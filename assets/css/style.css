@@ -362,7 +362,7 @@ section{ position:relative; padding:9rem 6vw; max-width:1440px; margin:0 auto; }
 
 /* ---------- pricing ---------- */
 .pricing{ background:var(--panel); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
-.pricing-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.4rem; }
+.pricing-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.4rem; }
 .pricing-card{
   background:var(--bg); border:1px solid var(--line); border-radius:16px; padding:2.6rem 2.2rem;
   display:flex; flex-direction:column; gap:1.4rem; transition:border-color .4s var(--ease), transform .4s var(--ease);
