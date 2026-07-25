@@ -12,9 +12,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../shared/prism-detail.css?v=1">
+<link rel="stylesheet" href="../shared/prism-detail.css?v=2">
 </head>
 <body>
+
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<script>
+window.YOUKOKU_BG_THEMES = [
+  { type: 'wire', colors: ['132,204,22','16,185,129'] },
+  { type: 'bokeh', colors: ['132,204,22','16,185,129'] },
+];
+</script>
+<script src="../shared/detail-bg.js?v=1"></script>
 
 <header class="topbar">
   <a href="../../index.html" class="back">← Youkoku</a>
