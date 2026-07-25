@@ -193,9 +193,13 @@ window.YOUKOKU_BG_THEMES = [
 
     <div class="panel-side">
       <div class="card">
-        <h3>Yk Studio</h3>
-        <p class="hint">Quillで書いた小説の緊張・穏やかのバランスから、曲調とテンポが変わる楽曲を自動作曲します（AI生成ではなく、ルールベースの作曲エンジンです）。</p>
-        <button type="button" class="btn btn-primary" id="autoComposeBtn"><span>✦ 自動作曲</span></button>
+        <h3>Yk Studio — AI Prompt</h3>
+        <p class="hint">好きな文章を入力すると、その内容（緊張・穏やかのバランス）に応じて曲調とテンポが変わる楽曲を自動作曲します（AI生成ではなく、ルールベースの作曲エンジンです）。</p>
+        <textarea id="promptInput" rows="3" placeholder="例: 争いの絶えない戦場。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+        <div class="btn-row" style="margin-top:.7rem;">
+          <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
+          <button type="button" class="btn btn-primary" id="autoComposeBtn"><span>✦ テキストから作曲</span></button>
+        </div>
         <p class="hint" id="autoComposeStatus"></p>
       </div>
 
@@ -309,6 +313,8 @@ window.YOUKOKU_BG_THEMES = [
   const masterHint = document.getElementById('masterHint');
   const autoComposeBtn = document.getElementById('autoComposeBtn');
   const autoComposeStatus = document.getElementById('autoComposeStatus');
+  const promptInput = document.getElementById('promptInput');
+  const loadQuillTextBtn = document.getElementById('loadQuillTextBtn');
   const remixBtn = document.getElementById('remixBtn');
   const remixSwitch = document.getElementById('remixSwitch');
   const remixHint = document.getElementById('remixHint');
@@ -442,20 +448,30 @@ window.YOUKOKU_BG_THEMES = [
   ['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); }));
   dropzone.addEventListener('drop', (e) => loadFile(e.dataTransfer.files && e.dataTransfer.files[0]));
 
-  /* ---------- auto-compose from Quill's text ---------- */
+  /* ---------- auto-compose from a text prompt ---------- */
+  loadQuillTextBtn.addEventListener('click', async () => {
+    if (!window.YoukokuProject) { autoComposeStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    const textSlot = await window.YoukokuProject.getSlot('text');
+    if (!textSlot || !textSlot.json) {
+      autoComposeStatus.textContent = 'Quillにまだ何も送信されていません。';
+      return;
+    }
+    const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
+    promptInput.value = fullText;
+    autoComposeStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」を読み込みました。`;
+  });
+
   autoComposeBtn.addEventListener('click', async () => {
-    if (!window.YoukokuMusic) { autoComposeStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuMusic || !window.YoukokuTextToArt) { autoComposeStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    const text = promptInput.value.trim();
+    if (!text) {
+      autoComposeStatus.textContent = 'テキストを入力してください。';
+      return;
+    }
     autoComposeBtn.disabled = true;
     autoComposeStatus.textContent = '作曲しています…';
     try {
-      let mood = 0;
-      if (window.YoukokuProject && window.YoukokuTextToArt) {
-        const textSlot = await window.YoukokuProject.getSlot('text');
-        if (textSlot && textSlot.json) {
-          const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
-          mood = window.YoukokuTextToArt.scoreText(fullText).mood;
-        }
-      }
+      const mood = window.YoukokuTextToArt.scoreText(text).mood;
       const buf = await window.YoukokuMusic.generate({ mood, duration: 20 });
       originalBuffer = buf;
       reversedBuffer = null;

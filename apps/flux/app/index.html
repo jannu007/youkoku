@@ -145,6 +145,7 @@ window.YOUKOKU_BG_THEMES = [
 <script src="../../shared/detail-bg.js?v=1"></script>
 <script src="../../shared/project-store.js"></script>
 <script src="../../shared/relief-3d.js"></script>
+<script src="../../shared/text-to-art.js"></script>
 
 <header class="topbar">
   <a href="../index.html" class="back">← Flux について</a>
@@ -213,9 +214,13 @@ window.YOUKOKU_BG_THEMES = [
 
     <div class="panel-side">
       <div class="card">
-        <h3>Yk Studio</h3>
-        <p class="hint">LumenでStudioに送った画像をもとに、3Dレリーフをぐるぐる回転させた動画を自動生成し、この編集画面にそのまま読み込みます（AI動画生成ではなく、実際にWebGLで描画した3D回転動画です）。</p>
-        <button type="button" class="btn btn-primary" id="generateVideoBtn"><span>✦ 3Dシーンから動画を生成</span></button>
+        <h3>Yk Studio — AI Prompt</h3>
+        <p class="hint">好きな文章を入力すると、その内容に応じたアートを生成し、3Dレリーフをぐるぐる回転させた動画を自動生成して、この編集画面に読み込みます（AI動画生成ではなく、実際にWebGLで描画した3D回転動画です）。</p>
+        <textarea id="promptInput" rows="3" placeholder="例: 荒れ狂う嵐の海。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+        <div class="btn-row" style="margin-top:.7rem;">
+          <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
+          <button type="button" class="btn btn-primary" id="generateVideoBtn"><span>✦ テキストから動画を生成</span></button>
+        </div>
         <p class="hint" id="generateVideoStatus"></p>
       </div>
 
@@ -317,6 +322,8 @@ window.YOUKOKU_BG_THEMES = [
   const detectScenesBtn = document.getElementById('detectScenesBtn');
   const generateVideoBtn = document.getElementById('generateVideoBtn');
   const generateVideoStatus = document.getElementById('generateVideoStatus');
+  const promptInput = document.getElementById('promptInput');
+  const loadQuillTextBtn = document.getElementById('loadQuillTextBtn');
   const aiHint = document.getElementById('aiHint');
   const sceneCountLabel = document.getElementById('sceneCount');
   const resetBtn = document.getElementById('resetBtn');
@@ -545,36 +552,36 @@ window.YOUKOKU_BG_THEMES = [
   ['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); }));
   dropzone.addEventListener('drop', (e) => loadFile(e.dataTransfer.files && e.dataTransfer.files[0]));
 
-  /* ---------- generate video from Studio's image (3D turntable) ---------- */
-  function loadImageDataFromBlob(blob, size) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        const c = document.createElement('canvas');
-        c.width = size; c.height = size;
-        const cctx = c.getContext('2d');
-        cctx.drawImage(img, 0, 0, size, size);
-        resolve(cctx.getImageData(0, 0, size, size));
-      };
-      img.onerror = reject;
-      img.src = URL.createObjectURL(blob);
-    });
-  }
+  /* ---------- generate video from a text prompt (art -> 3D turntable) ---------- */
+  loadQuillTextBtn.addEventListener('click', async () => {
+    if (!window.YoukokuProject) { generateVideoStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    const textSlot = await window.YoukokuProject.getSlot('text');
+    if (!textSlot || !textSlot.json) {
+      generateVideoStatus.textContent = 'Quillにまだ何も送信されていません。';
+      return;
+    }
+    const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
+    promptInput.value = fullText;
+    generateVideoStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」を読み込みました。`;
+  });
 
   generateVideoBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject || !window.YoukokuRelief) { generateVideoStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
-    const imageSlot = await window.YoukokuProject.getSlot('image');
-    if (!imageSlot || !imageSlot.blob) {
-      generateVideoStatus.textContent = 'まずLumenで画像を作り、「→ Studioに送る」を押してください。';
+    if (!window.YoukokuTextToArt || !window.YoukokuRelief) { generateVideoStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    const text = promptInput.value.trim();
+    if (!text) {
+      generateVideoStatus.textContent = 'テキストを入力してください。';
       return;
     }
     generateVideoBtn.disabled = true;
     generateVideoStatus.textContent = '3D動画を生成しています…';
     try {
-      const imageData = await loadImageDataFromBlob(imageSlot.blob, 200);
+      const artCanvas = document.createElement('canvas');
+      artCanvas.width = 200; artCanvas.height = 200;
+      window.YoukokuTextToArt.generate(artCanvas, text);
+      const imageData = artCanvas.getContext('2d').getImageData(0, 0, 200, 200);
       const blob = await window.YoukokuRelief.renderTurntable(imageData, { width: 960, height: 540, duration: 4, fps: 24 });
       loadFile(blob);
-      generateVideoStatus.textContent = '✓ 3D回転動画を読み込みました。';
+      generateVideoStatus.textContent = '✓ テキストから動画を生成しました。';
     } catch (err) {
       generateVideoStatus.textContent = '生成に失敗しました: ' + err.message;
     } finally {

@@ -105,6 +105,7 @@ window.YOUKOKU_BG_THEMES = [
 <script src="../../shared/detail-bg.js?v=1"></script>
 <script src="../../shared/project-store.js"></script>
 <script src="../../shared/relief-3d.js"></script>
+<script src="../../shared/text-to-art.js"></script>
 
 <header class="topbar">
   <a href="../index.html" class="back">← Mesh について</a>
@@ -163,10 +164,12 @@ window.YOUKOKU_BG_THEMES = [
     </div>
 
     <div class="card">
-      <h3>Yk Studio</h3>
-      <p class="hint">Lumenで送った画像の明るさを高さに変換し、立体地形（レリーフ）としてシーンに追加します。写真から本物の3Dモデルを復元するAIではなく、高さマップによる3D化です。</p>
-      <div class="btn-row">
-        <button type="button" class="btn" id="imageToReliefBtn"><span>✦ 画像から3D化</span></button>
+      <h3>Yk Studio — AI Prompt</h3>
+      <p class="hint">好きな文章を入力すると、その内容に応じたアートを生成し、明るさを高さに変換した立体地形（レリーフ）としてシーンに追加します（写真から本物の3Dモデルを復元するAIではなく、高さマップによる3D化です）。</p>
+      <textarea id="promptInput" rows="3" placeholder="例: そびえ立つ山々と深い谷。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+      <div class="btn-row" style="margin-top:.7rem;">
+        <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
+        <button type="button" class="btn btn-primary" id="imageToReliefBtn"><span>✦ テキストから3D化</span></button>
       </div>
       <p class="hint" id="imageToReliefStatus"></p>
       <p class="hint">今のシーンのスナップショットを、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
@@ -877,30 +880,37 @@ window.YOUKOKU_BG_THEMES = [
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   });
 
-  /* ================= image to 3D relief ================= */
+  /* ================= text prompt to 3D relief ================= */
   const imageToReliefBtn = document.getElementById('imageToReliefBtn');
   const imageToReliefStatus = document.getElementById('imageToReliefStatus');
-  imageToReliefBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject || !window.YoukokuRelief) { imageToReliefStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
-    const imageSlot = await window.YoukokuProject.getSlot('image');
-    if (!imageSlot || !imageSlot.blob) {
-      imageToReliefStatus.textContent = 'まずLumenで画像を作り、「→ Studioに送る」を押してください。';
+  const promptInput = document.getElementById('promptInput');
+  const loadQuillTextBtn = document.getElementById('loadQuillTextBtn');
+
+  loadQuillTextBtn.addEventListener('click', async () => {
+    if (!window.YoukokuProject) { imageToReliefStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    const textSlot = await window.YoukokuProject.getSlot('text');
+    if (!textSlot || !textSlot.json) {
+      imageToReliefStatus.textContent = 'Quillにまだ何も送信されていません。';
       return;
     }
-    const img = new Image();
-    const url = URL.createObjectURL(imageSlot.blob);
-    img.onload = () => {
-      const sampleCanvas = document.createElement('canvas');
-      sampleCanvas.width = 200; sampleCanvas.height = 200;
-      const sctx = sampleCanvas.getContext('2d');
-      sctx.drawImage(img, 0, 0, 200, 200);
-      const imageData = sctx.getImageData(0, 0, 200, 200);
-      URL.revokeObjectURL(url);
-      addReliefFromImageData(imageData);
-      imageToReliefStatus.textContent = '✓ 画像から3D化しました。';
-    };
-    img.onerror = () => { imageToReliefStatus.textContent = '画像の読み込みに失敗しました。'; URL.revokeObjectURL(url); };
-    img.src = url;
+    const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
+    promptInput.value = fullText;
+    imageToReliefStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」を読み込みました。`;
+  });
+
+  imageToReliefBtn.addEventListener('click', () => {
+    if (!window.YoukokuTextToArt || !window.YoukokuRelief) { imageToReliefStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    const text = promptInput.value.trim();
+    if (!text) {
+      imageToReliefStatus.textContent = 'テキストを入力してください。';
+      return;
+    }
+    const artCanvas = document.createElement('canvas');
+    artCanvas.width = 200; artCanvas.height = 200;
+    window.YoukokuTextToArt.generate(artCanvas, text);
+    const imageData = artCanvas.getContext('2d').getImageData(0, 0, 200, 200);
+    addReliefFromImageData(imageData);
+    imageToReliefStatus.textContent = '✓ テキストから3D化しました。';
   });
 
   /* ================= send to Studio ================= */

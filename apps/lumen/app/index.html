@@ -230,10 +230,12 @@ window.YOUKOKU_BG_THEMES = [
       </div>
 
       <div class="card">
-        <h3>Yk Studio</h3>
-        <p class="hint">Quillで書いた小説の緊張・穏やかのバランスから、ジェネラティブアートを自動生成できます（AIイラストではなく、文章の解析結果から描く抽象アートです）。</p>
-        <div class="btn-row">
-          <button type="button" class="btn" id="generateArtBtn"><span>✦ 小説からアートを生成</span></button>
+        <h3>Yk Studio — AI Prompt</h3>
+        <p class="hint">好きな文章を入力すると、その内容（緊張・穏やかのバランス）に応じたジェネラティブアートを自動生成します（AIイラスト生成ではなく、文章解析に基づく抽象アートです）。</p>
+        <textarea id="promptInput" rows="3" placeholder="例: 静かな夜の海辺で、星空を見上げる少女。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+        <div class="btn-row" style="margin-top:.7rem;">
+          <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
+          <button type="button" class="btn btn-primary" id="generateArtBtn"><span>✦ テキストから生成</span></button>
         </div>
         <p class="hint" id="generateArtStatus"></p>
         <p class="hint">この画像を、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
@@ -280,6 +282,8 @@ window.YOUKOKU_BG_THEMES = [
   const sendToProjectStatus = document.getElementById('sendToProjectStatus');
   const generateArtBtn = document.getElementById('generateArtBtn');
   const generateArtStatus = document.getElementById('generateArtStatus');
+  const promptInput = document.getElementById('promptInput');
+  const loadQuillTextBtn = document.getElementById('loadQuillTextBtn');
 
   const sliders = {
     brightness: document.getElementById('rBrightness'),
@@ -730,17 +734,28 @@ window.YOUKOKU_BG_THEMES = [
     }, 'image/png');
   });
 
-  generateArtBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject || !window.YoukokuTextToArt) { generateArtStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+  loadQuillTextBtn.addEventListener('click', async () => {
+    if (!window.YoukokuProject) { generateArtStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
     const textSlot = await window.YoukokuProject.getSlot('text');
     if (!textSlot || !textSlot.json) {
-      generateArtStatus.textContent = 'まずQuillで小説を書き、「→ Studioに送る」を押してください。';
+      generateArtStatus.textContent = 'Quillにまだ何も送信されていません。';
       return;
     }
     const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
+    promptInput.value = fullText;
+    generateArtStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」を読み込みました。`;
+  });
+
+  generateArtBtn.addEventListener('click', () => {
+    if (!window.YoukokuTextToArt) { generateArtStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    const text = promptInput.value.trim();
+    if (!text) {
+      generateArtStatus.textContent = 'テキストを入力してください。';
+      return;
+    }
     const artCanvas = document.createElement('canvas');
     artCanvas.width = 1200; artCanvas.height = 800;
-    window.YoukokuTextToArt.generate(artCanvas, fullText);
+    window.YoukokuTextToArt.generate(artCanvas, text);
 
     srcW = artCanvas.width; srcH = artCanvas.height;
     canvas.width = srcW; canvas.height = srcH;
@@ -754,7 +769,7 @@ window.YOUKOKU_BG_THEMES = [
     resetBtn.disabled = false;
     downloadBtn.disabled = false;
     sendToProjectBtn.disabled = false;
-    generateArtStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」からアートを生成しました。`;
+    generateArtStatus.textContent = '✓ テキストからアートを生成しました。';
   });
 
   sendToProjectBtn.addEventListener('click', () => {
