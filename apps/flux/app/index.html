@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flux — AI映像編集 | Youkoku</title>
+<title>Flux — AI映像編集 | Yk Studio</title>
 <meta name="description" content="AIによるシーン検出とカラーグレーディングで動画を仕上げる映像編集アプリ">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2290%22>▶</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -135,6 +135,7 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 <body>
 
 <script src="../../shared/project-store.js"></script>
+<script src="../../shared/relief-3d.js"></script>
 
 <header class="topbar">
   <a href="../index.html" class="back">← Flux について</a>
@@ -202,6 +203,13 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     </div>
 
     <div class="panel-side">
+      <div class="card">
+        <h3>Yk Studio</h3>
+        <p class="hint">LumenでStudioに送った画像をもとに、3Dレリーフをぐるぐる回転させた動画を自動生成し、この編集画面にそのまま読み込みます（AI動画生成ではなく、実際にWebGLで描画した3D回転動画です）。</p>
+        <button type="button" class="btn btn-primary" id="generateVideoBtn"><span>✦ 3Dシーンから動画を生成</span></button>
+        <p class="hint" id="generateVideoStatus"></p>
+      </div>
+
       <div class="card">
         <h3>AI Tools</h3>
         <button type="button" class="btn btn-primary" id="autoColorBtn" disabled><span>✦ AIカラー補正</span></button>
@@ -298,6 +306,8 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   const setOutBtn = document.getElementById('setOutBtn');
   const autoColorBtn = document.getElementById('autoColorBtn');
   const detectScenesBtn = document.getElementById('detectScenesBtn');
+  const generateVideoBtn = document.getElementById('generateVideoBtn');
+  const generateVideoStatus = document.getElementById('generateVideoStatus');
   const aiHint = document.getElementById('aiHint');
   const sceneCountLabel = document.getElementById('sceneCount');
   const resetBtn = document.getElementById('resetBtn');
@@ -525,6 +535,43 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   ['dragenter', 'dragover'].forEach(evt => dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('drag'); }));
   ['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); }));
   dropzone.addEventListener('drop', (e) => loadFile(e.dataTransfer.files && e.dataTransfer.files[0]));
+
+  /* ---------- generate video from Studio's image (3D turntable) ---------- */
+  function loadImageDataFromBlob(blob, size) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = size; c.height = size;
+        const cctx = c.getContext('2d');
+        cctx.drawImage(img, 0, 0, size, size);
+        resolve(cctx.getImageData(0, 0, size, size));
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(blob);
+    });
+  }
+
+  generateVideoBtn.addEventListener('click', async () => {
+    if (!window.YoukokuProject || !window.YoukokuRelief) { generateVideoStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    const imageSlot = await window.YoukokuProject.getSlot('image');
+    if (!imageSlot || !imageSlot.blob) {
+      generateVideoStatus.textContent = 'まずLumenで画像を作り、「→ Studioに送る」を押してください。';
+      return;
+    }
+    generateVideoBtn.disabled = true;
+    generateVideoStatus.textContent = '3D動画を生成しています…';
+    try {
+      const imageData = await loadImageDataFromBlob(imageSlot.blob, 200);
+      const blob = await window.YoukokuRelief.renderTurntable(imageData, { width: 960, height: 540, duration: 4, fps: 24 });
+      loadFile(blob);
+      generateVideoStatus.textContent = '✓ 3D回転動画を読み込みました。';
+    } catch (err) {
+      generateVideoStatus.textContent = '生成に失敗しました: ' + err.message;
+    } finally {
+      generateVideoBtn.disabled = false;
+    }
+  });
 
   /* ---------- transport ---------- */
   playBtn.addEventListener('click', () => {
