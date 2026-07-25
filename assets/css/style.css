@@ -270,6 +270,25 @@ section{ position:relative; padding:9rem 6vw; max-width:1440px; margin:0 auto; }
 }
 .mission .accent{ color:var(--violet); }
 
+.dyn-stats{ display:flex; gap:3.4rem; justify-content:center; margin:2.6rem 0 0; flex-wrap:wrap; }
+.dyn-stat{ display:flex; flex-direction:column; align-items:center; gap:.4rem; }
+.dyn-stat-num{
+  font-family:var(--display); font-weight:700; font-size:clamp(1.8rem,4vw,2.6rem); line-height:1;
+  background:var(--prism); -webkit-background-clip:text; background-clip:text; color:transparent;
+  font-variant-numeric:tabular-nums;
+}
+.dyn-stat-label{ font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; color:var(--ink-soft); text-transform:uppercase; }
+
+/* ---------- cursor glow (desktop only, follows pointer through hero/apps) ---------- */
+.cursor-glow{
+  position:fixed; top:0; left:0; width:440px; height:440px; border-radius:50%;
+  background:radial-gradient(circle, rgba(139,92,246,.22) 0%, rgba(34,211,238,.1) 45%, transparent 72%);
+  transform:translate3d(-50%,-50%,0); pointer-events:none; z-index:1; opacity:0;
+  transition:opacity .5s ease; filter:blur(6px); mix-blend-mode:screen;
+}
+.cursor-glow.active{ opacity:1; }
+@media (max-width:900px), (hover:none){ .cursor-glow{ display:none; } }
+
 /* ---------- apps ---------- */
 .apps{ padding-top:9rem; }
 .app-showcase{ display:flex; flex-direction:column; gap:1px; background:var(--line); margin-top:1px; }
@@ -303,10 +322,15 @@ section{ position:relative; padding:9rem 6vw; max-width:1440px; margin:0 auto; }
 }
 
 /* ---------- device frame mockups ---------- */
+.app-visual{ perspective:1200px; }
 .device-frame{
   border:1px solid var(--line); border-radius:14px; background:var(--panel); overflow:hidden;
   box-shadow:0 30px 80px -20px rgba(0,0,0,.6);
+  transition:transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s ease;
+  will-change:transform;
 }
+.device-frame.tilting{ transition:transform .06s linear; }
+.device-frame:hover{ box-shadow:0 40px 100px -20px rgba(139,92,246,.35); }
 .device-bar{ display:flex; align-items:center; gap:.5rem; padding:.9rem 1.1rem; border-bottom:1px solid var(--line); }
 .device-bar span{ width:.55rem; height:.55rem; border-radius:50%; background:var(--line-soft); }
 .device-bar span:nth-child(1){ background:#3a3a4a; }

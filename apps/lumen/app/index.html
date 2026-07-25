@@ -97,6 +97,14 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 .preset-btn:hover, .preset-btn.active{ border-color:var(--violet); color:var(--ink); }
 
 .hint{ font-size:.76rem; color:var(--ink-soft); margin-top:.4rem; }
+
+.toggle-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+.toggle-row:last-child{ margin-bottom:0; }
+.toggle-row span{ font-size:.86rem; }
+.switch{ position:relative; width:2.6rem; height:1.5rem; border-radius:999px; background:var(--line); border:none; flex-shrink:0; transition:background .25s var(--ease); }
+.switch::after{ content:''; position:absolute; top:2px; left:2px; width:1.1rem; height:1.1rem; border-radius:50%; background:var(--ink); transition:transform .25s var(--ease); }
+.switch.on{ background:linear-gradient(95deg,var(--violet),var(--blue)); }
+.switch.on::after{ transform:translateX(1.1rem); }
 </style>
 </head>
 <body>
@@ -156,6 +164,38 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
       </div>
 
       <div class="card">
+        <h3>Effects</h3>
+        <div class="slider-row">
+          <label>ぼかし <span id="valBlur">0px</span></label>
+          <input type="range" id="rBlur" min="0" max="20" value="0">
+        </div>
+        <div class="slider-row">
+          <label>ビネット <span id="valVignette">0%</span></label>
+          <input type="range" id="rVignette" min="0" max="100" value="0">
+        </div>
+        <div class="slider-row">
+          <label>グレイン <span id="valGrain">0%</span></label>
+          <input type="range" id="rGrain" min="0" max="100" value="0">
+        </div>
+        <div class="slider-row">
+          <label>色収差 <span id="valChroma">0</span></label>
+          <input type="range" id="rChroma" min="0" max="20" value="0">
+        </div>
+        <div class="slider-row">
+          <label>モザイク <span id="valPixelate">0</span></label>
+          <input type="range" id="rPixelate" min="0" max="40" value="0">
+        </div>
+        <div class="toggle-row">
+          <span>デュオトーン</span>
+          <button type="button" class="switch" id="duotoneSwitch" aria-pressed="false"></button>
+        </div>
+        <div class="toggle-row">
+          <span>スケッチ</span>
+          <button type="button" class="switch" id="sketchSwitch" aria-pressed="false"></button>
+        </div>
+      </div>
+
+      <div class="card">
         <h3>Style Presets</h3>
         <div class="presets" id="presetGrid"></div>
       </div>
@@ -195,6 +235,25 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     hue: document.getElementById('valHue'),
   };
 
+  const fxSliders = {
+    blur: document.getElementById('rBlur'),
+    vignette: document.getElementById('rVignette'),
+    grain: document.getElementById('rGrain'),
+    chroma: document.getElementById('rChroma'),
+    pixelate: document.getElementById('rPixelate'),
+  };
+  const fxValues = {
+    blur: document.getElementById('valBlur'),
+    vignette: document.getElementById('valVignette'),
+    grain: document.getElementById('valGrain'),
+    chroma: document.getElementById('valChroma'),
+    pixelate: document.getElementById('valPixelate'),
+  };
+  const duotoneSwitch = document.getElementById('duotoneSwitch');
+  const sketchSwitch = document.getElementById('sketchSwitch');
+  let duotoneOn = false;
+  let sketchOn = false;
+
   const MAX_DIM = 2000;
   let srcImage = null; // the loaded HTMLImageElement
   let srcW = 0, srcH = 0;
@@ -228,15 +287,160 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     values.contrast.textContent = sliders.contrast.value + '%';
     values.saturate.textContent = sliders.saturate.value + '%';
     values.hue.textContent = sliders.hue.value + '°';
+    fxValues.blur.textContent = fxSliders.blur.value + 'px';
+    fxValues.vignette.textContent = fxSliders.vignette.value + '%';
+    fxValues.grain.textContent = fxSliders.grain.value + '%';
+    fxValues.chroma.textContent = fxSliders.chroma.value;
+    fxValues.pixelate.textContent = fxSliders.pixelate.value;
+  }
+
+  function currentFx() {
+    return {
+      blur: Number(fxSliders.blur.value),
+      vignette: Number(fxSliders.vignette.value),
+      grain: Number(fxSliders.grain.value),
+      chroma: Number(fxSliders.chroma.value),
+      pixelate: Number(fxSliders.pixelate.value),
+      duotone: duotoneOn,
+      sketch: sketchOn,
+    };
+  }
+
+  /* ---------- strong effects: pixel-level post-processing ---------- */
+  function applyPixelate(blockSize) {
+    const w = canvas.width, h = canvas.height;
+    const sw = Math.max(1, Math.floor(w / blockSize));
+    const sh = Math.max(1, Math.floor(h / blockSize));
+    const off = document.createElement('canvas');
+    off.width = sw; off.height = sh;
+    off.getContext('2d').drawImage(canvas, 0, 0, sw, sh);
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(off, 0, 0, sw, sh, 0, 0, w, h);
+    ctx.restore();
+  }
+
+  function applyDuotone() {
+    const w = canvas.width, h = canvas.height;
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const d = imgData.data;
+    const dark = [24, 8, 56], light = [150, 235, 255];
+    for (let i = 0; i < d.length; i += 4) {
+      const lum = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255;
+      d[i] = dark[0] + (light[0] - dark[0]) * lum;
+      d[i + 1] = dark[1] + (light[1] - dark[1]) * lum;
+      d[i + 2] = dark[2] + (light[2] - dark[2]) * lum;
+    }
+    ctx.putImageData(imgData, 0, 0);
+  }
+
+  function applySketch() {
+    const w = canvas.width, h = canvas.height;
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const src = imgData.data;
+    const gray = new Float32Array(w * h);
+    for (let i = 0, p = 0; i < src.length; i += 4, p++) {
+      gray[p] = 0.299 * src[i] + 0.587 * src[i + 1] + 0.114 * src[i + 2];
+    }
+    const out = ctx.createImageData(w, h);
+    const od = out.data;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = y * w + x;
+        let gx = 0, gy = 0;
+        if (x > 0 && x < w - 1 && y > 0 && y < h - 1) {
+          gx = gray[idx - 1] - gray[idx + 1];
+          gy = gray[idx - w] - gray[idx + w];
+        }
+        const mag = Math.min(255, Math.sqrt(gx * gx + gy * gy) * 2.2);
+        const v = 255 - mag;
+        const o = idx * 4;
+        od[o] = v; od[o + 1] = v; od[o + 2] = v; od[o + 3] = 255;
+      }
+    }
+    ctx.putImageData(out, 0, 0);
+  }
+
+  function applyChromaticAberration(amount) {
+    const w = canvas.width, h = canvas.height;
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const src = imgData.data;
+    const out = ctx.createImageData(w, h);
+    const od = out.data;
+    for (let y = 0; y < h; y++) {
+      const rowBase = y * w;
+      for (let x = 0; x < w; x++) {
+        const o = (rowBase + x) * 4;
+        const xr = Math.min(w - 1, x + amount);
+        const xb = Math.max(0, x - amount);
+        const orIdx = (rowBase + xr) * 4;
+        const obIdx = (rowBase + xb) * 4;
+        od[o] = src[orIdx];
+        od[o + 1] = src[o + 1];
+        od[o + 2] = src[obIdx + 2];
+        od[o + 3] = 255;
+      }
+    }
+    ctx.putImageData(out, 0, 0);
+  }
+
+  function drawVignette(strength) {
+    const w = canvas.width, h = canvas.height;
+    const cx = w / 2, cy = h / 2;
+    const outerR = Math.hypot(cx, cy);
+    const grad = ctx.createRadialGradient(cx, cy, outerR * 0.35, cx, cy, outerR);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, `rgba(0,0,0,${(strength / 100) * 0.85})`);
+    ctx.save();
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
+  let noiseTile = null;
+  function getNoiseTile() {
+    if (noiseTile) return noiseTile;
+    const size = 128;
+    noiseTile = document.createElement('canvas');
+    noiseTile.width = size; noiseTile.height = size;
+    const nctx = noiseTile.getContext('2d');
+    const imgData = nctx.createImageData(size, size);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const v = Math.floor(Math.random() * 255);
+      d[i] = v; d[i + 1] = v; d[i + 2] = v; d[i + 3] = 255;
+    }
+    nctx.putImageData(imgData, 0, 0);
+    return noiseTile;
+  }
+
+  function drawGrain(strength) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, strength / 100);
+    ctx.globalCompositeOperation = 'overlay';
+    ctx.fillStyle = ctx.createPattern(getNoiseTile(), 'repeat');
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
   }
 
   function render() {
     if (!srcImage) return;
+    const fx = currentFx();
+
     ctx.save();
-    ctx.filter = buildFilterString(currentValues());
+    ctx.filter = buildFilterString(currentValues()) + (fx.blur > 0 ? ` blur(${fx.blur}px)` : '');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(srcImage, 0, 0, srcW, srcH);
     ctx.restore();
+
+    if (fx.pixelate > 1) applyPixelate(fx.pixelate);
+    if (fx.duotone) applyDuotone();
+    if (fx.sketch) applySketch();
+    if (fx.chroma > 0) applyChromaticAberration(fx.chroma);
+    if (fx.vignette > 0) drawVignette(fx.vignette);
+    if (fx.grain > 0) drawGrain(fx.grain);
+
     updateLabels();
     highlightMatchingPreset();
   }
@@ -251,6 +455,20 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   }
 
   Object.values(sliders).forEach(s => s.addEventListener('input', render));
+  Object.values(fxSliders).forEach(s => s.addEventListener('input', render));
+
+  duotoneSwitch.addEventListener('click', () => {
+    duotoneOn = !duotoneOn;
+    duotoneSwitch.classList.toggle('on', duotoneOn);
+    duotoneSwitch.setAttribute('aria-pressed', String(duotoneOn));
+    render();
+  });
+  sketchSwitch.addEventListener('click', () => {
+    sketchOn = !sketchOn;
+    sketchSwitch.classList.toggle('on', sketchOn);
+    sketchSwitch.setAttribute('aria-pressed', String(sketchOn));
+    render();
+  });
 
   function loadImage(file) {
     if (!file || !file.type.startsWith('image/')) return;
@@ -280,6 +498,17 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     sliders.contrast.value = 100;
     sliders.saturate.value = 100;
     sliders.hue.value = 0;
+    fxSliders.blur.value = 0;
+    fxSliders.vignette.value = 0;
+    fxSliders.grain.value = 0;
+    fxSliders.chroma.value = 0;
+    fxSliders.pixelate.value = 0;
+    duotoneOn = false;
+    sketchOn = false;
+    duotoneSwitch.classList.remove('on');
+    duotoneSwitch.setAttribute('aria-pressed', 'false');
+    sketchSwitch.classList.remove('on');
+    sketchSwitch.setAttribute('aria-pressed', 'false');
     updateLabels();
   }
 

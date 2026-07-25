@@ -49,7 +49,24 @@ main{ max-width:1180px; margin:0 auto; padding:2.6rem 5vw 5rem; }
 
 #editorWrap{ display:none; padding:1.2rem; }
 #editorWrap.active{ display:block; }
-#videoEl{ display:block; width:100%; max-height:480px; border-radius:8px; background:#000; }
+#videoEl{ display:block; width:100%; max-height:480px; background:#000; }
+
+.video-wrap{ position:relative; border-radius:8px; overflow:hidden; line-height:0; }
+.fx-vignette, .fx-grain, .fx-duotone, .fx-glitch-canvas{ position:absolute; inset:0; pointer-events:none; }
+.fx-vignette{ background:radial-gradient(circle, transparent 38%, rgba(0,0,0,.92) 100%); opacity:0; transition:opacity .2s linear; }
+.fx-grain{ opacity:0; mix-blend-mode:overlay; background-repeat:repeat; background-size:128px 128px; transition:opacity .2s linear; }
+.fx-duotone{ opacity:0; mix-blend-mode:color; background:linear-gradient(135deg,#180838,#96e6ff); transition:opacity .3s ease; }
+.fx-duotone.on{ opacity:1; }
+.fx-glitch-canvas{ width:100%; height:100%; opacity:0; }
+.fx-glitch-canvas.flash{ opacity:1; }
+
+.toggle-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+.toggle-row:last-child{ margin-bottom:0; }
+.toggle-row span{ font-size:.86rem; }
+.switch{ position:relative; width:2.6rem; height:1.5rem; border-radius:999px; background:var(--line); border:none; flex-shrink:0; transition:background .25s var(--ease); }
+.switch::after{ content:''; position:absolute; top:2px; left:2px; width:1.1rem; height:1.1rem; border-radius:50%; background:var(--ink); transition:transform .25s var(--ease); }
+.switch.on{ background:linear-gradient(95deg,var(--magenta),var(--orange)); }
+.switch.on::after{ transform:translateX(1.1rem); }
 
 .transport{ display:flex; align-items:center; gap:1rem; margin-top:1rem; }
 .play-btn{ width:2.6rem; height:2.6rem; border-radius:50%; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:.9rem; }
@@ -135,7 +152,13 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
         <p>または <span class="browse">クリックして選択</span>（MP4 / WebM / MOV）</p>
       </div>
       <div id="editorWrap">
-        <video id="videoEl" playsinline></video>
+        <div class="video-wrap" id="videoWrap">
+          <video id="videoEl" playsinline></video>
+          <div class="fx-vignette" id="fxVignette"></div>
+          <div class="fx-grain" id="fxGrain"></div>
+          <div class="fx-duotone" id="fxDuotone"></div>
+          <canvas class="fx-glitch-canvas" id="glitchCanvas"></canvas>
+        </div>
 
         <div class="transport">
           <button type="button" class="play-btn" id="playBtn">▶</button>
@@ -204,6 +227,26 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
         </div>
       </div>
 
+      <div class="card">
+        <h3>Effects</h3>
+        <div class="slider-row">
+          <label>ビネット <span id="valVignette">0%</span></label>
+          <input type="range" id="rVignette" min="0" max="100" value="0">
+        </div>
+        <div class="slider-row">
+          <label>グレイン <span id="valGrain">0%</span></label>
+          <input type="range" id="rGrain" min="0" max="100" value="0">
+        </div>
+        <div class="toggle-row">
+          <span>デュオトーン</span>
+          <button type="button" class="switch" id="duotoneSwitch" aria-pressed="false"></button>
+        </div>
+        <div class="toggle-row">
+          <span>グリッチ</span>
+          <button type="button" class="switch" id="glitchSwitch" aria-pressed="false"></button>
+        </div>
+      </div>
+
       <div class="btn-row">
         <button type="button" class="btn" id="resetBtn" disabled><span>リセット</span></button>
         <button type="button" class="btn btn-primary" id="exportBtn" disabled><span>↓ 書き出す</span></button>
@@ -255,6 +298,13 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   const downloadLink = document.getElementById('downloadLink');
   const exportCanvas = document.getElementById('exportCanvas');
   const sampleCanvas = document.getElementById('sampleCanvas');
+  const videoWrap = document.getElementById('videoWrap');
+  const fxVignette = document.getElementById('fxVignette');
+  const fxGrain = document.getElementById('fxGrain');
+  const fxDuotone = document.getElementById('fxDuotone');
+  const glitchCanvas = document.getElementById('glitchCanvas');
+  const duotoneSwitch = document.getElementById('duotoneSwitch');
+  const glitchSwitch = document.getElementById('glitchSwitch');
 
   const sliders = {
     brightness: document.getElementById('rBrightness'),
@@ -268,6 +318,16 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     saturate: document.getElementById('valSaturate'),
     speed: document.getElementById('valSpeed'),
   };
+  const fxSliders = {
+    vignette: document.getElementById('rVignette'),
+    grain: document.getElementById('rGrain'),
+  };
+  const fxValues = {
+    vignette: document.getElementById('valVignette'),
+    grain: document.getElementById('valGrain'),
+  };
+  let duotoneOn = false;
+  let glitchOn = false;
 
   let duration = 0;
   let trimIn = 0, trimOut = 0;
@@ -297,13 +357,80 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     values.contrast.textContent = sliders.contrast.value + '%';
     values.saturate.textContent = sliders.saturate.value + '%';
     values.speed.textContent = (sliders.speed.value / 100).toFixed(2) + 'x';
+    fxValues.vignette.textContent = fxSliders.vignette.value + '%';
+    fxValues.grain.textContent = fxSliders.grain.value + '%';
   }
   function applyLiveFilter() {
     video.style.filter = buildFilterString(currentValues());
     video.playbackRate = Number(sliders.speed.value) / 100;
     updateLabels();
+    updateFxOverlay();
   }
   Object.values(sliders).forEach(s => s.addEventListener('input', applyLiveFilter));
+  Object.values(fxSliders).forEach(s => s.addEventListener('input', applyLiveFilter));
+
+  /* ---------- strong effects: live preview overlays ---------- */
+  let grainTileUrl = null;
+  function getGrainTileUrl() {
+    if (grainTileUrl) return grainTileUrl;
+    const size = 128;
+    const tile = document.createElement('canvas');
+    tile.width = size; tile.height = size;
+    const tctx = tile.getContext('2d');
+    const imgData = tctx.createImageData(size, size);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const v = Math.floor(Math.random() * 255);
+      d[i] = v; d[i + 1] = v; d[i + 2] = v; d[i + 3] = 255;
+    }
+    tctx.putImageData(imgData, 0, 0);
+    grainTileUrl = tile.toDataURL();
+    return grainTileUrl;
+  }
+
+  function updateFxOverlay() {
+    const vignette = Number(fxSliders.vignette.value);
+    const grain = Number(fxSliders.grain.value);
+    fxVignette.style.opacity = String((vignette / 100) * 0.95);
+    if (grain > 0 && !fxGrain.style.backgroundImage) fxGrain.style.backgroundImage = `url(${getGrainTileUrl()})`;
+    fxGrain.style.opacity = String(Math.min(1, grain / 100));
+    fxDuotone.classList.toggle('on', duotoneOn);
+  }
+
+  duotoneSwitch.addEventListener('click', () => {
+    duotoneOn = !duotoneOn;
+    duotoneSwitch.classList.toggle('on', duotoneOn);
+    duotoneSwitch.setAttribute('aria-pressed', String(duotoneOn));
+    updateFxOverlay();
+  });
+
+  glitchSwitch.addEventListener('click', () => {
+    glitchOn = !glitchOn;
+    glitchSwitch.classList.toggle('on', glitchOn);
+    glitchSwitch.setAttribute('aria-pressed', String(glitchOn));
+  });
+
+  /* ---------- strong effects: periodic live glitch flash ---------- */
+  function triggerGlitchFlash() {
+    if (video.paused || video.videoWidth === 0) return;
+    const rect = videoWrap.getBoundingClientRect();
+    glitchCanvas.width = rect.width;
+    glitchCanvas.height = rect.height;
+    const gctx = glitchCanvas.getContext('2d');
+    gctx.drawImage(video, 0, 0, rect.width, rect.height);
+    const bandCount = 1 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < bandCount; i++) {
+      const bandH = 4 + Math.random() * 26;
+      const y = Math.random() * (rect.height - bandH);
+      const shift = (Math.random() - 0.5) * 60;
+      gctx.drawImage(glitchCanvas, 0, y, rect.width, bandH, shift, y, rect.width, bandH);
+    }
+    glitchCanvas.classList.add('flash');
+    setTimeout(() => glitchCanvas.classList.remove('flash'), 90 + Math.random() * 80);
+  }
+  setInterval(() => {
+    if (glitchOn && Math.random() < 0.5) triggerGlitchFlash();
+  }, 260);
 
   /* ---------- file loading ---------- */
   function loadFile(file) {
@@ -398,6 +525,10 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 
   resetBtn.addEventListener('click', () => {
     sliders.brightness.value = 100; sliders.contrast.value = 100; sliders.saturate.value = 100; sliders.speed.value = 100;
+    fxSliders.vignette.value = 0; fxSliders.grain.value = 0;
+    duotoneOn = false; glitchOn = false;
+    duotoneSwitch.classList.remove('on'); duotoneSwitch.setAttribute('aria-pressed', 'false');
+    glitchSwitch.classList.remove('on'); glitchSwitch.setAttribute('aria-pressed', 'false');
     applyLiveFilter();
     trimIn = 0; trimOut = duration; clampTrim();
   });
@@ -496,6 +627,68 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     });
   }
 
+  /* ---------- strong effects: baked into export frames ---------- */
+  function bakeExportDuotone(ectx, w, h) {
+    const imgData = ectx.getImageData(0, 0, w, h);
+    const d = imgData.data;
+    const dark = [24, 8, 56], light = [150, 235, 255];
+    for (let i = 0; i < d.length; i += 4) {
+      const lum = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255;
+      d[i] = dark[0] + (light[0] - dark[0]) * lum;
+      d[i + 1] = dark[1] + (light[1] - dark[1]) * lum;
+      d[i + 2] = dark[2] + (light[2] - dark[2]) * lum;
+    }
+    ectx.putImageData(imgData, 0, 0);
+  }
+
+  function bakeExportVignette(ectx, w, h, strength) {
+    const cx = w / 2, cy = h / 2;
+    const outerR = Math.hypot(cx, cy);
+    const grad = ectx.createRadialGradient(cx, cy, outerR * 0.35, cx, cy, outerR);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, `rgba(0,0,0,${(strength / 100) * 0.9})`);
+    ectx.save();
+    ectx.fillStyle = grad;
+    ectx.fillRect(0, 0, w, h);
+    ectx.restore();
+  }
+
+  let exportNoiseTile = null;
+  function getExportNoiseTile() {
+    if (exportNoiseTile) return exportNoiseTile;
+    const size = 128;
+    exportNoiseTile = document.createElement('canvas');
+    exportNoiseTile.width = size; exportNoiseTile.height = size;
+    const nctx = exportNoiseTile.getContext('2d');
+    const imgData = nctx.createImageData(size, size);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const v = Math.floor(Math.random() * 255);
+      d[i] = v; d[i + 1] = v; d[i + 2] = v; d[i + 3] = 255;
+    }
+    nctx.putImageData(imgData, 0, 0);
+    return exportNoiseTile;
+  }
+  function bakeExportGrain(ectx, w, h, strength) {
+    ectx.save();
+    ectx.globalAlpha = Math.min(1, strength / 100);
+    ectx.globalCompositeOperation = 'overlay';
+    ectx.fillStyle = ectx.createPattern(getExportNoiseTile(), 'repeat');
+    ectx.fillRect(0, 0, w, h);
+    ectx.restore();
+  }
+
+  function bakeExportGlitch(ectx, w, h) {
+    if (Math.random() > 0.75) return; // most frames stay clean, occasional tear
+    const bandCount = 1 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < bandCount; i++) {
+      const bandH = 4 + Math.random() * (h * 0.06);
+      const y = Math.random() * (h - bandH);
+      const shift = (Math.random() - 0.5) * (w * 0.05);
+      ectx.drawImage(exportCanvas, 0, y, w, bandH, shift, y, w, bandH);
+    }
+  }
+
   /* ---------- export ---------- */
   exportBtn.addEventListener('click', async () => {
     if (!duration || typeof MediaRecorder === 'undefined') {
@@ -544,9 +737,17 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     let rafId = null;
     const segmentLen = Math.max(0.05, trimOut - trimIn);
 
+    const vignetteAmt = Number(fxSliders.vignette.value);
+    const grainAmt = Number(fxSliders.grain.value);
+
     function drawFrame() {
       ectx.filter = filterStr;
       ectx.drawImage(video, 0, 0, w, h);
+      ectx.filter = 'none';
+      if (duotoneOn) bakeExportDuotone(ectx, w, h);
+      if (glitchOn) bakeExportGlitch(ectx, w, h);
+      if (vignetteAmt > 0) bakeExportVignette(ectx, w, h, vignetteAmt);
+      if (grainAmt > 0) bakeExportGrain(ectx, w, h, grainAmt);
       const progress = Math.min(1, (video.currentTime - trimIn) / segmentLen);
       progressFill.style.width = Math.round(5 + progress * 90) + '%';
       if (video.currentTime < trimOut && !video.ended) {

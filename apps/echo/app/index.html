@@ -212,6 +212,30 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
         </div>
       </div>
 
+      <div class="card">
+        <h3>Effects</h3>
+        <div class="slider-row">
+          <label>ベース <span id="valBass">0dB</span></label>
+          <input type="range" id="rBass" min="-12" max="12" value="0">
+        </div>
+        <div class="slider-row">
+          <label>トレブル <span id="valTreble">0dB</span></label>
+          <input type="range" id="rTreble" min="-12" max="12" value="0">
+        </div>
+        <div class="slider-row">
+          <label>リバーブ <span id="valReverb">0%</span></label>
+          <input type="range" id="rReverb" min="0" max="100" value="0">
+        </div>
+        <div class="slider-row">
+          <label>ディレイ (Echo) <span id="valDelay">0%</span></label>
+          <input type="range" id="rDelay" min="0" max="100" value="0">
+        </div>
+        <div class="slider-row">
+          <label>ディストーション <span id="valDistortion">0%</span></label>
+          <input type="range" id="rDistortion" min="0" max="100" value="0">
+        </div>
+      </div>
+
       <div class="btn-row">
         <button type="button" class="btn" id="resetBtn" disabled><span>リセット</span></button>
         <button type="button" class="btn btn-primary" id="exportBtn" disabled><span>↓ 書き出す</span></button>
@@ -269,6 +293,20 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     fadeOut: document.getElementById('valFadeOut'),
     speed: document.getElementById('valSpeed'),
   };
+  const fxSliders = {
+    bass: document.getElementById('rBass'),
+    treble: document.getElementById('rTreble'),
+    reverb: document.getElementById('rReverb'),
+    delay: document.getElementById('rDelay'),
+    distortion: document.getElementById('rDistortion'),
+  };
+  const fxValues = {
+    bass: document.getElementById('valBass'),
+    treble: document.getElementById('valTreble'),
+    reverb: document.getElementById('valReverb'),
+    delay: document.getElementById('valDelay'),
+    distortion: document.getElementById('valDistortion'),
+  };
 
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   let originalBuffer = null;
@@ -301,8 +339,17 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     values.fadeIn.textContent = Number(sliders.fadeIn.value).toFixed(1) + 's';
     values.fadeOut.textContent = Number(sliders.fadeOut.value).toFixed(1) + 's';
     values.speed.textContent = getSpeed().toFixed(2) + 'x';
+    fxValues.bass.textContent = (fxSliders.bass.value > 0 ? '+' : '') + fxSliders.bass.value + 'dB';
+    fxValues.treble.textContent = (fxSliders.treble.value > 0 ? '+' : '') + fxSliders.treble.value + 'dB';
+    fxValues.reverb.textContent = fxSliders.reverb.value + '%';
+    fxValues.delay.textContent = fxSliders.delay.value + '%';
+    fxValues.distortion.textContent = fxSliders.distortion.value + '%';
   }
   Object.values(sliders).forEach(s => s.addEventListener('input', updateLabels));
+  Object.values(fxSliders).forEach(s => s.addEventListener('input', () => {
+    updateLabels();
+    if (isPlaying) { stopSourceOnly(); playFrom(getCurrentPosition()); }
+  }));
   updateLabels();
 
   /* ---------- loading & decoding ---------- */
@@ -442,24 +489,107 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   setInBtn.addEventListener('click', () => { trimIn = getCurrentPosition(); clampTrim(); });
   setOutBtn.addEventListener('click', () => { trimOut = getCurrentPosition(); clampTrim(); });
 
+  /* ---------- strong effects: reverb impulse + distortion curve ---------- */
+  function generateImpulseResponse(ctx, seconds, decay) {
+    const rate = ctx.sampleRate;
+    const length = Math.max(1, Math.round(rate * seconds));
+    const impulse = ctx.createBuffer(2, length, rate);
+    for (let c = 0; c < 2; c++) {
+      const d = impulse.getChannelData(c);
+      for (let i = 0; i < length; i++) {
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+      }
+    }
+    return impulse;
+  }
+
+  function makeDistortionCurve(k) {
+    const n = 44100;
+    const curve = new Float32Array(n);
+    const deg = Math.PI / 180;
+    for (let i = 0; i < n; i++) {
+      const x = (i * 2) / n - 1;
+      curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+    }
+    return curve;
+  }
+
+  /* insert an effect node in parallel with a dry path, mixed by `wet` (0-1) */
+  function insertWetDry(ctx, input, effectNode, wet) {
+    const dryGain = ctx.createGain(); dryGain.gain.value = 1 - wet;
+    const wetGain = ctx.createGain(); wetGain.gain.value = wet;
+    const merge = ctx.createGain(); merge.gain.value = 1;
+    input.connect(dryGain); dryGain.connect(merge);
+    input.connect(effectNode); effectNode.connect(wetGain); wetGain.connect(merge);
+    return merge;
+  }
+
   /* ---------- audio chain ---------- */
   function buildChain(ctx) {
     const gainNode = ctx.createGain();
     gainNode.gain.value = Number(sliders.volume.value) / 100;
-    if (!masteringOn) {
-      return { input: gainNode, output: gainNode, gainNode };
+
+    let node; // current end of the serial chain, before the final gainNode
+    let firstNode;
+
+    if (masteringOn) {
+      const highpass = ctx.createBiquadFilter();
+      highpass.type = 'highpass'; highpass.frequency.value = 80;
+      const presence = ctx.createBiquadFilter();
+      presence.type = 'peaking'; presence.frequency.value = 3200; presence.Q.value = 0.9; presence.gain.value = 3.5;
+      const compressor = ctx.createDynamicsCompressor();
+      compressor.threshold.value = -20; compressor.knee.value = 24; compressor.ratio.value = 3.2;
+      compressor.attack.value = 0.004; compressor.release.value = 0.22;
+      const makeup = ctx.createGain();
+      makeup.gain.value = 1.2;
+      highpass.connect(presence); presence.connect(compressor); compressor.connect(makeup);
+      firstNode = highpass;
+      node = makeup;
+    } else {
+      const pass = ctx.createGain(); pass.gain.value = 1;
+      firstNode = pass;
+      node = pass;
     }
-    const highpass = ctx.createBiquadFilter();
-    highpass.type = 'highpass'; highpass.frequency.value = 80;
-    const presence = ctx.createBiquadFilter();
-    presence.type = 'peaking'; presence.frequency.value = 3200; presence.Q.value = 0.9; presence.gain.value = 3.5;
-    const compressor = ctx.createDynamicsCompressor();
-    compressor.threshold.value = -20; compressor.knee.value = 24; compressor.ratio.value = 3.2;
-    compressor.attack.value = 0.004; compressor.release.value = 0.22;
-    const makeup = ctx.createGain();
-    makeup.gain.value = 1.2;
-    highpass.connect(presence); presence.connect(compressor); compressor.connect(makeup); makeup.connect(gainNode);
-    return { input: highpass, output: gainNode, gainNode };
+
+    const bassDb = Number(fxSliders.bass.value);
+    const trebleDb = Number(fxSliders.treble.value);
+    if (bassDb !== 0) {
+      const bass = ctx.createBiquadFilter();
+      bass.type = 'lowshelf'; bass.frequency.value = 200; bass.gain.value = bassDb;
+      node.connect(bass); node = bass;
+    }
+    if (trebleDb !== 0) {
+      const treble = ctx.createBiquadFilter();
+      treble.type = 'highshelf'; treble.frequency.value = 3000; treble.gain.value = trebleDb;
+      node.connect(treble); node = treble;
+    }
+
+    const distortionAmt = Number(fxSliders.distortion.value);
+    if (distortionAmt > 0) {
+      const shaper = ctx.createWaveShaper();
+      shaper.curve = makeDistortionCurve(distortionAmt * 3);
+      shaper.oversample = '2x';
+      node = insertWetDry(ctx, node, shaper, (distortionAmt / 100) * 0.8);
+    }
+
+    const delayAmt = Number(fxSliders.delay.value);
+    if (delayAmt > 0) {
+      const delayNode = ctx.createDelay(1.0);
+      delayNode.delayTime.value = 0.28;
+      const feedback = ctx.createGain(); feedback.gain.value = 0.35;
+      delayNode.connect(feedback); feedback.connect(delayNode);
+      node = insertWetDry(ctx, node, delayNode, (delayAmt / 100) * 0.55);
+    }
+
+    const reverbAmt = Number(fxSliders.reverb.value);
+    if (reverbAmt > 0) {
+      const convolver = ctx.createConvolver();
+      convolver.buffer = generateImpulseResponse(ctx, 2.2, 2.6);
+      node = insertWetDry(ctx, node, convolver, (reverbAmt / 100) * 0.6);
+    }
+
+    node.connect(gainNode);
+    return { input: firstNode, output: gainNode, gainNode };
   }
 
   function scheduleFades(gainNode, ctx, t0, segDuration) {
@@ -594,6 +724,8 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   resetBtn.addEventListener('click', () => {
     stopPlayback();
     sliders.volume.value = 100; sliders.fadeIn.value = 0; sliders.fadeOut.value = 0; sliders.speed.value = 100;
+    fxSliders.bass.value = 0; fxSliders.treble.value = 0; fxSliders.reverb.value = 0;
+    fxSliders.delay.value = 0; fxSliders.distortion.value = 0;
     updateLabels();
     if (masteringOn) masterSwitch.click();
     if (reverseOn) reverseSwitch.click();
