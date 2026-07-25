@@ -77,6 +77,15 @@ main{ max-width:1180px; margin:0 auto; padding:2.6rem 5vw 5rem; }
 .btn-primary:hover{ box-shadow:0 8px 24px rgba(139,92,246,.3); }
 .hint{ font-size:.76rem; color:var(--ink-soft); margin-top:.7rem; line-height:1.7; }
 
+.toggle-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:.85rem; }
+.toggle-row:last-child{ margin-bottom:0; }
+.toggle-row span{ font-size:.85rem; display:flex; align-items:center; gap:.5em; }
+.toggle-row .dot{ width:.5rem; height:.5rem; border-radius:50%; flex-shrink:0; }
+.switch{ position:relative; width:2.6rem; height:1.5rem; border-radius:999px; background:var(--line); border:none; flex-shrink:0; transition:background .25s var(--ease); cursor:pointer; }
+.switch::after{ content:''; position:absolute; top:2px; left:2px; width:1.1rem; height:1.1rem; border-radius:50%; background:var(--ink); transition:transform .25s var(--ease); }
+.switch.on{ background:var(--prism,linear-gradient(95deg,#8b5cf6,#ec4899,#22d3ee)); }
+.switch.on::after{ transform:translateX(1.1rem); }
+
 .progress-track{ height:6px; border-radius:6px; background:var(--panel2); overflow:hidden; margin:1rem 0; display:none; }
 .progress-track.active{ display:block; }
 .progress-fill{ height:100%; width:0%; background:linear-gradient(95deg,#8b5cf6,#ec4899,#22d3ee); transition:width .2s linear; }
@@ -117,6 +126,27 @@ window.YOUKOKU_BG_THEMES = [
 
   <div class="workspace">
     <div class="slots" id="slotsGrid"></div>
+
+    <div class="card">
+      <h3>使用するアプリ</h3>
+      <div class="toggle-row">
+        <span><span class="dot" style="background:#8b5cf6"></span>Lumen（画像）</span>
+        <button type="button" class="switch on" id="toggleImage" data-kind="image" aria-pressed="true"></button>
+      </div>
+      <div class="toggle-row">
+        <span><span class="dot" style="background:#84cc16"></span>Mesh（3D）</span>
+        <button type="button" class="switch on" id="toggleModel" data-kind="model" aria-pressed="true"></button>
+      </div>
+      <div class="toggle-row">
+        <span><span class="dot" style="background:#ec4899"></span>Flux（動画）</span>
+        <button type="button" class="switch on" id="toggleVideo" data-kind="video" aria-pressed="true"></button>
+      </div>
+      <div class="toggle-row">
+        <span><span class="dot" style="background:#22d3ee"></span>Echo（音楽）</span>
+        <button type="button" class="switch on" id="toggleAudio" data-kind="audio" aria-pressed="true"></button>
+      </div>
+      <p class="hint">オフにしたアプリは、全自動で作成する際にスキップされ、結合結果にも含まれません（例: Meshだけオフにできます）。Quillの文章は自動生成の起点として常に使用されます。</p>
+    </div>
 
     <div class="card">
       <h3>Combine</h3>
@@ -165,6 +195,16 @@ window.YOUKOKU_BG_THEMES = [
   let slots = {};
   const objectUrls = [];
   function trackUrl(url) { objectUrls.push(url); return url; }
+
+  const appEnabled = { image: true, model: true, video: true, audio: true };
+  document.querySelectorAll('.switch[data-kind]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const kind = btn.dataset.kind;
+      appEnabled[kind] = !appEnabled[kind];
+      btn.classList.toggle('on', appEnabled[kind]);
+      btn.setAttribute('aria-pressed', String(appEnabled[kind]));
+    });
+  });
 
   async function refreshSlots() {
     slots = await window.YoukokuProject.getAllSlots();
@@ -277,8 +317,8 @@ window.YOUKOKU_BG_THEMES = [
     const cw = previewCanvas.width, ch = previewCanvas.height;
     const segments = [];
 
-    if (slots.text || slots.image) {
-      const bgImg = slots.image ? await loadImage(slots.image.blob) : null;
+    if (slots.text || (slots.image && appEnabled.image)) {
+      const bgImg = (slots.image && appEnabled.image) ? await loadImage(slots.image.blob) : null;
       const title = (slots.text && slots.text.json && slots.text.json.title) || 'Youkoku Records';
       const chapter = (slots.text && slots.text.json && slots.text.json.chapters && slots.text.json.chapters[0]) || { content: '' };
       segments.push({
@@ -324,7 +364,7 @@ window.YOUKOKU_BG_THEMES = [
       });
     }
 
-    if (slots.model) {
+    if (slots.model && appEnabled.model) {
       const modelImg = await loadImage(slots.model.blob);
       segments.push({
         type: 'model', duration: 4,
@@ -346,7 +386,7 @@ window.YOUKOKU_BG_THEMES = [
       });
     }
 
-    if (slots.video) {
+    if (slots.video && appEnabled.video) {
       hiddenVideo.src = trackUrl(URL.createObjectURL(slots.video.blob));
       await new Promise((resolve) => {
         hiddenVideo.onloadedmetadata = resolve;
@@ -367,7 +407,7 @@ window.YOUKOKU_BG_THEMES = [
       });
     }
 
-    if (!segments.length && slots.audio) {
+    if (!segments.length && slots.audio && appEnabled.audio) {
       segments.push({
         type: 'audiocard', duration: Math.min(30, 12),
         draw(t) {
@@ -403,7 +443,7 @@ window.YOUKOKU_BG_THEMES = [
       const totalDuration = segments.reduce((sum, s) => sum + s.duration, 0);
 
       let audioCtx = null, audioSource = null, audioTrack = null;
-      if (slots.audio) {
+      if (slots.audio && appEnabled.audio) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const arr = await slots.audio.blob.arrayBuffer();
         const audioBuf = await audioCtx.decodeAudioData(arr);
@@ -505,6 +545,16 @@ window.YOUKOKU_BG_THEMES = [
     });
   }
 
+  async function getArtImageData(text) {
+    if (appEnabled.image && slots.image) {
+      return await loadImageData(slots.image.blob, 200);
+    }
+    const c = document.createElement('canvas');
+    c.width = 200; c.height = 200;
+    window.YoukokuTextToArt.generate(c, text);
+    return c.getContext('2d').getImageData(0, 0, 200, 200);
+  }
+
   autoCreateBtn.addEventListener('click', async () => {
     if (!slots.text) { combineHint.textContent = 'まずQuillで小説を書き、「→ Studioに送る」を押してください。'; return; }
     autoCreateBtn.disabled = true;
@@ -515,7 +565,7 @@ window.YOUKOKU_BG_THEMES = [
       const fullText = (slots.text.json.chapters || []).map(c => c.content || '').join('\n');
       const mood = window.YoukokuTextToArt.scoreText(fullText).mood;
 
-      if (!slots.image) {
+      if (!slots.image && appEnabled.image) {
         combineHint.textContent = '自動生成中: Lumen風アートを作成しています…';
         const artCanvas = document.createElement('canvas');
         artCanvas.width = 1200; artCanvas.height = 800;
@@ -526,21 +576,21 @@ window.YOUKOKU_BG_THEMES = [
 
       slots = await window.YoukokuProject.getAllSlots();
 
-      if (!slots.model && slots.image) {
+      if (!slots.model && appEnabled.model) {
         combineHint.textContent = '自動生成中: Meshで3D化しています…';
-        const imageData = await loadImageData(slots.image.blob, 200);
+        const imageData = await getArtImageData(fullText);
         const blob = await window.YoukokuRelief.renderSnapshot(imageData, { width: 1200, height: 800 });
         await window.YoukokuProject.saveSlot('model', { blob, from: 'Mesh (auto)' });
       }
 
-      if (!slots.video && slots.image) {
+      if (!slots.video && appEnabled.video) {
         combineHint.textContent = '自動生成中: Fluxで3D回転動画を作成しています…';
-        const imageData = await loadImageData(slots.image.blob, 200);
+        const imageData = await getArtImageData(fullText);
         const blob = await window.YoukokuRelief.renderTurntable(imageData, { width: 960, height: 540, duration: 4, fps: 24 });
         await window.YoukokuProject.saveSlot('video', { blob, from: 'Flux (auto)' });
       }
 
-      if (!slots.audio) {
+      if (!slots.audio && appEnabled.audio) {
         combineHint.textContent = '自動生成中: Echoで作曲しています…';
         const buf = await window.YoukokuMusic.generate({ mood, duration: 20 });
         const blob = window.YoukokuWav.encode(buf);
