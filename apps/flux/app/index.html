@@ -49,9 +49,10 @@ main{ max-width:1180px; margin:0 auto; padding:2.6rem 5vw 5rem; }
 
 #editorWrap{ display:none; padding:1.2rem; }
 #editorWrap.active{ display:block; }
-#videoEl{ display:block; width:100%; max-height:480px; background:#000; }
+#videoEl{ display:block; width:100%; max-height:480px; background:#000; transition:opacity .15s linear; }
 
 .video-wrap{ position:relative; border-radius:8px; overflow:hidden; line-height:0; }
+.fx-trail-canvas{ position:absolute; inset:0; width:100%; height:100%; opacity:0; transition:opacity .15s linear; }
 .fx-vignette, .fx-grain, .fx-duotone, .fx-glitch-canvas{ position:absolute; inset:0; pointer-events:none; }
 .fx-vignette{ background:radial-gradient(circle, transparent 38%, rgba(0,0,0,.92) 100%); opacity:0; transition:opacity .2s linear; }
 .fx-grain{ opacity:0; mix-blend-mode:overlay; background-repeat:repeat; background-size:128px 128px; transition:opacity .2s linear; }
@@ -154,6 +155,7 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
       <div id="editorWrap">
         <div class="video-wrap" id="videoWrap">
           <video id="videoEl" playsinline></video>
+          <canvas class="fx-trail-canvas" id="trailCanvas"></canvas>
           <div class="fx-vignette" id="fxVignette"></div>
           <div class="fx-grain" id="fxGrain"></div>
           <div class="fx-duotone" id="fxDuotone"></div>
@@ -237,6 +239,10 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
           <label>グレイン <span id="valGrain">0%</span></label>
           <input type="range" id="rGrain" min="0" max="100" value="0">
         </div>
+        <div class="slider-row">
+          <label>モーショントレイル <span id="valTrail">0%</span></label>
+          <input type="range" id="rTrail" min="0" max="100" value="0">
+        </div>
         <div class="toggle-row">
           <span>デュオトーン</span>
           <button type="button" class="switch" id="duotoneSwitch" aria-pressed="false"></button>
@@ -303,6 +309,8 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   const fxGrain = document.getElementById('fxGrain');
   const fxDuotone = document.getElementById('fxDuotone');
   const glitchCanvas = document.getElementById('glitchCanvas');
+  const trailCanvas = document.getElementById('trailCanvas');
+  const trailCtx = trailCanvas.getContext('2d');
   const duotoneSwitch = document.getElementById('duotoneSwitch');
   const glitchSwitch = document.getElementById('glitchSwitch');
 
@@ -321,10 +329,12 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   const fxSliders = {
     vignette: document.getElementById('rVignette'),
     grain: document.getElementById('rGrain'),
+    trail: document.getElementById('rTrail'),
   };
   const fxValues = {
     vignette: document.getElementById('valVignette'),
     grain: document.getElementById('valGrain'),
+    trail: document.getElementById('valTrail'),
   };
   let duotoneOn = false;
   let glitchOn = false;
@@ -359,12 +369,14 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     values.speed.textContent = (sliders.speed.value / 100).toFixed(2) + 'x';
     fxValues.vignette.textContent = fxSliders.vignette.value + '%';
     fxValues.grain.textContent = fxSliders.grain.value + '%';
+    fxValues.trail.textContent = fxSliders.trail.value + '%';
   }
   function applyLiveFilter() {
     video.style.filter = buildFilterString(currentValues());
     video.playbackRate = Number(sliders.speed.value) / 100;
     updateLabels();
     updateFxOverlay();
+    syncTrailState();
   }
   Object.values(sliders).forEach(s => s.addEventListener('input', applyLiveFilter));
   Object.values(fxSliders).forEach(s => s.addEventListener('input', applyLiveFilter));
@@ -431,6 +443,46 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   setInterval(() => {
     if (glitchOn && Math.random() < 0.5) triggerGlitchFlash();
   }, 260);
+
+  /* ---------- strong effects: live motion trail (long-exposure ghosting) ----------
+     While playing, frames accumulate on a canvas with globalAlpha < 1 instead of
+     being cleared each frame — anything that moves leaves an exponentially fading
+     trail, anything static converges to a normal, full-opacity frame. */
+  let trailRafId = null;
+  function trailAlpha() {
+    const amt = Number(fxSliders.trail.value);
+    return 1 - (amt / 100) * 0.45;
+  }
+  function startTrail() {
+    if (trailRafId || video.paused || video.videoWidth === 0) return;
+    const rect = videoWrap.getBoundingClientRect();
+    trailCanvas.width = rect.width;
+    trailCanvas.height = rect.height;
+    trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+    video.style.opacity = '0';
+    trailCanvas.style.opacity = '1';
+    const loop = () => {
+      if (Number(fxSliders.trail.value) <= 0 || video.paused || video.ended) { stopTrail(); return; }
+      trailCtx.filter = buildFilterString(currentValues());
+      trailCtx.globalAlpha = trailAlpha();
+      trailCtx.drawImage(video, 0, 0, trailCanvas.width, trailCanvas.height);
+      trailRafId = requestAnimationFrame(loop);
+    };
+    trailRafId = requestAnimationFrame(loop);
+  }
+  function stopTrail() {
+    if (trailRafId) cancelAnimationFrame(trailRafId);
+    trailRafId = null;
+    video.style.opacity = '1';
+    trailCanvas.style.opacity = '0';
+  }
+  function syncTrailState() {
+    if (Number(fxSliders.trail.value) > 0 && !video.paused) startTrail();
+    else stopTrail();
+  }
+  video.addEventListener('play', syncTrailState);
+  video.addEventListener('pause', stopTrail);
+  video.addEventListener('ended', stopTrail);
 
   /* ---------- file loading ---------- */
   function loadFile(file) {
@@ -525,8 +577,9 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 
   resetBtn.addEventListener('click', () => {
     sliders.brightness.value = 100; sliders.contrast.value = 100; sliders.saturate.value = 100; sliders.speed.value = 100;
-    fxSliders.vignette.value = 0; fxSliders.grain.value = 0;
+    fxSliders.vignette.value = 0; fxSliders.grain.value = 0; fxSliders.trail.value = 0;
     duotoneOn = false; glitchOn = false;
+    stopTrail();
     duotoneSwitch.classList.remove('on'); duotoneSwitch.setAttribute('aria-pressed', 'false');
     glitchSwitch.classList.remove('on'); glitchSwitch.setAttribute('aria-pressed', 'false');
     applyLiveFilter();
@@ -739,10 +792,17 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 
     const vignetteAmt = Number(fxSliders.vignette.value);
     const grainAmt = Number(fxSliders.grain.value);
+    const trailAmt = Number(fxSliders.trail.value);
 
     function drawFrame() {
       ectx.filter = filterStr;
-      ectx.drawImage(video, 0, 0, w, h);
+      if (trailAmt > 0) {
+        ectx.globalAlpha = 1 - (trailAmt / 100) * 0.45;
+        ectx.drawImage(video, 0, 0, w, h);
+        ectx.globalAlpha = 1;
+      } else {
+        ectx.drawImage(video, 0, 0, w, h);
+      }
       ectx.filter = 'none';
       if (duotoneOn) bakeExportDuotone(ectx, w, h);
       if (glitchOn) bakeExportGlitch(ectx, w, h);

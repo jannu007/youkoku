@@ -105,6 +105,18 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 .switch::after{ content:''; position:absolute; top:2px; left:2px; width:1.1rem; height:1.1rem; border-radius:50%; background:var(--ink); transition:transform .25s var(--ease); }
 .switch.on{ background:linear-gradient(95deg,var(--violet),var(--blue)); }
 .switch.on::after{ transform:translateX(1.1rem); }
+
+.parallax-section{ display:none; margin-top:2rem; }
+.parallax-section.active{ display:block; }
+.parallax-card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:1.5rem; }
+.parallax-card h3{ font-family:var(--display); font-size:.82rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:0 0 .5rem; }
+.parallax-card .hint{ margin:0 0 1.2rem; }
+.parallax-wrap{
+  border-radius:12px; overflow:hidden; background:#000; cursor:grab; touch-action:none;
+  display:flex; align-items:center; justify-content:center; max-width:100%;
+}
+#parallaxCanvas{ display:block; max-width:100%; }
+.parallax-controls{ margin-top:1.2rem; max-width:320px; }
 </style>
 </head>
 <body>
@@ -203,6 +215,22 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
       <div class="btn-row">
         <button type="button" class="btn" id="resetBtn" disabled><span>リセット</span></button>
         <button type="button" class="btn btn-primary" id="downloadBtn" disabled><span>↓ 書き出す</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="parallax-section" id="parallaxSection">
+    <div class="parallax-card">
+      <h3>3D Parallax Preview</h3>
+      <p class="hint">画像から疑似的な奥行きマップを推定し、マウスの動きに合わせて視点が動くような3D風プレビューを生成します。一般的な画像編集アプリにはない体験です。</p>
+      <div class="parallax-wrap" id="parallaxWrap">
+        <canvas id="parallaxCanvas"></canvas>
+      </div>
+      <div class="parallax-controls">
+        <div class="slider-row">
+          <label>奥行きの強さ <span id="valParallax">18px</span></label>
+          <input type="range" id="rParallax" min="0" max="50" value="18">
+        </div>
       </div>
     </div>
   </div>
@@ -443,7 +471,100 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 
     updateLabels();
     highlightMatchingPreset();
+    refreshParallax();
   }
+
+  /* ---------- 3D parallax preview (uncommon feature) ----------
+     Derives a coarse pseudo-depth map from the edited image's luminance
+     (brighter tiles read as "nearer"), then shifts a grid of small tiles
+     by an amount proportional to their depth as the pointer moves —
+     a lightweight, no-WebGL approximation of a depth-parallax photo. */
+  const PARALLAX_GRID = 16;
+  const parallaxSection = document.getElementById('parallaxSection');
+  const parallaxWrap = document.getElementById('parallaxWrap');
+  const parallaxCanvas = document.getElementById('parallaxCanvas');
+  const pctx = parallaxCanvas.getContext('2d');
+  const parallaxStrengthSlider = document.getElementById('rParallax');
+  const valParallax = document.getElementById('valParallax');
+  let parallaxBackdrop = null;
+  let depthMap = null;
+  let lastNx = 0, lastNy = 0;
+  let parallaxRafPending = false;
+
+  function refreshParallax() {
+    if (!srcImage || !parallaxSection.classList.contains('active')) return;
+    const aspect = canvas.height / canvas.width;
+    const dispW = Math.min(760, canvas.width);
+    const dispH = Math.max(1, Math.round(dispW * aspect));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    parallaxCanvas.width = dispW * dpr;
+    parallaxCanvas.height = dispH * dpr;
+    parallaxCanvas.style.width = dispW + 'px';
+    parallaxCanvas.style.height = dispH + 'px';
+    pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (!parallaxBackdrop) parallaxBackdrop = document.createElement('canvas');
+    parallaxBackdrop.width = dispW;
+    parallaxBackdrop.height = dispH;
+    const bctx = parallaxBackdrop.getContext('2d');
+    bctx.filter = 'blur(16px)';
+    bctx.drawImage(canvas, 0, 0, dispW, dispH);
+    bctx.filter = 'none';
+
+    const depthCanvas = document.createElement('canvas');
+    depthCanvas.width = PARALLAX_GRID;
+    depthCanvas.height = PARALLAX_GRID;
+    const dctx = depthCanvas.getContext('2d');
+    dctx.drawImage(canvas, 0, 0, PARALLAX_GRID, PARALLAX_GRID);
+    const raw = dctx.getImageData(0, 0, PARALLAX_GRID, PARALLAX_GRID).data;
+    depthMap = new Float32Array(PARALLAX_GRID * PARALLAX_GRID);
+    for (let i = 0; i < depthMap.length; i++) {
+      const o = i * 4;
+      depthMap[i] = (0.299 * raw[o] + 0.587 * raw[o + 1] + 0.114 * raw[o + 2]) / 255;
+    }
+    drawParallax(lastNx, lastNy);
+  }
+
+  function drawParallax(nx, ny) {
+    if (!depthMap) return;
+    const w = parallaxCanvas.clientWidth, h = parallaxCanvas.clientHeight;
+    if (!w || !h) return;
+    pctx.clearRect(0, 0, w, h);
+    pctx.drawImage(parallaxBackdrop, 0, 0, w, h);
+    const strength = Number(parallaxStrengthSlider.value);
+    const tileW = w / PARALLAX_GRID, tileH = h / PARALLAX_GRID;
+    const srcTileW = canvas.width / PARALLAX_GRID, srcTileH = canvas.height / PARALLAX_GRID;
+    for (let gy = 0; gy < PARALLAX_GRID; gy++) {
+      for (let gx = 0; gx < PARALLAX_GRID; gx++) {
+        const depth = depthMap[gy * PARALLAX_GRID + gx];
+        const shiftX = nx * strength * depth;
+        const shiftY = ny * strength * depth;
+        pctx.drawImage(
+          canvas, gx * srcTileW, gy * srcTileH, srcTileW, srcTileH,
+          gx * tileW + shiftX - 1, gy * tileH + shiftY - 1, tileW + 2, tileH + 2
+        );
+      }
+    }
+  }
+
+  parallaxWrap.addEventListener('pointermove', (e) => {
+    const rect = parallaxCanvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    lastNx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    lastNy = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+    if (!parallaxRafPending) {
+      parallaxRafPending = true;
+      requestAnimationFrame(() => { drawParallax(lastNx, lastNy); parallaxRafPending = false; });
+    }
+  });
+  parallaxWrap.addEventListener('pointerleave', () => {
+    lastNx = 0; lastNy = 0;
+    requestAnimationFrame(() => drawParallax(0, 0));
+  });
+  parallaxStrengthSlider.addEventListener('input', () => {
+    valParallax.textContent = parallaxStrengthSlider.value + 'px';
+    drawParallax(lastNx, lastNy);
+  });
 
   function highlightMatchingPreset() {
     const cur = currentValues();
@@ -483,6 +604,7 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
       srcImage = img;
       dropzone.style.display = 'none';
       canvasWrap.classList.add('active');
+      parallaxSection.classList.add('active');
       resetControls();
       render();
       autoEnhanceBtn.disabled = false;

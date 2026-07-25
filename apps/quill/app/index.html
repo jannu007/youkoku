@@ -153,6 +153,13 @@ main{ max-width:1180px; margin:0 auto; padding:2.6rem 5vw 5rem; }
       </div>
 
       <div class="card">
+        <h3>Emotional Arc</h3>
+        <button type="button" class="btn btn-primary" id="arcBtn"><span>✦ 起伏グラフを更新</span></button>
+        <canvas id="arcCanvas" style="width:100%;height:140px;margin-top:1rem;display:block;"></canvas>
+        <p class="hint">章ごとの緊張・穏やかさのバランスをキーワード解析で可視化します。一般的な小説作成ツールにはない機能です。</p>
+      </div>
+
+      <div class="card">
         <h3>Project</h3>
         <button type="button" class="btn btn-primary" id="exportBtn"><span>↓ テキストで書き出す</span></button>
         <div class="btn-row">
@@ -384,9 +391,88 @@ main{ max-width:1180px; margin:0 auto; padding:2.6rem 5vw 5rem; }
     insertPlotBtn.disabled = true;
   });
 
+  /* ---------- emotional arc ---------- */
+  const TENSE_WORDS = ['泣','叫','恐怖','死','戦','怒','悲し','絶望','痛み','逃げ','血','銃','剣','争い','恐ろし','苦し','崩れ','壊れ','裏切り','孤独'];
+  const CALM_WORDS = ['笑','幸せ','平和','安心','喜び','愛','希望','美しい','穏やか','優しい','温かい','眠り','光','花','祝','感謝'];
+  const arcBtn = document.getElementById('arcBtn');
+  const arcCanvas = document.getElementById('arcCanvas');
+
+  function countOccurrences(text, word) {
+    if (!word) return 0;
+    let count = 0, idx = 0;
+    while ((idx = text.indexOf(word, idx)) !== -1) { count++; idx += word.length; }
+    return count;
+  }
+
+  function scoreChapter(text) {
+    const charCount = text.replace(/\s/g, '').length || 1;
+    let tense = 0, calm = 0;
+    TENSE_WORDS.forEach((w) => { tense += countOccurrences(text, w); });
+    CALM_WORDS.forEach((w) => { calm += countOccurrences(text, w); });
+    const exclaim = countOccurrences(text, '！') + countOccurrences(text, '!');
+    return ((tense * 2 + exclaim) - calm) / charCount * 1000;
+  }
+
+  function drawArc() {
+    const chapters = project.chapters;
+    const scores = chapters.map((c) => scoreChapter(c.content || ''));
+    const dpr = window.devicePixelRatio || 1;
+    const rect = arcCanvas.getBoundingClientRect();
+    const w = Math.max(rect.width, 1);
+    const h = 140;
+    arcCanvas.width = w * dpr;
+    arcCanvas.height = h * dpr;
+    const ctx = arcCanvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    const padX = 28, padY = 20;
+    const midY = h / 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padX, midY);
+    ctx.lineTo(w - padX, midY);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '11px sans-serif';
+    ctx.fillText('緊張', 4, padY);
+    ctx.fillText('穏やか', 4, h - 8);
+
+    if (chapters.length < 1) return;
+    const maxAbs = Math.max(1, ...scores.map((s) => Math.abs(s)));
+    const usableH = midY - padY;
+    const stepX = chapters.length > 1 ? (w - padX * 2) / (chapters.length - 1) : 0;
+    const points = scores.map((s, i) => ({
+      x: padX + stepX * i,
+      y: midY - (s / maxAbs) * usableH,
+    }));
+
+    const grad = ctx.createLinearGradient(0, 0, w, 0);
+    grad.addColorStop(0, '#f59e0b');
+    grad.addColorStop(1, '#f43f5e');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    points.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+    ctx.stroke();
+
+    points.forEach((p, i) => {
+      ctx.beginPath();
+      ctx.fillStyle = scores[i] >= 0 ? '#f43f5e' : '#60a5fa';
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  arcBtn.addEventListener('click', drawArc);
+
   /* ---------- init ---------- */
   renderChapterTabs();
   renderEditor();
+  drawArc();
 
   window.addEventListener('beforeunload', () => {
     clearTimeout(saveTimer);

@@ -189,6 +189,16 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
       </div>
 
       <div class="card">
+        <h3>AI Remix</h3>
+        <button type="button" class="btn btn-primary" id="remixBtn" disabled><span>🔀 リミックスを生成</span></button>
+        <div class="toggle-row" style="margin-top:1rem;">
+          <span>リミックス版を再生</span>
+          <button type="button" class="switch" id="remixSwitch" aria-pressed="false" disabled></button>
+        </div>
+        <p class="hint" id="remixHint">トリム範囲を8つのブロックに分割し、シャッフル・一部逆再生して新しいバージョンを生成します。</p>
+      </div>
+
+      <div class="card">
         <h3>Adjust</h3>
         <div class="slider-row">
           <label>ボリューム <span id="valVolume">100%</span></label>
@@ -274,6 +284,9 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   const setOutBtn = document.getElementById('setOutBtn');
   const masterSwitch = document.getElementById('masterSwitch');
   const masterHint = document.getElementById('masterHint');
+  const remixBtn = document.getElementById('remixBtn');
+  const remixSwitch = document.getElementById('remixSwitch');
+  const remixHint = document.getElementById('remixHint');
   const reverseSwitch = document.getElementById('reverseSwitch');
   const resetBtn = document.getElementById('resetBtn');
   const exportBtn = document.getElementById('exportBtn');
@@ -311,8 +324,10 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   let originalBuffer = null;
   let reversedBuffer = null;
+  let remixBuffer = null;
   let masteringOn = false;
   let reverseOn = false;
+  let remixOn = false;
   let duration = 0;
   let trimIn = 0, trimOut = 0;
 
@@ -323,7 +338,10 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   let playStartOffset = 0;
   let rafId = null;
 
-  function activeBuffer() { return reverseOn ? reversedBuffer : originalBuffer; }
+  function activeBuffer() {
+    if (remixOn && remixBuffer) return remixBuffer;
+    return reverseOn ? reversedBuffer : originalBuffer;
+  }
 
   function fmt(t) {
     if (!isFinite(t)) return '0:00';
@@ -361,9 +379,15 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
         const buf = await audioCtx.decodeAudioData(reader.result);
         originalBuffer = buf;
         reversedBuffer = null;
+        remixBuffer = null;
         reverseOn = false;
+        remixOn = false;
         reverseSwitch.classList.remove('on');
         reverseSwitch.setAttribute('aria-pressed', 'false');
+        remixSwitch.classList.remove('on');
+        remixSwitch.setAttribute('aria-pressed', 'false');
+        remixSwitch.disabled = true;
+        remixHint.textContent = 'トリム範囲を8つのブロックに分割し、シャッフル・一部逆再生して新しいバージョンを生成します。';
         duration = buf.duration;
         trimIn = 0; trimOut = duration;
         playPosition = 0;
@@ -375,7 +399,7 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
         drawWaveform();
         updateHandles();
         updateTimeLabel();
-        [resetBtn, exportBtn].forEach(b => b.disabled = false);
+        [resetBtn, exportBtn, remixBtn].forEach(b => b.disabled = false);
       } catch (err) {
         alert('この音声ファイルを読み込めませんでした。');
       }
@@ -715,6 +739,76 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     if (reverseOn && !reversedBuffer) reversedBuffer = buildReversed();
     reverseSwitch.classList.toggle('on', reverseOn);
     reverseSwitch.setAttribute('aria-pressed', String(reverseOn));
+    remixOn = false;
+    remixSwitch.classList.remove('on');
+    remixSwitch.setAttribute('aria-pressed', 'false');
+    duration = (reverseOn ? reversedBuffer : originalBuffer).duration;
+    trimIn = 0; trimOut = duration; playPosition = 0;
+    updateHandles();
+    drawWaveform();
+    updatePlayheadVisual();
+  });
+
+  /* ---------- AI auto-remix: shuffle the trimmed range into new blocks ---------- */
+  function generateRemix() {
+    if (!originalBuffer) return;
+    const base = reverseOn && reversedBuffer ? reversedBuffer : originalBuffer;
+    const sr = base.sampleRate;
+    const startSample = Math.max(0, Math.floor(trimIn * sr));
+    const endSample = Math.min(base.length, Math.floor(trimOut * sr));
+    const totalLen = endSample - startSample;
+    const N = 8;
+    const segLen = Math.floor(totalLen / N);
+    if (segLen <= 0) {
+      remixHint.textContent = 'リミックスするには、もう少し長い範囲をトリムしてください。';
+      return;
+    }
+
+    const order = Array.from({ length: N }, (_, i) => i);
+    for (let i = N - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    const reverseFlags = order.map(() => Math.random() < 0.3);
+
+    const newBuf = audioCtx.createBuffer(base.numberOfChannels, N * segLen, sr);
+    for (let c = 0; c < base.numberOfChannels; c++) {
+      const src = base.getChannelData(c);
+      const dst = newBuf.getChannelData(c);
+      order.forEach((segIdx, outIdx) => {
+        const srcStart = startSample + segIdx * segLen;
+        const rev = reverseFlags[outIdx];
+        for (let i = 0; i < segLen; i++) {
+          dst[outIdx * segLen + i] = rev ? (src[srcStart + (segLen - 1 - i)] || 0) : (src[srcStart + i] || 0);
+        }
+      });
+    }
+
+    remixBuffer = newBuf;
+    remixOn = true;
+    remixSwitch.disabled = false;
+    remixSwitch.classList.add('on');
+    remixSwitch.setAttribute('aria-pressed', 'true');
+    stopPlayback();
+    duration = remixBuffer.duration;
+    trimIn = 0; trimOut = duration; playPosition = 0;
+    updateHandles();
+    drawWaveform();
+    updatePlayheadVisual();
+    const reversedCount = reverseFlags.filter(Boolean).length;
+    remixHint.textContent = `8ブロックをシャッフルして生成しました（${reversedCount}ブロックを逆再生）。もう一度押すと別のバージョンになります。`;
+  }
+
+  remixBtn.addEventListener('click', generateRemix);
+
+  remixSwitch.addEventListener('click', () => {
+    if (!remixBuffer) return;
+    stopPlayback();
+    remixOn = !remixOn;
+    remixSwitch.classList.toggle('on', remixOn);
+    remixSwitch.setAttribute('aria-pressed', String(remixOn));
+    const base = remixOn ? remixBuffer : (reverseOn && reversedBuffer ? reversedBuffer : originalBuffer);
+    duration = base.duration;
     trimIn = 0; trimOut = duration; playPosition = 0;
     updateHandles();
     drawWaveform();
@@ -728,9 +822,18 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     fxSliders.delay.value = 0; fxSliders.distortion.value = 0;
     updateLabels();
     if (masteringOn) masterSwitch.click();
-    if (reverseOn) reverseSwitch.click();
+    remixOn = false;
+    remixBuffer = null;
+    remixSwitch.classList.remove('on');
+    remixSwitch.setAttribute('aria-pressed', 'false');
+    remixSwitch.disabled = true;
+    reverseOn = false;
+    reverseSwitch.classList.remove('on');
+    reverseSwitch.setAttribute('aria-pressed', 'false');
+    duration = originalBuffer.duration;
     trimIn = 0; trimOut = duration; playPosition = 0;
     updateHandles();
+    drawWaveform();
     updatePlayheadVisual();
   });
 

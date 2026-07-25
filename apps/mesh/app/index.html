@@ -123,7 +123,9 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
         <div class="scene-list" id="sceneList"></div>
         <div class="btn-row">
           <button type="button" class="btn btn-primary" id="autoLayoutBtn"><span>✦ AIレイアウト</span></button>
+          <button type="button" class="btn" id="gravityDropBtn"><span>💥 落下レイアウト</span></button>
         </div>
+        <p class="hint">オブジェクトを空中に飛ばし、物理シミュレーションで重力落下・バウンドさせて自然に配置します。一般的な3D入門ツールにはない機能です。</p>
       </div>
 
       <div class="card" id="transformCard">
@@ -556,6 +558,81 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
     renderTransformControls();
   });
 
+  /* ================= gravity drop layout ================= */
+  function relaxOverlap(objs) {
+    for (let pass = 0; pass < 24; pass++) {
+      for (let i = 0; i < objs.length; i++) {
+        for (let j = i + 1; j < objs.length; j++) {
+          const a = objs[i], b = objs[j];
+          const dx = b.position.x - a.position.x;
+          const dz = b.position.z - a.position.z;
+          const dist = Math.sqrt(dx * dx + dz * dz) || 0.0001;
+          const minDist = (a.scale + b.scale) * 0.9;
+          if (dist < minDist) {
+            const push = (minDist - dist) / 2;
+            const nx = dx / dist, nz = dz / dist;
+            a.position.x -= nx * push; a.position.z -= nz * push;
+            b.position.x += nx * push; b.position.z += nz * push;
+          }
+        }
+      }
+    }
+  }
+
+  document.getElementById('gravityDropBtn').addEventListener('click', () => {
+    if (!scene.length) return;
+    scene.forEach((obj, i) => {
+      obj.position.x = (Math.random() - 0.5) * 5;
+      obj.position.z = (Math.random() - 0.5) * 5;
+    });
+    relaxOverlap(scene);
+    scene.forEach((obj, i) => {
+      obj.position.y = 4 + Math.random() * 2.5 + i * 0.4;
+      obj.rotation.x = Math.random() * 360;
+      obj.rotation.z = Math.random() * 360;
+      obj._vy = 0;
+      obj._spinX = (Math.random() - 0.5) * 240;
+      obj._spinZ = (Math.random() - 0.5) * 240;
+      obj._falling = true;
+    });
+    physicsLastTime = performance.now();
+    physicsActive = true;
+  });
+
+  let physicsActive = false;
+  let physicsLastTime = 0;
+  const GRAVITY = -9.8;
+
+  function updatePhysics(now) {
+    const dt = Math.min((now - physicsLastTime) / 1000, 0.05);
+    physicsLastTime = now;
+    let anyFalling = false;
+    scene.forEach((obj) => {
+      if (!obj._falling) return;
+      anyFalling = true;
+      obj._vy += GRAVITY * dt;
+      obj.position.y += obj._vy * dt;
+      obj.rotation.x = (obj.rotation.x + obj._spinX * dt + 360) % 360;
+      obj.rotation.z = (obj.rotation.z + obj._spinZ * dt + 360) % 360;
+      if (obj.position.y <= 0) {
+        obj.position.y = 0;
+        obj._vy *= -0.42;
+        obj._spinX *= 0.5;
+        obj._spinZ *= 0.5;
+        if (Math.abs(obj._vy) < 0.25) {
+          obj._vy = 0;
+          obj.rotation.x = 0;
+          obj.rotation.z = 0;
+          obj._falling = false;
+        }
+      }
+    });
+    if (!anyFalling) {
+      physicsActive = false;
+      renderTransformControls();
+    }
+  }
+
   document.getElementById('clearSceneBtn').addEventListener('click', () => {
     if (!scene.length) return;
     if (!confirm('シーン内のすべてのオブジェクトを削除しますか？')) return;
@@ -605,6 +682,7 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
 
   function drawScene() {
     if (!glSupported) return;
+    if (physicsActive) updatePhysics(performance.now());
     resizeCanvas();
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.enable(gl.DEPTH_TEST);
