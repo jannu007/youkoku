@@ -94,6 +94,8 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
 </head>
 <body>
 
+<script src="../../shared/project-store.js"></script>
+
 <header class="topbar">
   <a href="../index.html" class="back">← Mesh について</a>
   <div class="applogo"><span class="dot"></span>Mesh</div>
@@ -148,6 +150,16 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
         <button type="button" class="btn btn-primary" id="exportObjBtn"><span>↓ OBJ書き出す</span></button>
       </div>
       <p class="hint">書き出した.OBJファイルは Blender など標準的な3Dソフトで読み込めます。</p>
+    </div>
+
+    <div class="card">
+      <h3>Youkoku Studio</h3>
+      <p class="hint">今のシーンのスナップショットを、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
+      <div class="btn-row">
+        <button type="button" class="btn" id="sendToProjectBtn"><span>→ Studioに送る</span></button>
+      </div>
+      <p class="hint" id="sendToProjectStatus"></p>
+      <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;">Studioを開く →</a>
     </div>
   </div>
 </main>
@@ -355,7 +367,7 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
 
   /* ================= WebGL setup ================= */
   const canvas = document.getElementById('glCanvas');
-  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true }) || canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
   let glSupported = !!gl;
 
   const VERT_SRC = `
@@ -757,6 +769,26 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
     a.download = 'mesh-scene.obj';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  });
+
+  /* ================= send to Studio ================= */
+  const sendToProjectBtn = document.getElementById('sendToProjectBtn');
+  const sendToProjectStatus = document.getElementById('sendToProjectStatus');
+  sendToProjectBtn.addEventListener('click', () => {
+    if (!window.YoukokuProject) { sendToProjectStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!scene.length) { sendToProjectStatus.textContent = 'シーンにオブジェクトがありません。'; return; }
+    canvas.toBlob(async (blob) => {
+      try {
+        await window.YoukokuProject.saveSlot('model', {
+          blob,
+          json: { objects: scene.map(o => ({ type: o.type, position: o.position, rotation: o.rotation, scale: o.scale, color: o.color })) },
+          from: 'Mesh',
+        });
+        sendToProjectStatus.textContent = '✓ Studioに送信しました。';
+      } catch (err) {
+        sendToProjectStatus.textContent = '送信に失敗しました: ' + err.message;
+      }
+    }, 'image/png');
   });
 
   /* ================= init ================= */

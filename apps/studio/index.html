@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studio — 5つのアプリをつなぐ | Youkoku</title>
+<meta name="description" content="Lumen・Flux・Echo・Quill・Meshの作品を1本の動画に組み合わせて書き出すYoukoku Studio。会員登録不要・完全無料・インストール不要。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2290%22>✦</text></svg>">
+<meta name="theme-color" content="#070c26">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070c26; --panel:#0d1642; --panel2:#11204f; --ink:#f4f5fa; --ink-soft:#8d8fa3; --line:#2a3868;
+  --violet:#8b5cf6; --blue:#3b82f6; --magenta:#ec4899; --orange:#fb923c; --cyan:#22d3ee; --teal:#2dd4bf;
+  --amber:#f59e0b; --rose:#fb7185; --lime:#84cc16; --emerald:#10b981;
+  --display:'Space Grotesk',sans-serif;
+  --sans:'Inter','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.7; -webkit-font-smoothing:antialiased; }
+a{ color:inherit; text-decoration:none; }
+button{ font-family:inherit; cursor:pointer; color:inherit; }
+#bgCanvas{ position:fixed; inset:0; z-index:-2; width:100%; height:100%; pointer-events:none; }
+
+.topbar{ display:flex; align-items:center; justify-content:space-between; padding:1.4rem 5vw; border-bottom:1px solid var(--line); }
+.back{ font-size:.78rem; color:var(--ink-soft); }
+.back:hover{ color:var(--ink); }
+.applogo{ font-family:var(--display); font-weight:700; font-size:1rem; display:flex; align-items:center; gap:.6rem; text-transform:uppercase; }
+.applogo .dot{ width:.5rem; height:.5rem; border-radius:50%; background:var(--violet); }
+
+main{ max-width:1180px; margin:0 auto; padding:2.6rem 5vw 5rem; }
+.intro{ margin-bottom:2.2rem; }
+.intro h1{ font-family:var(--display); font-weight:700; font-size:clamp(1.6rem,3vw,2.1rem); margin:0 0 .5rem; }
+.intro p{ color:var(--ink-soft); font-size:.88rem; margin:0; max-width:48em; }
+
+.workspace{ display:grid; grid-template-columns:1fr 380px; gap:2rem; align-items:flex-start; }
+@media (max-width:960px){ .workspace{ grid-template-columns:1fr; } }
+
+.slots{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+@media (max-width:640px){ .slots{ grid-template-columns:1fr; } }
+
+.slot-card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:1.2rem; display:flex; flex-direction:column; gap:.7rem; }
+.slot-head{ display:flex; align-items:center; justify-content:space-between; }
+.slot-title{ display:flex; align-items:center; gap:.5rem; font-family:var(--display); font-weight:700; font-size:.82rem; letter-spacing:.04em; text-transform:uppercase; }
+.slot-title .dot{ width:.5rem; height:.5rem; border-radius:50%; }
+.slot-kind{ font-size:.68rem; color:var(--ink-soft); font-family:var(--display); text-transform:uppercase; letter-spacing:.06em; }
+.slot-preview{ height:120px; border-radius:10px; background:var(--panel2); overflow:hidden; display:flex; align-items:center; justify-content:center; position:relative; }
+.slot-preview img, .slot-preview video{ width:100%; height:100%; object-fit:cover; display:block; }
+.slot-preview.empty{ color:var(--ink-soft); font-size:.76rem; text-align:center; padding:0 1rem; }
+.slot-text-preview{ font-size:.74rem; color:var(--ink-soft); padding:.8rem; overflow:hidden; line-height:1.6; }
+.slot-text-preview strong{ display:block; color:var(--ink); font-size:.82rem; margin-bottom:.3rem; }
+.slot-actions{ display:flex; gap:.5rem; }
+.mini-btn{
+  flex:1; font-size:.72rem; padding:.5rem .6rem; border-radius:8px; border:1px solid var(--line);
+  background:transparent; color:var(--ink-soft); transition:border-color .2s var(--ease), color .2s var(--ease);
+}
+.mini-btn:hover{ border-color:var(--ink); color:var(--ink); }
+.mini-btn:disabled{ opacity:.35; cursor:default; }
+
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:1.5rem; }
+.card h3{ font-family:var(--display); font-size:.82rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:0 0 1.2rem; }
+
+#previewCanvas{ display:block; width:100%; aspect-ratio:16/9; border-radius:10px; background:#000; margin-bottom:1rem; }
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5em; width:100%;
+  padding:.85rem 1.4rem; font-size:.8rem; letter-spacing:.04em; font-weight:600; border-radius:999px;
+  border:1px solid var(--line); background:transparent; color:var(--ink); text-transform:uppercase;
+  transition:background .3s var(--ease), border-color .3s var(--ease), transform .2s var(--ease);
+}
+.btn:hover{ border-color:var(--ink); transform:translateY(-1px); }
+.btn:disabled{ opacity:.4; cursor:default; transform:none !important; }
+.btn-primary{ background:var(--prism,linear-gradient(95deg,#8b5cf6,#ec4899,#22d3ee)); border-color:transparent; color:#05050b; }
+.btn-primary:hover{ box-shadow:0 8px 24px rgba(139,92,246,.3); }
+.hint{ font-size:.76rem; color:var(--ink-soft); margin-top:.7rem; line-height:1.7; }
+
+.progress-track{ height:6px; border-radius:6px; background:var(--panel2); overflow:hidden; margin:1rem 0; display:none; }
+.progress-track.active{ display:block; }
+.progress-fill{ height:100%; width:0%; background:linear-gradient(95deg,#8b5cf6,#ec4899,#22d3ee); transition:width .2s linear; }
+
+.result{ margin-top:1.2rem; display:none; }
+.result.active{ display:block; }
+.result video{ width:100%; border-radius:10px; display:block; margin-bottom:.8rem; }
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<script>
+window.YOUKOKU_BG_THEMES = [
+  { type: 'bokeh', colors: ['139,92,246','236,72,153','34,211,238','245,158,11','132,204,22'] },
+];
+</script>
+<script src="../shared/detail-bg.js?v=1"></script>
+<script src="../shared/project-store.js"></script>
+
+<header class="topbar">
+  <a href="../../index.html" class="back">← Youkoku</a>
+  <div class="applogo"><span class="dot"></span>Studio</div>
+</header>
+
+<main>
+  <div class="intro">
+    <h1>5つの作品を、1本にまとめる。</h1>
+    <p>
+      各アプリの「→ Studioに送る」で送った本文・画像・3D・動画・音楽を、このページで1本の動画としてつなぎ合わせ、書き出せます。
+      すべてこのブラウザの中だけで処理され、サーバーには何も送信されません。
+    </p>
+  </div>
+
+  <div class="workspace">
+    <div class="slots" id="slotsGrid"></div>
+
+    <div class="card">
+      <h3>Combine</h3>
+      <canvas id="previewCanvas" width="1280" height="720"></canvas>
+      <button type="button" class="btn btn-primary" id="combineBtn" disabled><span>✦ 1本の動画にまとめてダウンロード</span></button>
+      <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
+      <p class="hint" id="combineHint">対応するアプリで「→ Studioに送る」を押すと、ここに反映されます。1つ以上あれば書き出せます。</p>
+
+      <div class="result" id="resultBox">
+        <video id="resultVideo" controls></video>
+        <a class="btn btn-primary" id="downloadLink" download="youkoku-studio.webm"><span>ダウンロード</span></a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<video id="hiddenVideo" hidden playsinline muted></video>
+
+<script>
+(() => {
+  'use strict';
+
+  const APP_INFO = {
+    text:  { label: 'Quill',  kind: 'テキスト', color: '#f59e0b', link: '../quill/app/' },
+    image: { label: 'Lumen',  kind: '画像',     color: '#8b5cf6', link: '../lumen/app/' },
+    model: { label: 'Mesh',   kind: '3D',       color: '#84cc16', link: '../mesh/app/' },
+    video: { label: 'Flux',   kind: '動画',     color: '#ec4899', link: '../flux/app/' },
+    audio: { label: 'Echo',   kind: '音楽',     color: '#22d3ee', link: '../echo/app/' },
+  };
+
+  const slotsGrid = document.getElementById('slotsGrid');
+  const combineBtn = document.getElementById('combineBtn');
+  const combineHint = document.getElementById('combineHint');
+  const progressTrack = document.getElementById('progressTrack');
+  const progressFill = document.getElementById('progressFill');
+  const resultBox = document.getElementById('resultBox');
+  const resultVideo = document.getElementById('resultVideo');
+  const downloadLink = document.getElementById('downloadLink');
+  const previewCanvas = document.getElementById('previewCanvas');
+  const previewCtx = previewCanvas.getContext('2d');
+  const hiddenVideo = document.getElementById('hiddenVideo');
+
+  let slots = {};
+  const objectUrls = [];
+  function trackUrl(url) { objectUrls.push(url); return url; }
+
+  async function refreshSlots() {
+    slots = await window.YoukokuProject.getAllSlots();
+    renderSlots();
+    combineBtn.disabled = !Object.values(slots).some(Boolean);
+    combineHint.textContent = combineBtn.disabled
+      ? '対応するアプリで「→ Studioに送る」を押すと、ここに反映されます。1つ以上あれば書き出せます。'
+      : '準備ができました。ボタンを押すと1本の動画としてまとめます。';
+  }
+
+  function renderSlots() {
+    slotsGrid.innerHTML = '';
+    window.YoukokuProject.KINDS.forEach((kind) => {
+      const info = APP_INFO[kind];
+      const data = slots[kind];
+      const card = document.createElement('div');
+      card.className = 'slot-card';
+      const head = document.createElement('div');
+      head.className = 'slot-head';
+      head.innerHTML = `<span class="slot-title"><span class="dot" style="background:${info.color}"></span>${info.label}</span><span class="slot-kind">${info.kind}</span>`;
+      card.appendChild(head);
+
+      const preview = document.createElement('div');
+      preview.className = 'slot-preview' + (data ? '' : ' empty');
+      if (!data) {
+        preview.textContent = `${info.label}で送信すると表示されます`;
+      } else if (kind === 'image' || kind === 'model') {
+        const img = document.createElement('img');
+        img.src = trackUrl(URL.createObjectURL(data.blob));
+        preview.appendChild(img);
+      } else if (kind === 'video') {
+        const v = document.createElement('video');
+        v.src = trackUrl(URL.createObjectURL(data.blob));
+        v.muted = true;
+        preview.appendChild(v);
+      } else if (kind === 'audio') {
+        const a = document.createElement('audio');
+        a.controls = true;
+        a.style.width = '100%';
+        a.src = trackUrl(URL.createObjectURL(data.blob));
+        preview.style.background = 'transparent';
+        preview.appendChild(a);
+      } else if (kind === 'text') {
+        preview.classList.add('slot-text-preview');
+        const title = (data.json && data.json.title) || '無題の物語';
+        const firstChapter = (data.json && data.json.chapters && data.json.chapters[0]) || { content: '' };
+        const snippet = (firstChapter.content || '').slice(0, 90);
+        preview.innerHTML = `<strong>${escapeHtml(title)}</strong>${escapeHtml(snippet)}${snippet.length >= 90 ? '…' : ''}`;
+      }
+      card.appendChild(preview);
+
+      const actions = document.createElement('div');
+      actions.className = 'slot-actions';
+      const openBtn = document.createElement('a');
+      openBtn.href = info.link;
+      openBtn.className = 'mini-btn';
+      openBtn.textContent = data ? `${info.label}で編集` : `${info.label}を開く`;
+      actions.appendChild(openBtn);
+      const clearBtn = document.createElement('button');
+      clearBtn.type = 'button';
+      clearBtn.className = 'mini-btn';
+      clearBtn.textContent = 'クリア';
+      clearBtn.disabled = !data;
+      clearBtn.addEventListener('click', async () => {
+        await window.YoukokuProject.clearSlot(kind);
+        await refreshSlots();
+      });
+      actions.appendChild(clearBtn);
+      card.appendChild(actions);
+
+      slotsGrid.appendChild(card);
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  /* ---------- combine logic ---------- */
+  function loadImage(blob) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = URL.createObjectURL(blob);
+    });
+  }
+
+  function drawCover(ctx, source, sw, sh, cw, ch) {
+    const scale = Math.max(cw / sw, ch / sh);
+    const dw = sw * scale, dh = sh * scale;
+    const dx = (cw - dw) / 2, dy = (ch - dh) / 2;
+    ctx.drawImage(source, dx, dy, dw, dh);
+  }
+
+  function wrapText(ctx, text, maxWidth) {
+    const words = text.split('');
+    const lines = [];
+    let cur = '';
+    words.forEach((ch) => {
+      const test = cur + ch;
+      if (ctx.measureText(test).width > maxWidth && cur) { lines.push(cur); cur = ch; } else { cur = test; }
+    });
+    if (cur) lines.push(cur);
+    return lines;
+  }
+
+  async function buildSegments() {
+    const cw = previewCanvas.width, ch = previewCanvas.height;
+    const segments = [];
+
+    if (slots.text || slots.image) {
+      const bgImg = slots.image ? await loadImage(slots.image.blob) : null;
+      const title = (slots.text && slots.text.json && slots.text.json.title) || 'Youkoku';
+      const chapter = (slots.text && slots.text.json && slots.text.json.chapters && slots.text.json.chapters[0]) || { content: '' };
+      segments.push({
+        type: 'intro', duration: 6,
+        draw(t) {
+          const p = t; // 0..1
+          previewCtx.save();
+          if (bgImg) {
+            const zoom = 1 + p * 0.08;
+            previewCtx.save();
+            previewCtx.translate(cw / 2, ch / 2);
+            previewCtx.scale(zoom, zoom);
+            previewCtx.translate(-cw / 2, -ch / 2);
+            drawCover(previewCtx, bgImg, bgImg.naturalWidth, bgImg.naturalHeight, cw, ch);
+            previewCtx.restore();
+          } else {
+            const g = previewCtx.createLinearGradient(0, 0, cw, ch);
+            g.addColorStop(0, '#1a1030'); g.addColorStop(1, '#070c26');
+            previewCtx.fillStyle = g; previewCtx.fillRect(0, 0, cw, ch);
+          }
+          const grad = previewCtx.createLinearGradient(0, ch * 0.4, 0, ch);
+          grad.addColorStop(0, 'rgba(7,12,38,0)');
+          grad.addColorStop(1, 'rgba(7,12,38,0.92)');
+          previewCtx.fillStyle = grad;
+          previewCtx.fillRect(0, 0, cw, ch);
+
+          const fade = Math.min(1, p / 0.25);
+          previewCtx.globalAlpha = fade;
+          previewCtx.fillStyle = '#f4f5fa';
+          previewCtx.font = "700 52px 'Space Grotesk', sans-serif";
+          previewCtx.textBaseline = 'alphabetic';
+          previewCtx.fillText(title, 70, ch - 200);
+
+          if (slots.text) {
+            previewCtx.font = "26px 'Inter', 'Noto Sans JP', sans-serif";
+            previewCtx.fillStyle = 'rgba(244,245,250,0.82)';
+            const lines = wrapText(previewCtx, chapter.content || '', cw - 140).slice(0, 3);
+            lines.forEach((line, i) => previewCtx.fillText(line, 70, ch - 140 + i * 36));
+          }
+          previewCtx.globalAlpha = 1;
+          previewCtx.restore();
+        },
+      });
+    }
+
+    if (slots.model) {
+      const modelImg = await loadImage(slots.model.blob);
+      segments.push({
+        type: 'model', duration: 4,
+        draw(t) {
+          const zoom = 1 + t * 0.06;
+          previewCtx.save();
+          const g = previewCtx.createLinearGradient(0, 0, cw, ch);
+          g.addColorStop(0, '#07130a'); g.addColorStop(1, '#070c26');
+          previewCtx.fillStyle = g; previewCtx.fillRect(0, 0, cw, ch);
+          previewCtx.translate(cw / 2, ch / 2);
+          previewCtx.scale(zoom, zoom);
+          previewCtx.translate(-cw / 2, -ch / 2);
+          drawCover(previewCtx, modelImg, modelImg.naturalWidth, modelImg.naturalHeight, cw, ch * 0.86);
+          previewCtx.restore();
+          previewCtx.fillStyle = 'rgba(244,245,250,0.75)';
+          previewCtx.font = "600 22px 'Space Grotesk', sans-serif";
+          previewCtx.fillText('MESH — 3D SCENE', 40, ch - 40);
+        },
+      });
+    }
+
+    if (slots.video) {
+      hiddenVideo.src = trackUrl(URL.createObjectURL(slots.video.blob));
+      await new Promise((resolve) => {
+        hiddenVideo.onloadedmetadata = resolve;
+        hiddenVideo.load();
+      });
+      segments.push({
+        type: 'video', duration: hiddenVideo.duration || 6,
+        draw() {
+          const g = previewCtx.createLinearGradient(0, 0, cw, ch);
+          g.addColorStop(0, '#05050b'); g.addColorStop(1, '#05050b');
+          previewCtx.fillStyle = g; previewCtx.fillRect(0, 0, cw, ch);
+          if (hiddenVideo.readyState >= 2) {
+            drawCover(previewCtx, hiddenVideo, hiddenVideo.videoWidth || cw, hiddenVideo.videoHeight || ch, cw, ch);
+          }
+        },
+        onStart() { hiddenVideo.currentTime = 0; hiddenVideo.play().catch(() => {}); },
+        isDone() { return hiddenVideo.ended || hiddenVideo.currentTime >= hiddenVideo.duration - 0.05; },
+      });
+    }
+
+    if (!segments.length && slots.audio) {
+      segments.push({
+        type: 'audiocard', duration: Math.min(30, 12),
+        draw(t) {
+          const g = previewCtx.createLinearGradient(0, 0, cw, ch);
+          g.addColorStop(0, '#1a1030'); g.addColorStop(0.5, '#0d1642'); g.addColorStop(1, '#07130a');
+          previewCtx.fillStyle = g; previewCtx.fillRect(0, 0, cw, ch);
+          previewCtx.fillStyle = '#f4f5fa';
+          previewCtx.font = "700 56px 'Space Grotesk', sans-serif";
+          previewCtx.textAlign = 'center';
+          previewCtx.fillText('YOUKOKU', cw / 2, ch / 2);
+          previewCtx.textAlign = 'left';
+        },
+      });
+    }
+
+    return segments;
+  }
+
+  combineBtn.addEventListener('click', async () => {
+    combineBtn.disabled = true;
+    resultBox.classList.remove('active');
+    progressTrack.classList.add('active');
+    progressFill.style.width = '2%';
+    combineHint.textContent = '組み立てています…';
+
+    try {
+      const segments = await buildSegments();
+      if (!segments.length) {
+        combineHint.textContent = '組み合わせる素材がありません。';
+        return;
+      }
+      const totalDuration = segments.reduce((sum, s) => sum + s.duration, 0);
+
+      let audioCtx = null, audioSource = null, audioTrack = null;
+      if (slots.audio) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const arr = await slots.audio.blob.arrayBuffer();
+        const audioBuf = await audioCtx.decodeAudioData(arr);
+        const dest = audioCtx.createMediaStreamDestination();
+        audioSource = audioCtx.createBufferSource();
+        audioSource.buffer = audioBuf;
+        audioSource.loop = true;
+        audioSource.connect(dest);
+        audioTrack = dest.stream.getAudioTracks()[0];
+      }
+
+      const videoTrack = previewCanvas.captureStream(30).getVideoTracks()[0];
+      const tracks = [videoTrack];
+      if (audioTrack) tracks.push(audioTrack);
+      const combinedStream = new MediaStream(tracks);
+
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+        ? 'video/webm;codecs=vp9,opus'
+        : (MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : '');
+      const recorder = new MediaRecorder(combinedStream, mimeType ? { mimeType } : undefined);
+      const chunks = [];
+      recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+      const stopped = new Promise((resolve) => { recorder.onstop = resolve; });
+
+      recorder.start();
+      if (audioSource) audioSource.start();
+
+      let segIndex = -1;
+      let segStart = 0;
+      const overallStart = performance.now();
+
+      function nextSegment() {
+        segIndex += 1;
+        segStart = performance.now();
+        const seg = segments[segIndex];
+        if (seg.onStart) seg.onStart();
+      }
+      nextSegment();
+
+      await new Promise((resolve) => {
+        function loop() {
+          const seg = segments[segIndex];
+          const elapsed = (performance.now() - segStart) / 1000;
+          const t = Math.min(1, elapsed / seg.duration);
+          seg.draw(t);
+
+          const overallElapsed = (performance.now() - overallStart) / 1000;
+          progressFill.style.width = Math.min(98, Math.round((overallElapsed / totalDuration) * 100)) + '%';
+
+          const segDone = seg.isDone ? seg.isDone() : elapsed >= seg.duration;
+          if (segDone) {
+            if (segIndex + 1 < segments.length) {
+              nextSegment();
+            } else {
+              resolve();
+              return;
+            }
+          }
+          requestAnimationFrame(loop);
+        }
+        loop();
+      });
+
+      recorder.stop();
+      if (audioSource) { try { audioSource.stop(); } catch (e) { /* already stopped */ } }
+      await stopped;
+
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = trackUrl(URL.createObjectURL(blob));
+      resultVideo.src = url;
+      downloadLink.href = url;
+      resultBox.classList.add('active');
+      progressFill.style.width = '100%';
+      combineHint.textContent = '完成しました。';
+    } catch (err) {
+      combineHint.textContent = '書き出しに失敗しました: ' + err.message;
+    } finally {
+      setTimeout(() => progressTrack.classList.remove('active'), 600);
+      combineBtn.disabled = false;
+    }
+  });
+
+  refreshSlots();
+})();
+</script>
+</body>
+</html>

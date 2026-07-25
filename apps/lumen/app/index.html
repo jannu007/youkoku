@@ -121,6 +121,8 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 </head>
 <body>
 
+<script src="../../shared/project-store.js"></script>
+
 <header class="topbar">
   <a href="../index.html" class="back">← Lumen について</a>
   <div class="applogo"><span class="dot"></span>Lumen</div>
@@ -216,6 +218,16 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
         <button type="button" class="btn" id="resetBtn" disabled><span>リセット</span></button>
         <button type="button" class="btn btn-primary" id="downloadBtn" disabled><span>↓ 書き出す</span></button>
       </div>
+
+      <div class="card">
+        <h3>Youkoku Studio</h3>
+        <p class="hint">この画像を、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
+        <div class="btn-row">
+          <button type="button" class="btn" id="sendToProjectBtn" disabled><span>→ Studioに送る</span></button>
+        </div>
+        <p class="hint" id="sendToProjectStatus"></p>
+        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;">Studioを開く →</a>
+      </div>
     </div>
   </div>
 
@@ -249,6 +261,8 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   const resetBtn = document.getElementById('resetBtn');
   const downloadBtn = document.getElementById('downloadBtn');
   const autoHint = document.getElementById('autoHint');
+  const sendToProjectBtn = document.getElementById('sendToProjectBtn');
+  const sendToProjectStatus = document.getElementById('sendToProjectStatus');
 
   const sliders = {
     brightness: document.getElementById('rBrightness'),
@@ -610,6 +624,7 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
       autoEnhanceBtn.disabled = false;
       resetBtn.disabled = false;
       downloadBtn.disabled = false;
+      sendToProjectBtn.disabled = false;
       URL.revokeObjectURL(url);
     };
     img.src = url;
@@ -695,6 +710,18 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
       a.download = 'lumen-edit.png';
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }, 'image/png');
+  });
+
+  sendToProjectBtn.addEventListener('click', () => {
+    if (!window.YoukokuProject) { sendToProjectStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    canvas.toBlob(async (blob) => {
+      try {
+        await window.YoukokuProject.saveSlot('image', { blob, from: 'Lumen' });
+        sendToProjectStatus.textContent = '✓ Studioに送信しました。';
+      } catch (err) {
+        sendToProjectStatus.textContent = '送信に失敗しました: ' + err.message;
+      }
     }, 'image/png');
   });
 
