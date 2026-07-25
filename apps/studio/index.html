@@ -96,6 +96,10 @@ window.YOUKOKU_BG_THEMES = [
 </script>
 <script src="../shared/detail-bg.js?v=1"></script>
 <script src="../shared/project-store.js"></script>
+<script src="../shared/text-to-art.js"></script>
+<script src="../shared/relief-3d.js"></script>
+<script src="../shared/music-generator.js"></script>
+<script src="../shared/wav-encoder.js"></script>
 
 <header class="topbar">
   <a href="../../index.html" class="back">← Youkoku</a>
@@ -117,7 +121,9 @@ window.YOUKOKU_BG_THEMES = [
     <div class="card">
       <h3>Combine</h3>
       <canvas id="previewCanvas" width="1280" height="720"></canvas>
-      <button type="button" class="btn btn-primary" id="combineBtn" disabled><span>✦ 1本の動画にまとめてダウンロード</span></button>
+      <button type="button" class="btn btn-primary" id="autoCreateBtn" disabled><span>🪄 全自動で作成</span></button>
+      <p class="hint">Quillの文章さえ送っておけば、足りない画像・3D・音楽をルールベースで自動生成して結合します（AI生成ではありません。詳しくは各アプリのヒントをご覧ください）。</p>
+      <button type="button" class="btn btn-primary" id="combineBtn" disabled style="margin-top:.8rem;"><span>✦ 1本の動画にまとめてダウンロード</span></button>
       <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
       <p class="hint" id="combineHint">対応するアプリで「→ Studioに送る」を押すと、ここに反映されます。1つ以上あれば書き出せます。</p>
 
@@ -145,6 +151,7 @@ window.YOUKOKU_BG_THEMES = [
 
   const slotsGrid = document.getElementById('slotsGrid');
   const combineBtn = document.getElementById('combineBtn');
+  const autoCreateBtn = document.getElementById('autoCreateBtn');
   const combineHint = document.getElementById('combineHint');
   const progressTrack = document.getElementById('progressTrack');
   const progressFill = document.getElementById('progressFill');
@@ -163,6 +170,7 @@ window.YOUKOKU_BG_THEMES = [
     slots = await window.YoukokuProject.getAllSlots();
     renderSlots();
     combineBtn.disabled = !Object.values(slots).some(Boolean);
+    autoCreateBtn.disabled = !slots.text;
     combineHint.textContent = combineBtn.disabled
       ? '対応するアプリで「→ Studioに送る」を押すと、ここに反映されます。1つ以上あれば書き出せます。'
       : '準備ができました。ボタンを押すと1本の動画としてまとめます。';
@@ -378,8 +386,9 @@ window.YOUKOKU_BG_THEMES = [
     return segments;
   }
 
-  combineBtn.addEventListener('click', async () => {
+  async function runCombine() {
     combineBtn.disabled = true;
+    autoCreateBtn.disabled = true;
     resultBox.classList.remove('active');
     progressTrack.classList.add('active');
     progressFill.style.width = '2%';
@@ -474,6 +483,69 @@ window.YOUKOKU_BG_THEMES = [
     } finally {
       setTimeout(() => progressTrack.classList.remove('active'), 600);
       combineBtn.disabled = false;
+      autoCreateBtn.disabled = !slots.text;
+    }
+  }
+
+  combineBtn.addEventListener('click', runCombine);
+
+  /* ---------- fully automatic pipeline ---------- */
+  function loadImageData(blob, size) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = size; c.height = size;
+        const cctx = c.getContext('2d');
+        cctx.drawImage(img, 0, 0, size, size);
+        resolve(cctx.getImageData(0, 0, size, size));
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(blob);
+    });
+  }
+
+  autoCreateBtn.addEventListener('click', async () => {
+    if (!slots.text) { combineHint.textContent = 'まずQuillで小説を書き、「→ Studioに送る」を押してください。'; return; }
+    autoCreateBtn.disabled = true;
+    combineBtn.disabled = true;
+    combineHint.textContent = '自動生成しています…';
+
+    try {
+      const fullText = (slots.text.json.chapters || []).map(c => c.content || '').join('\n');
+      const mood = window.YoukokuTextToArt.scoreText(fullText).mood;
+
+      if (!slots.image) {
+        combineHint.textContent = '自動生成中: Lumen風アートを作成しています…';
+        const artCanvas = document.createElement('canvas');
+        artCanvas.width = 1200; artCanvas.height = 800;
+        window.YoukokuTextToArt.generate(artCanvas, fullText);
+        const blob = await new Promise((resolve) => artCanvas.toBlob(resolve, 'image/png'));
+        await window.YoukokuProject.saveSlot('image', { blob, from: 'Lumen (auto)' });
+      }
+
+      slots = await window.YoukokuProject.getAllSlots();
+
+      if (!slots.model && slots.image) {
+        combineHint.textContent = '自動生成中: Meshで3D化しています…';
+        const imageData = await loadImageData(slots.image.blob, 200);
+        const blob = await window.YoukokuRelief.renderSnapshot(imageData, { width: 1200, height: 800 });
+        await window.YoukokuProject.saveSlot('model', { blob, from: 'Mesh (auto)' });
+      }
+
+      if (!slots.audio) {
+        combineHint.textContent = '自動生成中: Echoで作曲しています…';
+        const buf = await window.YoukokuMusic.generate({ mood, duration: 20 });
+        const blob = window.YoukokuWav.encode(buf);
+        await window.YoukokuProject.saveSlot('audio', { blob, from: 'Echo (auto)' });
+      }
+
+      await refreshSlots();
+      await runCombine();
+    } catch (err) {
+      combineHint.textContent = '自動生成に失敗しました: ' + err.message;
+      autoCreateBtn.disabled = !slots.text;
+      combineBtn.disabled = !Object.values(slots).some(Boolean);
     }
   });
 

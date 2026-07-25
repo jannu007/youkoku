@@ -95,6 +95,7 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
 <body>
 
 <script src="../../shared/project-store.js"></script>
+<script src="../../shared/relief-3d.js"></script>
 
 <header class="topbar">
   <a href="../index.html" class="back">← Mesh について</a>
@@ -154,6 +155,11 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
 
     <div class="card">
       <h3>Youkoku Studio</h3>
+      <p class="hint">Lumenで送った画像の明るさを高さに変換し、立体地形（レリーフ）としてシーンに追加します。写真から本物の3Dモデルを復元するAIではなく、高さマップによる3D化です。</p>
+      <div class="btn-row">
+        <button type="button" class="btn" id="imageToReliefBtn"><span>✦ 画像から3D化</span></button>
+      </div>
+      <p class="hint" id="imageToReliefStatus"></p>
       <p class="hint">今のシーンのスナップショットを、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
       <div class="btn-row">
         <button type="button" class="btn" id="sendToProjectBtn"><span>→ Studioに送る</span></button>
@@ -442,6 +448,72 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
     }
   }
 
+  /* ================= relief (image-to-3D) shader ================= */
+  const RELIEF_VERT_SRC = `
+    attribute vec3 aPosition;
+    attribute vec3 aColor;
+    uniform mat4 uModel, uView, uProjection;
+    varying vec3 vColor;
+    void main() {
+      gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.0);
+      vColor = aColor;
+    }
+  `;
+  const RELIEF_FRAG_SRC = `
+    precision mediump float;
+    varying vec3 vColor;
+    void main() { gl_FragColor = vec4(vColor, 1.0); }
+  `;
+  let reliefProgram = null, reliefAttribs = {}, reliefUniforms = {};
+  if (glSupported) {
+    const rvs = compileShader(RELIEF_VERT_SRC, gl.VERTEX_SHADER);
+    const rfs = compileShader(RELIEF_FRAG_SRC, gl.FRAGMENT_SHADER);
+    reliefProgram = gl.createProgram();
+    gl.attachShader(reliefProgram, rvs);
+    gl.attachShader(reliefProgram, rfs);
+    gl.linkProgram(reliefProgram);
+    if (gl.getProgramParameter(reliefProgram, gl.LINK_STATUS)) {
+      reliefAttribs.position = gl.getAttribLocation(reliefProgram, 'aPosition');
+      reliefAttribs.color = gl.getAttribLocation(reliefProgram, 'aColor');
+      reliefUniforms.model = gl.getUniformLocation(reliefProgram, 'uModel');
+      reliefUniforms.view = gl.getUniformLocation(reliefProgram, 'uView');
+      reliefUniforms.projection = gl.getUniformLocation(reliefProgram, 'uProjection');
+    }
+  }
+  const reliefBuffers = new Map();
+
+  function addReliefFromImageData(imageData) {
+    if (!window.YoukokuRelief) return null;
+    const geo = window.YoukokuRelief.buildReliefGeometry(imageData, 48);
+    const posBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, geo.positions, gl.STATIC_DRAW);
+    const colBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, geo.colors, gl.STATIC_DRAW);
+    const idxBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, idxBuf);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geo.indices, gl.STATIC_DRAW);
+    const obj = {
+      id: nextId++, type: 'relief',
+      position: { x: (Math.random() - 0.5) * 2, y: 0, z: (Math.random() - 0.5) * 2 },
+      rotation: { x: 0, y: 0, z: 0 }, scale: 1.4, color: '#ffffff',
+    };
+    reliefBuffers.set(obj.id, { posBuf, colBuf, idxBuf, count: geo.indices.length });
+    scene.push(obj);
+    selectedId = obj.id;
+    renderSceneList();
+    renderTransformControls();
+    return obj;
+  }
+
+  function disposeRelief(id) {
+    const b = reliefBuffers.get(id);
+    if (!b) return;
+    gl.deleteBuffer(b.posBuf); gl.deleteBuffer(b.colBuf); gl.deleteBuffer(b.idxBuf);
+    reliefBuffers.delete(id);
+  }
+
   const glBufferCache = {};
   function getBuffers(type) {
     if (glBufferCache[type]) return glBufferCache[type];
@@ -483,6 +555,7 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
   function selectedObject() { return scene.find(o => o.id === selectedId) || null; }
 
   function deleteObject(id) {
+    disposeRelief(id);
     scene = scene.filter(o => o.id !== id);
     if (selectedId === id) selectedId = scene.length ? scene[scene.length - 1].id : null;
     renderSceneList();
@@ -493,7 +566,7 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
     btn.addEventListener('click', () => addObject(btn.dataset.type));
   });
 
-  const TYPE_LABEL = { cube: '立方体', sphere: '球', cone: '円錐', cylinder: '円柱' };
+  const TYPE_LABEL = { cube: '立方体', sphere: '球', cone: '円錐', cylinder: '円柱', relief: '立体アート' };
 
   function renderSceneList() {
     const list = document.getElementById('sceneList');
@@ -648,6 +721,7 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
   document.getElementById('clearSceneBtn').addEventListener('click', () => {
     if (!scene.length) return;
     if (!confirm('シーン内のすべてのオブジェクトを削除しますか？')) return;
+    scene.forEach(o => disposeRelief(o.id));
     scene = [];
     selectedId = null;
     renderSceneList();
@@ -712,6 +786,7 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
     gl.uniform1f(uniforms.ambient, Number(ambientSlider.value) / 100);
 
     scene.forEach((obj) => {
+      if (obj.type === 'relief') return;
       const buffers = getBuffers(obj.type);
       const model = composeModel(obj);
       const normalMat = mat3FromMat4(rotationMatrixFor(obj.rotation));
@@ -730,6 +805,27 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
       gl.drawElements(gl.TRIANGLES, buffers.count, gl.UNSIGNED_SHORT, 0);
     });
 
+    if (reliefProgram && scene.some(o => o.type === 'relief')) {
+      gl.useProgram(reliefProgram);
+      gl.uniformMatrix4fv(reliefUniforms.view, false, view);
+      gl.uniformMatrix4fv(reliefUniforms.projection, false, projection);
+      scene.forEach((obj) => {
+        if (obj.type !== 'relief') return;
+        const buffers = reliefBuffers.get(obj.id);
+        if (!buffers) return;
+        const model = composeModel(obj);
+        gl.uniformMatrix4fv(reliefUniforms.model, false, model);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.posBuf);
+        gl.enableVertexAttribArray(reliefAttribs.position);
+        gl.vertexAttribPointer(reliefAttribs.position, 3, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.colBuf);
+        gl.enableVertexAttribArray(reliefAttribs.color);
+        gl.vertexAttribPointer(reliefAttribs.color, 3, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.idxBuf);
+        gl.drawElements(gl.TRIANGLES, buffers.count, gl.UNSIGNED_SHORT, 0);
+      });
+    }
+
     requestAnimationFrame(drawScene);
   }
 
@@ -744,6 +840,7 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
     let out = '# Mesh (Youkoku) OBJ export\n';
     let vOffset = 0;
     scene.forEach((obj, oi) => {
+      if (obj.type === 'relief') return;
       const geo = getGeometry(obj.type);
       const model = composeModel(obj);
       const normalMat = mat3FromMat4(rotationMatrixFor(obj.rotation));
@@ -769,6 +866,32 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
     a.download = 'mesh-scene.obj';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  });
+
+  /* ================= image to 3D relief ================= */
+  const imageToReliefBtn = document.getElementById('imageToReliefBtn');
+  const imageToReliefStatus = document.getElementById('imageToReliefStatus');
+  imageToReliefBtn.addEventListener('click', async () => {
+    if (!window.YoukokuProject || !window.YoukokuRelief) { imageToReliefStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    const imageSlot = await window.YoukokuProject.getSlot('image');
+    if (!imageSlot || !imageSlot.blob) {
+      imageToReliefStatus.textContent = 'まずLumenで画像を作り、「→ Studioに送る」を押してください。';
+      return;
+    }
+    const img = new Image();
+    const url = URL.createObjectURL(imageSlot.blob);
+    img.onload = () => {
+      const sampleCanvas = document.createElement('canvas');
+      sampleCanvas.width = 200; sampleCanvas.height = 200;
+      const sctx = sampleCanvas.getContext('2d');
+      sctx.drawImage(img, 0, 0, 200, 200);
+      const imageData = sctx.getImageData(0, 0, 200, 200);
+      URL.revokeObjectURL(url);
+      addReliefFromImageData(imageData);
+      imageToReliefStatus.textContent = '✓ 画像から3D化しました。';
+    };
+    img.onerror = () => { imageToReliefStatus.textContent = '画像の読み込みに失敗しました。'; URL.revokeObjectURL(url); };
+    img.src = url;
   });
 
   /* ================= send to Studio ================= */

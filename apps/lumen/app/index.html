@@ -122,6 +122,7 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 <body>
 
 <script src="../../shared/project-store.js"></script>
+<script src="../../shared/text-to-art.js"></script>
 
 <header class="topbar">
   <a href="../index.html" class="back">← Lumen について</a>
@@ -221,6 +222,11 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 
       <div class="card">
         <h3>Youkoku Studio</h3>
+        <p class="hint">Quillで書いた小説の緊張・穏やかのバランスから、ジェネラティブアートを自動生成できます（AIイラストではなく、文章の解析結果から描く抽象アートです）。</p>
+        <div class="btn-row">
+          <button type="button" class="btn" id="generateArtBtn"><span>✦ 小説からアートを生成</span></button>
+        </div>
+        <p class="hint" id="generateArtStatus"></p>
         <p class="hint">この画像を、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
         <div class="btn-row">
           <button type="button" class="btn" id="sendToProjectBtn" disabled><span>→ Studioに送る</span></button>
@@ -263,6 +269,8 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   const autoHint = document.getElementById('autoHint');
   const sendToProjectBtn = document.getElementById('sendToProjectBtn');
   const sendToProjectStatus = document.getElementById('sendToProjectStatus');
+  const generateArtBtn = document.getElementById('generateArtBtn');
+  const generateArtStatus = document.getElementById('generateArtStatus');
 
   const sliders = {
     brightness: document.getElementById('rBrightness'),
@@ -711,6 +719,33 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     }, 'image/png');
+  });
+
+  generateArtBtn.addEventListener('click', async () => {
+    if (!window.YoukokuProject || !window.YoukokuTextToArt) { generateArtStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    const textSlot = await window.YoukokuProject.getSlot('text');
+    if (!textSlot || !textSlot.json) {
+      generateArtStatus.textContent = 'まずQuillで小説を書き、「→ Studioに送る」を押してください。';
+      return;
+    }
+    const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
+    const artCanvas = document.createElement('canvas');
+    artCanvas.width = 1200; artCanvas.height = 800;
+    window.YoukokuTextToArt.generate(artCanvas, fullText);
+
+    srcW = artCanvas.width; srcH = artCanvas.height;
+    canvas.width = srcW; canvas.height = srcH;
+    srcImage = artCanvas;
+    dropzone.style.display = 'none';
+    canvasWrap.classList.add('active');
+    parallaxSection.classList.add('active');
+    resetControls();
+    render();
+    autoEnhanceBtn.disabled = false;
+    resetBtn.disabled = false;
+    downloadBtn.disabled = false;
+    sendToProjectBtn.disabled = false;
+    generateArtStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」からアートを生成しました。`;
   });
 
   sendToProjectBtn.addEventListener('click', () => {

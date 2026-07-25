@@ -123,6 +123,8 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 <body>
 
 <script src="../../shared/project-store.js"></script>
+<script src="../../shared/text-to-art.js"></script>
+<script src="../../shared/music-generator.js"></script>
 
 <header class="topbar">
   <a href="../index.html" class="back">← Echo について</a>
@@ -181,6 +183,13 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     </div>
 
     <div class="panel-side">
+      <div class="card">
+        <h3>Youkoku Studio</h3>
+        <p class="hint">Quillで書いた小説の緊張・穏やかのバランスから、曲調とテンポが変わる楽曲を自動作曲します（AI生成ではなく、ルールベースの作曲エンジンです）。</p>
+        <button type="button" class="btn btn-primary" id="autoComposeBtn"><span>✦ 自動作曲</span></button>
+        <p class="hint" id="autoComposeStatus"></p>
+      </div>
+
       <div class="card">
         <h3>AI Mastering</h3>
         <div class="toggle-row">
@@ -289,6 +298,8 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   const setOutBtn = document.getElementById('setOutBtn');
   const masterSwitch = document.getElementById('masterSwitch');
   const masterHint = document.getElementById('masterHint');
+  const autoComposeBtn = document.getElementById('autoComposeBtn');
+  const autoComposeStatus = document.getElementById('autoComposeStatus');
   const remixBtn = document.getElementById('remixBtn');
   const remixSwitch = document.getElementById('remixSwitch');
   const remixHint = document.getElementById('remixHint');
@@ -421,6 +432,52 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   ['dragenter', 'dragover'].forEach(evt => dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('drag'); }));
   ['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); }));
   dropzone.addEventListener('drop', (e) => loadFile(e.dataTransfer.files && e.dataTransfer.files[0]));
+
+  /* ---------- auto-compose from Quill's text ---------- */
+  autoComposeBtn.addEventListener('click', async () => {
+    if (!window.YoukokuMusic) { autoComposeStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    autoComposeBtn.disabled = true;
+    autoComposeStatus.textContent = '作曲しています…';
+    try {
+      let mood = 0;
+      if (window.YoukokuProject && window.YoukokuTextToArt) {
+        const textSlot = await window.YoukokuProject.getSlot('text');
+        if (textSlot && textSlot.json) {
+          const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
+          mood = window.YoukokuTextToArt.scoreText(fullText).mood;
+        }
+      }
+      const buf = await window.YoukokuMusic.generate({ mood, duration: 20 });
+      originalBuffer = buf;
+      reversedBuffer = null;
+      remixBuffer = null;
+      reverseOn = false;
+      remixOn = false;
+      reverseSwitch.classList.remove('on');
+      reverseSwitch.setAttribute('aria-pressed', 'false');
+      remixSwitch.classList.remove('on');
+      remixSwitch.setAttribute('aria-pressed', 'false');
+      remixSwitch.disabled = true;
+      remixHint.textContent = 'トリム範囲を8つのブロックに分割し、シャッフル・一部逆再生して新しいバージョンを生成します。';
+      duration = buf.duration;
+      trimIn = 0; trimOut = duration;
+      playPosition = 0;
+      trimInField.value = '0.0'; trimOutField.value = duration.toFixed(1);
+      trimInField.max = duration; trimOutField.max = duration;
+      dropzone.style.display = 'none';
+      editorWrap.classList.add('active');
+      resizeCanvas();
+      drawWaveform();
+      updateHandles();
+      updateTimeLabel();
+      [resetBtn, exportBtn, remixBtn].forEach(b => b.disabled = false);
+      autoComposeStatus.textContent = '✓ 自動作曲が完成しました。';
+    } catch (err) {
+      autoComposeStatus.textContent = '作曲に失敗しました: ' + err.message;
+    } finally {
+      autoComposeBtn.disabled = false;
+    }
+  });
 
   /* ---------- waveform drawing ---------- */
   function resizeCanvas() {
