@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flux — AI映像編集 | PRISM AI</title>
+<meta name="description" content="AIによるシーン検出とカラーグレーディングで動画を仕上げる映像編集アプリ">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2290%22>▶</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05050b; --panel:#0e0e1a; --panel2:#12121f; --ink:#f4f5fa; --ink-soft:#8d8fa3; --line:#1e1f2e;
+  --magenta:#ec4899; --orange:#fb923c;
+  --display:'Space Grotesk',sans-serif;
+  --sans:'Inter','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.7; -webkit-font-smoothing:antialiased; }
+a{ color:inherit; text-decoration:none; }
+button{ font-family:inherit; cursor:pointer; color:inherit; }
+
+.topbar{ display:flex; align-items:center; justify-content:space-between; padding:1.4rem 5vw; border-bottom:1px solid var(--line); }
+.back{ font-size:.78rem; color:var(--ink-soft); }
+.back:hover{ color:var(--ink); }
+.applogo{ font-family:var(--display); font-weight:700; font-size:1rem; display:flex; align-items:center; gap:.6rem; text-transform:uppercase; }
+.applogo .dot{ width:.5rem; height:.5rem; border-radius:50%; background:var(--magenta); }
+
+main{ max-width:1180px; margin:0 auto; padding:2.6rem 5vw 5rem; }
+.intro{ margin-bottom:2.2rem; }
+.intro h1{ font-family:var(--display); font-weight:700; font-size:clamp(1.5rem,3vw,2rem); margin:0 0 .5rem; }
+.intro p{ color:var(--ink-soft); font-size:.88rem; margin:0; max-width:42em; }
+
+.workspace{ display:grid; grid-template-columns:1fr 320px; gap:2rem; align-items:flex-start; }
+@media (max-width:900px){ .workspace{ grid-template-columns:1fr; } }
+
+.canvas-panel{ background:var(--panel); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+.dropzone{
+  height:420px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:1rem; cursor:pointer; padding:2rem; text-align:center; transition:background .3s var(--ease);
+}
+.dropzone.drag{ background:rgba(236,72,153,.08); }
+.dropzone-icon{ width:3.4rem; height:3.4rem; border-radius:50%; border:1.5px dashed var(--line); display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--magenta); }
+.dropzone h2{ font-family:var(--display); font-size:1.05rem; margin:0; font-weight:600; }
+.dropzone p{ color:var(--ink-soft); font-size:.82rem; margin:0; }
+.dropzone .browse{ font-size:.78rem; color:var(--magenta); text-decoration:underline; text-underline-offset:.25em; }
+
+#editorWrap{ display:none; padding:1.2rem; }
+#editorWrap.active{ display:block; }
+#videoEl{ display:block; width:100%; max-height:480px; border-radius:8px; background:#000; }
+
+.transport{ display:flex; align-items:center; gap:1rem; margin-top:1rem; }
+.play-btn{ width:2.6rem; height:2.6rem; border-radius:50%; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:.9rem; }
+.play-btn:hover{ border-color:var(--ink); }
+.time-label{ font-family:var(--display); font-size:.76rem; color:var(--ink-soft); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.seek{ flex:1; -webkit-appearance:none; appearance:none; height:4px; border-radius:4px; background:var(--line); outline:none; }
+.seek::-webkit-slider-thumb{ -webkit-appearance:none; width:.9rem; height:.9rem; border-radius:50%; background:var(--ink); cursor:pointer; }
+.seek::-moz-range-thumb{ width:.9rem; height:.9rem; border-radius:50%; background:var(--ink); cursor:pointer; border:none; }
+
+.timeline{ margin-top:1.2rem; }
+.timeline-label{ display:flex; justify-content:space-between; font-size:.72rem; color:var(--ink-soft); margin-bottom:.5rem; letter-spacing:.04em; text-transform:uppercase; font-family:var(--display); }
+.timeline-track{ position:relative; height:34px; background:var(--panel2); border-radius:8px; overflow:hidden; cursor:pointer; }
+.timeline-fill{ position:absolute; top:0; bottom:0; background:linear-gradient(90deg, rgba(236,72,153,.35), rgba(251,146,60,.35)); border-left:2px solid var(--magenta); border-right:2px solid var(--orange); }
+.timeline-playhead{ position:absolute; top:0; bottom:0; width:2px; background:var(--ink); }
+.scene-marker{ position:absolute; top:0; bottom:0; width:2px; background:#22d3ee; opacity:.8; cursor:pointer; }
+
+.trim-inputs{ display:flex; gap:.8rem; margin-top:.9rem; }
+.trim-field{ flex:1; }
+.trim-field label{ display:block; font-size:.72rem; color:var(--ink-soft); margin-bottom:.4rem; }
+.trim-field-row{ display:flex; gap:.4rem; }
+.trim-field input[type="number"]{
+  width:100%; background:var(--panel2); border:1px solid var(--line); border-radius:8px; color:var(--ink);
+  padding:.55rem .6rem; font-size:.82rem; font-family:inherit;
+}
+.mini-btn{
+  border:1px solid var(--line); background:transparent; color:var(--ink-soft); border-radius:8px;
+  padding:.3rem .6rem; font-size:.68rem; white-space:nowrap;
+}
+.mini-btn:hover{ border-color:var(--ink); color:var(--ink); }
+
+.panel-side{ display:flex; flex-direction:column; gap:1.4rem; }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:1.5rem; }
+.card h3{ font-family:var(--display); font-size:.82rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:0 0 1.2rem; }
+.slider-row{ margin-bottom:1.1rem; }
+.slider-row:last-child{ margin-bottom:0; }
+.slider-row label{ display:flex; justify-content:space-between; font-size:.82rem; margin-bottom:.5rem; }
+.slider-row label span{ color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+input[type="range"]{ width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:4px; background:var(--line); outline:none; }
+input[type="range"]::-webkit-slider-thumb{ -webkit-appearance:none; width:1rem; height:1rem; border-radius:50%; background:var(--ink); cursor:pointer; border:none; }
+input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50%; background:var(--ink); cursor:pointer; border:none; }
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5em; width:100%;
+  padding:.85rem 1.4rem; font-size:.8rem; letter-spacing:.04em; font-weight:600; border-radius:999px;
+  border:1px solid var(--line); background:transparent; color:var(--ink); text-transform:uppercase;
+  transition:background .3s var(--ease), border-color .3s var(--ease), transform .2s var(--ease);
+}
+.btn:hover{ border-color:var(--ink); transform:translateY(-1px); }
+.btn:disabled{ opacity:.4; cursor:default; transform:none !important; }
+.btn-primary{ background:linear-gradient(95deg,var(--magenta),var(--orange)); border-color:transparent; color:#fff; }
+.btn-primary:hover{ box-shadow:0 8px 24px rgba(236,72,153,.3); }
+.btn-row{ display:flex; gap:.7rem; }
+.btn-row .btn{ width:auto; flex:1; }
+
+.hint{ font-size:.76rem; color:var(--ink-soft); margin-top:.6rem; line-height:1.7; }
+.progress-track{ height:6px; border-radius:6px; background:var(--panel2); overflow:hidden; margin-top:.8rem; display:none; }
+.progress-track.active{ display:block; }
+.progress-fill{ height:100%; background:linear-gradient(90deg,var(--magenta),var(--orange)); width:0%; transition:width .2s linear; }
+
+.result{ margin-top:1.4rem; display:none; }
+.result.active{ display:block; }
+.result video{ width:100%; border-radius:8px; background:#000; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="../index.html" class="back">← Flux について</a>
+  <div class="applogo"><span class="dot"></span>Flux</div>
+</header>
+
+<main>
+  <div class="intro">
+    <h1>動きを、切り取る。</h1>
+    <p>動画を読み込んでトリムし、AIカラー補正やシーン検出で仕上げます。処理はすべてこのブラウザ内で行われ、動画は外部に送信されません。</p>
+  </div>
+
+  <div class="workspace">
+    <div class="canvas-panel">
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone-icon">▶</div>
+        <h2>動画をドラッグ&ドロップ</h2>
+        <p>または <span class="browse">クリックして選択</span>（MP4 / WebM / MOV）</p>
+      </div>
+      <div id="editorWrap">
+        <video id="videoEl" playsinline></video>
+
+        <div class="transport">
+          <button type="button" class="play-btn" id="playBtn">▶</button>
+          <span class="time-label" id="timeLabel">0:00 / 0:00</span>
+          <input type="range" class="seek" id="seekRange" min="0" max="1000" value="0" step="1">
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-label"><span>トリム範囲</span><span id="sceneCount">シーン検出: 未実行</span></div>
+          <div class="timeline-track" id="timelineTrack">
+            <div class="timeline-fill" id="timelineFill"></div>
+            <div class="timeline-playhead" id="timelinePlayhead"></div>
+          </div>
+          <div class="trim-inputs">
+            <div class="trim-field">
+              <label>開始 (秒)</label>
+              <div class="trim-field-row">
+                <input type="number" id="trimInField" min="0" step="0.1" value="0">
+                <button type="button" class="mini-btn" id="setInBtn">現在位置</button>
+              </div>
+            </div>
+            <div class="trim-field">
+              <label>終了 (秒)</label>
+              <div class="trim-field-row">
+                <input type="number" id="trimOutField" min="0" step="0.1" value="0">
+                <button type="button" class="mini-btn" id="setOutBtn">現在位置</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p style="text-align:center;margin-top:1rem;">
+          <button type="button" id="changeVideoBtn" style="background:none;border:none;color:var(--magenta);text-decoration:underline;text-underline-offset:.2em;cursor:pointer;font-size:.76rem;">別の動画を選ぶ</button>
+        </p>
+      </div>
+      <input type="file" id="fileInput" accept="video/*" hidden>
+    </div>
+
+    <div class="panel-side">
+      <div class="card">
+        <h3>AI Tools</h3>
+        <button type="button" class="btn btn-primary" id="autoColorBtn" disabled><span>✦ AIカラー補正</span></button>
+        <div class="btn-row" style="margin-top:.7rem;">
+          <button type="button" class="btn" id="detectScenesBtn" disabled><span>シーン検出</span></button>
+        </div>
+        <p class="hint" id="aiHint">明るさ・コントラスト・彩度を自動解析し、見栄えの良いトーンに補正します。</p>
+      </div>
+
+      <div class="card">
+        <h3>Color</h3>
+        <div class="slider-row">
+          <label>明るさ <span id="valBrightness">100%</span></label>
+          <input type="range" id="rBrightness" min="40" max="180" value="100">
+        </div>
+        <div class="slider-row">
+          <label>コントラスト <span id="valContrast">100%</span></label>
+          <input type="range" id="rContrast" min="40" max="180" value="100">
+        </div>
+        <div class="slider-row">
+          <label>彩度 <span id="valSaturate">100%</span></label>
+          <input type="range" id="rSaturate" min="0" max="220" value="100">
+        </div>
+        <div class="slider-row">
+          <label>再生速度 <span id="valSpeed">1.0x</span></label>
+          <input type="range" id="rSpeed" min="50" max="200" value="100" step="5">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn" id="resetBtn" disabled><span>リセット</span></button>
+        <button type="button" class="btn btn-primary" id="exportBtn" disabled><span>↓ 書き出す</span></button>
+      </div>
+      <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
+
+      <div class="result" id="resultBox">
+        <h3 style="font-family:var(--display);font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 .8rem;">書き出し結果</h3>
+        <video id="resultVideo" controls></video>
+        <div class="btn-row" style="margin-top:.8rem;">
+          <a class="btn btn-primary" id="downloadLink" download="flux-edit.webm"><span>ダウンロード</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<canvas id="exportCanvas" hidden></canvas>
+<canvas id="sampleCanvas" width="160" height="90" hidden></canvas>
+
+<script>
+(() => {
+  'use strict';
+
+  const dropzone = document.getElementById('dropzone');
+  const editorWrap = document.getElementById('editorWrap');
+  const video = document.getElementById('videoEl');
+  const fileInput = document.getElementById('fileInput');
+  const playBtn = document.getElementById('playBtn');
+  const timeLabel = document.getElementById('timeLabel');
+  const seekRange = document.getElementById('seekRange');
+  const timelineTrack = document.getElementById('timelineTrack');
+  const timelineFill = document.getElementById('timelineFill');
+  const timelinePlayhead = document.getElementById('timelinePlayhead');
+  const trimInField = document.getElementById('trimInField');
+  const trimOutField = document.getElementById('trimOutField');
+  const setInBtn = document.getElementById('setInBtn');
+  const setOutBtn = document.getElementById('setOutBtn');
+  const autoColorBtn = document.getElementById('autoColorBtn');
+  const detectScenesBtn = document.getElementById('detectScenesBtn');
+  const aiHint = document.getElementById('aiHint');
+  const sceneCountLabel = document.getElementById('sceneCount');
+  const resetBtn = document.getElementById('resetBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const progressTrack = document.getElementById('progressTrack');
+  const progressFill = document.getElementById('progressFill');
+  const resultBox = document.getElementById('resultBox');
+  const resultVideo = document.getElementById('resultVideo');
+  const downloadLink = document.getElementById('downloadLink');
+  const exportCanvas = document.getElementById('exportCanvas');
+  const sampleCanvas = document.getElementById('sampleCanvas');
+
+  const sliders = {
+    brightness: document.getElementById('rBrightness'),
+    contrast: document.getElementById('rContrast'),
+    saturate: document.getElementById('rSaturate'),
+    speed: document.getElementById('rSpeed'),
+  };
+  const values = {
+    brightness: document.getElementById('valBrightness'),
+    contrast: document.getElementById('valContrast'),
+    saturate: document.getElementById('valSaturate'),
+    speed: document.getElementById('valSpeed'),
+  };
+
+  let duration = 0;
+  let trimIn = 0, trimOut = 0;
+  let sceneMarkers = [];
+  let seeking = false;
+  let previewingLoop = false;
+
+  function fmt(t) {
+    if (!isFinite(t)) return '0:00';
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  function currentValues() {
+    return {
+      brightness: Number(sliders.brightness.value),
+      contrast: Number(sliders.contrast.value),
+      saturate: Number(sliders.saturate.value),
+    };
+  }
+  function buildFilterString(v) {
+    return `brightness(${v.brightness}%) contrast(${v.contrast}%) saturate(${v.saturate}%)`;
+  }
+  function updateLabels() {
+    values.brightness.textContent = sliders.brightness.value + '%';
+    values.contrast.textContent = sliders.contrast.value + '%';
+    values.saturate.textContent = sliders.saturate.value + '%';
+    values.speed.textContent = (sliders.speed.value / 100).toFixed(2) + 'x';
+  }
+  function applyLiveFilter() {
+    video.style.filter = buildFilterString(currentValues());
+    video.playbackRate = Number(sliders.speed.value) / 100;
+    updateLabels();
+  }
+  Object.values(sliders).forEach(s => s.addEventListener('input', applyLiveFilter));
+
+  /* ---------- file loading ---------- */
+  function loadFile(file) {
+    if (!file || !file.type.startsWith('video/')) return;
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    video.load();
+    dropzone.style.display = 'none';
+    editorWrap.classList.add('active');
+  }
+  video.addEventListener('loadedmetadata', () => {
+    duration = video.duration;
+    trimIn = 0;
+    trimOut = duration;
+    trimInField.max = duration;
+    trimOutField.max = duration;
+    trimInField.value = trimIn.toFixed(1);
+    trimOutField.value = trimOut.toFixed(1);
+    seekRange.max = 1000;
+    sceneMarkers = [];
+    renderSceneMarkers();
+    updateTimeline();
+    updateTimeLabel();
+    [autoColorBtn, detectScenesBtn, resetBtn, exportBtn].forEach(b => b.disabled = false);
+    aiHint.textContent = '明るさ・コントラスト・彩度を自動解析し、見栄えの良いトーンに補正します。';
+    sceneCountLabel.textContent = 'シーン検出: 未実行';
+  });
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  document.getElementById('changeVideoBtn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => loadFile(e.target.files[0]));
+  ['dragenter', 'dragover'].forEach(evt => dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('drag'); }));
+  ['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); }));
+  dropzone.addEventListener('drop', (e) => loadFile(e.dataTransfer.files && e.dataTransfer.files[0]));
+
+  /* ---------- transport ---------- */
+  playBtn.addEventListener('click', () => {
+    if (video.paused) { previewingLoop = true; video.play(); } else { video.pause(); }
+  });
+  video.addEventListener('play', () => { playBtn.textContent = '❚❚'; });
+  video.addEventListener('pause', () => { playBtn.textContent = '▶'; });
+
+  video.addEventListener('timeupdate', () => {
+    if (!seeking) seekRange.value = Math.round((video.currentTime / (duration || 1)) * 1000);
+    updateTimeLabel();
+    updateTimeline();
+    if (previewingLoop && video.currentTime >= trimOut) {
+      video.currentTime = trimIn;
+    }
+  });
+
+  seekRange.addEventListener('input', () => {
+    seeking = true;
+    const t = (seekRange.value / 1000) * duration;
+    video.currentTime = t;
+    updateTimeLabel();
+  });
+  seekRange.addEventListener('change', () => { seeking = false; });
+
+  function updateTimeLabel() {
+    timeLabel.textContent = `${fmt(video.currentTime)} / ${fmt(duration)}`;
+  }
+
+  function updateTimeline() {
+    if (!duration) return;
+    const pIn = (trimIn / duration) * 100;
+    const pOut = (trimOut / duration) * 100;
+    timelineFill.style.left = pIn + '%';
+    timelineFill.style.width = Math.max(0, pOut - pIn) + '%';
+    timelinePlayhead.style.left = ((video.currentTime / duration) * 100) + '%';
+  }
+
+  timelineTrack.addEventListener('click', (e) => {
+    if (!duration) return;
+    const rect = timelineTrack.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    video.currentTime = ratio * duration;
+  });
+
+  function clampTrim() {
+    trimIn = Math.min(Math.max(0, trimIn), duration);
+    trimOut = Math.min(Math.max(0, trimOut), duration);
+    if (trimOut <= trimIn) trimOut = Math.min(duration, trimIn + 0.2);
+    trimInField.value = trimIn.toFixed(1);
+    trimOutField.value = trimOut.toFixed(1);
+    updateTimeline();
+  }
+  trimInField.addEventListener('change', () => { trimIn = Number(trimInField.value) || 0; clampTrim(); });
+  trimOutField.addEventListener('change', () => { trimOut = Number(trimOutField.value) || duration; clampTrim(); });
+  setInBtn.addEventListener('click', () => { trimIn = video.currentTime; clampTrim(); });
+  setOutBtn.addEventListener('click', () => { trimOut = video.currentTime; clampTrim(); });
+
+  resetBtn.addEventListener('click', () => {
+    sliders.brightness.value = 100; sliders.contrast.value = 100; sliders.saturate.value = 100; sliders.speed.value = 100;
+    applyLiveFilter();
+    trimIn = 0; trimOut = duration; clampTrim();
+  });
+
+  /* ---------- AI auto color (histogram sample of current frame) ---------- */
+  function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
+
+  autoColorBtn.addEventListener('click', () => {
+    const sctx = sampleCanvas.getContext('2d');
+    sctx.filter = 'none';
+    sctx.drawImage(video, 0, 0, sampleCanvas.width, sampleCanvas.height);
+    const { data } = sctx.getImageData(0, 0, sampleCanvas.width, sampleCanvas.height);
+    let sum = 0, count = 0;
+    const hist = new Array(256).fill(0);
+    for (let i = 0; i < data.length; i += 4) {
+      const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      hist[Math.round(lum)]++;
+      sum += lum; count++;
+    }
+    const mean = sum / count;
+    let cum = 0, low = 0, high = 255;
+    for (let i = 0; i < 256; i++) { cum += hist[i]; if (cum / count >= 0.02) { low = i; break; } }
+    cum = 0;
+    for (let i = 255; i >= 0; i--) { cum += hist[i]; if (cum / count >= 0.02) { high = i; break; } }
+    const range = Math.max(1, high - low);
+
+    const brightness = Math.round(clamp(100 + (128 - mean) * 0.25, 85, 125));
+    const contrast = Math.round(clamp(255 / range * 100, 100, 150));
+    const saturate = Math.round(clamp(115, 100, 140));
+
+    sliders.brightness.value = brightness;
+    sliders.contrast.value = contrast;
+    sliders.saturate.value = saturate;
+    applyLiveFilter();
+    aiHint.textContent = `現在フレームを解析: 明るさ ${brightness}% ・ コントラスト ${contrast}% ・ 彩度 ${saturate}% に補正しました。`;
+  });
+
+  /* ---------- AI scene detection ---------- */
+  function seekAndWait(t) {
+    return new Promise((resolve) => {
+      const done = () => { video.removeEventListener('seeked', done); resolve(); };
+      video.addEventListener('seeked', done);
+      video.currentTime = t;
+      setTimeout(done, 400); // fallback in case 'seeked' doesn't fire promptly
+    });
+  }
+
+  detectScenesBtn.addEventListener('click', async () => {
+    if (!duration) return;
+    const wasPaused = video.paused;
+    video.pause();
+    detectScenesBtn.disabled = true;
+    detectScenesBtn.querySelector('span').textContent = '解析中…';
+
+    const N = 36;
+    const sctx = sampleCanvas.getContext('2d');
+    let prevAvg = null;
+    const markers = [];
+    const startTime = video.currentTime;
+
+    for (let i = 0; i < N; i++) {
+      const t = (i / N) * duration;
+      await seekAndWait(t);
+      sctx.drawImage(video, 0, 0, sampleCanvas.width, sampleCanvas.height);
+      const { data } = sctx.getImageData(0, 0, sampleCanvas.width, sampleCanvas.height);
+      let r = 0, g = 0, b = 0;
+      for (let p = 0; p < data.length; p += 4) { r += data[p]; g += data[p + 1]; b += data[p + 2]; }
+      const n = data.length / 4;
+      const avg = [r / n, g / n, b / n];
+      if (prevAvg) {
+        const diff = Math.abs(avg[0] - prevAvg[0]) + Math.abs(avg[1] - prevAvg[1]) + Math.abs(avg[2] - prevAvg[2]);
+        if (diff > 28) markers.push(t);
+      }
+      prevAvg = avg;
+    }
+
+    sceneMarkers = markers;
+    renderSceneMarkers();
+    sceneCountLabel.textContent = `シーン検出: ${markers.length}件`;
+    detectScenesBtn.disabled = false;
+    detectScenesBtn.querySelector('span').textContent = 'シーン検出';
+    await seekAndWait(startTime);
+    if (!wasPaused) video.play();
+  });
+
+  function renderSceneMarkers() {
+    timelineTrack.querySelectorAll('.scene-marker').forEach(el => el.remove());
+    if (!duration) return;
+    sceneMarkers.forEach((t) => {
+      const el = document.createElement('div');
+      el.className = 'scene-marker';
+      el.style.left = ((t / duration) * 100) + '%';
+      el.title = `シーン変化: ${fmt(t)}`;
+      el.addEventListener('click', (e) => { e.stopPropagation(); video.currentTime = t; });
+      timelineTrack.appendChild(el);
+    });
+  }
+
+  /* ---------- export ---------- */
+  exportBtn.addEventListener('click', async () => {
+    if (!duration || typeof MediaRecorder === 'undefined') {
+      aiHint.textContent = 'このブラウザは書き出し機能に対応していません。';
+      return;
+    }
+    exportBtn.disabled = true;
+    previewingLoop = false;
+    video.pause();
+    progressTrack.classList.add('active');
+    progressFill.style.width = '2%';
+    resultBox.classList.remove('active');
+
+    const scale = Math.min(1, 960 / video.videoWidth);
+    const w = Math.max(2, Math.round(video.videoWidth * scale));
+    const h = Math.max(2, Math.round(video.videoHeight * scale));
+    exportCanvas.width = w; exportCanvas.height = h;
+    const ectx = exportCanvas.getContext('2d');
+    const filterStr = buildFilterString(currentValues());
+
+    await seekAndWait(trimIn);
+
+    const wasMuted = video.muted;
+    video.muted = true;
+
+    let audioTrack = null;
+    try {
+      const ms = video.captureStream ? video.captureStream() : (video.mozCaptureStream ? video.mozCaptureStream() : null);
+      if (ms) audioTrack = ms.getAudioTracks()[0] || null;
+    } catch (err) { /* no audio track available — export video-only */ }
+
+    const canvasStream = exportCanvas.captureStream(30);
+    const tracks = canvasStream.getVideoTracks().slice();
+    if (audioTrack) tracks.push(audioTrack);
+    const combined = new MediaStream(tracks);
+
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+      ? 'video/webm;codecs=vp9,opus'
+      : (MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : '');
+    const recorder = new MediaRecorder(combined, mimeType ? { mimeType } : undefined);
+    const chunks = [];
+    recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    const stopped = new Promise((resolve) => { recorder.onstop = resolve; });
+
+    recorder.start();
+    let rafId = null;
+    const segmentLen = Math.max(0.05, trimOut - trimIn);
+
+    function drawFrame() {
+      ectx.filter = filterStr;
+      ectx.drawImage(video, 0, 0, w, h);
+      const progress = Math.min(1, (video.currentTime - trimIn) / segmentLen);
+      progressFill.style.width = Math.round(5 + progress * 90) + '%';
+      if (video.currentTime < trimOut && !video.ended) {
+        rafId = requestAnimationFrame(drawFrame);
+      } else {
+        recorder.stop();
+        video.pause();
+      }
+    }
+
+    try {
+      await video.play();
+    } catch (err) { /* ignore — draw loop still runs on whatever frame is current */ }
+    drawFrame();
+    await stopped;
+    if (rafId) cancelAnimationFrame(rafId);
+    video.muted = wasMuted;
+
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    resultVideo.src = url;
+    downloadLink.href = url;
+    resultBox.classList.add('active');
+    progressFill.style.width = '100%';
+    setTimeout(() => progressTrack.classList.remove('active'), 600);
+    exportBtn.disabled = false;
+  });
+
+})();
+</script>
+</body>
+</html>

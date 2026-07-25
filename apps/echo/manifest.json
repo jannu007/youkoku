@@ -1,0 +1,15 @@
+{
+  "name": "Echo — AI音楽編集",
+  "short_name": "Echo",
+  "description": "AIマスタリングと波形編集で音源を仕上げる音楽編集アプリ",
+  "start_url": "app/",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#05050b",
+  "theme_color": "#05050b",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "PRISM AI — 芸術系AI創作アプリ",
+  "short_name": "PRISM AI",
+  "description": "画像・映像・音楽の制作に特化したAI創作アプリ Lumen / Flux / Echo を無料で提供する PRISM AI の公式サイト",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#05050b",
+  "theme_color": "#05050b",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

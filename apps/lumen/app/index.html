@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumen — AI画像編集 | PRISM AI</title>
+<meta name="description" content="AIによる自動補正とスタイルプリセットで写真を仕上げる画像編集アプリ">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2290%22>◎</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05050b; --panel:#0e0e1a; --panel2:#12121f; --ink:#f4f5fa; --ink-soft:#8d8fa3; --line:#1e1f2e;
+  --violet:#8b5cf6; --blue:#3b82f6; --magenta:#ec4899;
+  --display:'Space Grotesk',sans-serif;
+  --sans:'Inter','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.7; -webkit-font-smoothing:antialiased; }
+a{ color:inherit; text-decoration:none; }
+button{ font-family:inherit; cursor:pointer; color:inherit; }
+input[type="file"]{ font-family:inherit; }
+
+.topbar{ display:flex; align-items:center; justify-content:space-between; padding:1.4rem 5vw; border-bottom:1px solid var(--line); }
+.back{ font-size:.78rem; color:var(--ink-soft); }
+.back:hover{ color:var(--ink); }
+.applogo{ font-family:var(--display); font-weight:700; font-size:1rem; display:flex; align-items:center; gap:.6rem; text-transform:uppercase; }
+.applogo .dot{ width:.5rem; height:.5rem; border-radius:50%; background:var(--violet); }
+
+main{ max-width:1180px; margin:0 auto; padding:2.6rem 5vw 5rem; }
+
+.intro{ margin-bottom:2.2rem; }
+.intro h1{ font-family:var(--display); font-weight:700; font-size:clamp(1.5rem,3vw,2rem); margin:0 0 .5rem; }
+.intro p{ color:var(--ink-soft); font-size:.88rem; margin:0; max-width:40em; }
+
+.workspace{ display:grid; grid-template-columns:1fr 320px; gap:2rem; align-items:flex-start; }
+@media (max-width:900px){ .workspace{ grid-template-columns:1fr; } }
+
+.canvas-panel{
+  background:var(--panel); border:1px solid var(--line); border-radius:16px;
+  min-height:420px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;
+}
+.dropzone{
+  width:100%; height:420px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:1rem; cursor:pointer; padding:2rem; text-align:center; border-radius:16px;
+  transition:background .3s var(--ease);
+}
+.dropzone.drag{ background:rgba(139,92,246,.08); }
+.dropzone-icon{
+  width:3.4rem; height:3.4rem; border-radius:50%; border:1.5px dashed var(--line);
+  display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--violet);
+}
+.dropzone h2{ font-family:var(--display); font-size:1.05rem; margin:0; font-weight:600; }
+.dropzone p{ color:var(--ink-soft); font-size:.82rem; margin:0; }
+.dropzone .browse{ font-size:.78rem; color:var(--violet); text-decoration:underline; text-underline-offset:.25em; }
+
+#canvasWrap{ display:none; width:100%; padding:1.2rem; }
+#canvasWrap.active{ display:block; }
+#previewCanvas{ display:block; max-width:100%; height:auto; margin:0 auto; border-radius:8px; }
+
+.panel-side{ display:flex; flex-direction:column; gap:1.4rem; }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:1.5rem; }
+.card h3{ font-family:var(--display); font-size:.82rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:0 0 1.2rem; }
+
+.slider-row{ margin-bottom:1.1rem; }
+.slider-row:last-child{ margin-bottom:0; }
+.slider-row label{ display:flex; justify-content:space-between; font-size:.82rem; margin-bottom:.5rem; }
+.slider-row label span{ color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+input[type="range"]{
+  width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:4px; background:var(--line); outline:none;
+}
+input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:1rem; height:1rem; border-radius:50%; background:var(--ink); cursor:pointer; border:none;
+}
+input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50%; background:var(--ink); cursor:pointer; border:none; }
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5em; width:100%;
+  padding:.85rem 1.4rem; font-size:.8rem; letter-spacing:.04em; font-weight:600; border-radius:999px;
+  border:1px solid var(--line); background:transparent; color:var(--ink); text-transform:uppercase;
+  transition:background .3s var(--ease), border-color .3s var(--ease), transform .2s var(--ease);
+}
+.btn:hover{ border-color:var(--ink); transform:translateY(-1px); }
+.btn-primary{ background:linear-gradient(95deg,var(--violet),var(--blue)); border-color:transparent; color:#fff; }
+.btn-primary:hover{ box-shadow:0 8px 24px rgba(139,92,246,.3); }
+.btn-row{ display:flex; gap:.7rem; }
+.btn-row .btn{ width:auto; flex:1; }
+
+.presets{ display:grid; grid-template-columns:repeat(4,1fr); gap:.6rem; }
+.preset-btn{
+  aspect-ratio:1; border-radius:10px; border:1px solid var(--line); background:var(--panel2);
+  display:flex; align-items:center; justify-content:center; font-size:.68rem; color:var(--ink-soft);
+  transition:border-color .25s var(--ease), color .25s var(--ease); text-align:center; padding:.3rem;
+}
+.preset-btn:hover, .preset-btn.active{ border-color:var(--violet); color:var(--ink); }
+
+.hint{ font-size:.76rem; color:var(--ink-soft); margin-top:.4rem; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="../index.html" class="back">← Lumen について</a>
+  <div class="applogo"><span class="dot"></span>Lumen</div>
+</header>
+
+<main>
+  <div class="intro">
+    <h1>光と色を、思いのままに。</h1>
+    <p>写真を読み込むと、ヒストグラムを解析してAIオートエンハンスが最適な補正値を提案します。データはこのブラウザだけで処理され、外部には送信されません。</p>
+  </div>
+
+  <div class="workspace">
+    <div class="canvas-panel">
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone-icon">◎</div>
+        <h2>画像をドラッグ&ドロップ</h2>
+        <p>または <span class="browse">クリックして選択</span>（JPEG / PNG / WebP）</p>
+      </div>
+      <div id="canvasWrap">
+        <canvas id="previewCanvas"></canvas>
+        <p style="text-align:center;color:var(--ink-soft);font-size:.76rem;margin:.9rem 0 0;">
+          <button type="button" id="changeImageBtn" style="background:none;border:none;color:var(--violet);text-decoration:underline;text-underline-offset:.2em;cursor:pointer;font-size:inherit;">別の画像を選ぶ</button>
+        </p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" hidden>
+    </div>
+
+    <div class="panel-side">
+      <div class="card">
+        <h3>AI Auto Enhance</h3>
+        <button type="button" class="btn btn-primary" id="autoEnhanceBtn" disabled><span>✦ 自動で補正する</span></button>
+        <p class="hint" id="autoHint">画像のヒストグラムから最適な明るさ・コントラストを推定します。</p>
+      </div>
+
+      <div class="card">
+        <h3>Adjust</h3>
+        <div class="slider-row">
+          <label>明るさ <span id="valBrightness">100%</span></label>
+          <input type="range" id="rBrightness" min="40" max="180" value="100">
+        </div>
+        <div class="slider-row">
+          <label>コントラスト <span id="valContrast">100%</span></label>
+          <input type="range" id="rContrast" min="40" max="180" value="100">
+        </div>
+        <div class="slider-row">
+          <label>彩度 <span id="valSaturate">100%</span></label>
+          <input type="range" id="rSaturate" min="0" max="220" value="100">
+        </div>
+        <div class="slider-row">
+          <label>色相 <span id="valHue">0°</span></label>
+          <input type="range" id="rHue" min="-180" max="180" value="0">
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Style Presets</h3>
+        <div class="presets" id="presetGrid"></div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn" id="resetBtn" disabled><span>リセット</span></button>
+        <button type="button" class="btn btn-primary" id="downloadBtn" disabled><span>↓ 書き出す</span></button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const dropzone = document.getElementById('dropzone');
+  const canvasWrap = document.getElementById('canvasWrap');
+  const canvas = document.getElementById('previewCanvas');
+  const ctx = canvas.getContext('2d');
+  const fileInput = document.getElementById('fileInput');
+  const autoEnhanceBtn = document.getElementById('autoEnhanceBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const autoHint = document.getElementById('autoHint');
+
+  const sliders = {
+    brightness: document.getElementById('rBrightness'),
+    contrast: document.getElementById('rContrast'),
+    saturate: document.getElementById('rSaturate'),
+    hue: document.getElementById('rHue'),
+  };
+  const values = {
+    brightness: document.getElementById('valBrightness'),
+    contrast: document.getElementById('valContrast'),
+    saturate: document.getElementById('valSaturate'),
+    hue: document.getElementById('valHue'),
+  };
+
+  const MAX_DIM = 2000;
+  let srcImage = null; // the loaded HTMLImageElement
+  let srcW = 0, srcH = 0;
+
+  const PRESETS = [
+    { name: 'Vivid',   v: { brightness: 108, contrast: 118, saturate: 145, hue: 0 } },
+    { name: 'Mono',    v: { brightness: 104, contrast: 112, saturate: 0,   hue: 0 } },
+    { name: 'Film',    v: { brightness: 98,  contrast: 96,  saturate: 88,  hue: 8 } },
+    { name: 'Warm',    v: { brightness: 106, contrast: 104, saturate: 118, hue: 12 } },
+    { name: 'Cool',    v: { brightness: 102, contrast: 108, saturate: 110, hue: -14 } },
+    { name: 'Fade',    v: { brightness: 110, contrast: 84,  saturate: 78,  hue: 0 } },
+    { name: 'Noir',    v: { brightness: 92,  contrast: 132, saturate: 6,   hue: 0 } },
+    { name: 'Dramatic',v: { brightness: 94,  contrast: 140, saturate: 128, hue: 0 } },
+  ];
+
+  function buildFilterString(v) {
+    return `brightness(${v.brightness}%) contrast(${v.contrast}%) saturate(${v.saturate}%) hue-rotate(${v.hue}deg)`;
+  }
+
+  function currentValues() {
+    return {
+      brightness: Number(sliders.brightness.value),
+      contrast: Number(sliders.contrast.value),
+      saturate: Number(sliders.saturate.value),
+      hue: Number(sliders.hue.value),
+    };
+  }
+
+  function updateLabels() {
+    values.brightness.textContent = sliders.brightness.value + '%';
+    values.contrast.textContent = sliders.contrast.value + '%';
+    values.saturate.textContent = sliders.saturate.value + '%';
+    values.hue.textContent = sliders.hue.value + '°';
+  }
+
+  function render() {
+    if (!srcImage) return;
+    ctx.save();
+    ctx.filter = buildFilterString(currentValues());
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(srcImage, 0, 0, srcW, srcH);
+    ctx.restore();
+    updateLabels();
+    highlightMatchingPreset();
+  }
+
+  function highlightMatchingPreset() {
+    const cur = currentValues();
+    document.querySelectorAll('.preset-btn').forEach((btn, i) => {
+      const p = PRESETS[i].v;
+      const match = p.brightness === cur.brightness && p.contrast === cur.contrast && p.saturate === cur.saturate && p.hue === cur.hue;
+      btn.classList.toggle('active', match);
+    });
+  }
+
+  Object.values(sliders).forEach(s => s.addEventListener('input', render));
+
+  function loadImage(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, MAX_DIM / Math.max(img.naturalWidth, img.naturalHeight));
+      srcW = Math.round(img.naturalWidth * scale);
+      srcH = Math.round(img.naturalHeight * scale);
+      canvas.width = srcW;
+      canvas.height = srcH;
+      srcImage = img;
+      dropzone.style.display = 'none';
+      canvasWrap.classList.add('active');
+      resetControls();
+      render();
+      autoEnhanceBtn.disabled = false;
+      resetBtn.disabled = false;
+      downloadBtn.disabled = false;
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }
+
+  function resetControls() {
+    sliders.brightness.value = 100;
+    sliders.contrast.value = 100;
+    sliders.saturate.value = 100;
+    sliders.hue.value = 0;
+    updateLabels();
+  }
+
+  /* ---------- AI-style auto enhance: histogram-based auto levels ---------- */
+  function autoEnhance() {
+    if (!srcImage) return;
+    // sample the untouched source into an offscreen canvas to read luminance histogram
+    const off = document.createElement('canvas');
+    off.width = srcW; off.height = srcH;
+    const octx = off.getContext('2d');
+    octx.drawImage(srcImage, 0, 0, srcW, srcH);
+    const { data } = octx.getImageData(0, 0, srcW, srcH);
+
+    const hist = new Array(256).fill(0);
+    let sum = 0;
+    const step = 4 * 4; // sample every 4th pixel for speed
+    let sampled = 0;
+    for (let i = 0; i < data.length; i += step) {
+      const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      hist[Math.round(lum)]++;
+      sum += lum;
+      sampled++;
+    }
+    const mean = sum / sampled;
+
+    // find 1st and 99th percentile bounds to determine clipping/contrast stretch
+    const total = sampled;
+    let cum = 0, lowClip = 0, highClip = 255;
+    for (let i = 0; i < 256; i++) {
+      cum += hist[i];
+      if (cum / total >= 0.01) { lowClip = i; break; }
+    }
+    cum = 0;
+    for (let i = 255; i >= 0; i--) {
+      cum += hist[i];
+      if (cum / total >= 0.01) { highClip = i; break; }
+    }
+    const range = Math.max(1, highClip - lowClip);
+
+    // derive suggested slider values from the measured tonal range
+    const contrast = Math.round(clamp(255 / range * 100, 100, 165));
+    const brightness = Math.round(clamp(100 + (128 - mean) * 0.28, 85, 130));
+    const saturate = Math.round(clamp(108 + (128 - mean) * 0.1, 95, 135));
+
+    sliders.brightness.value = brightness;
+    sliders.contrast.value = contrast;
+    sliders.saturate.value = saturate;
+    sliders.hue.value = 0;
+    render();
+    autoHint.textContent = `解析結果: 明るさ ${brightness}% ・ コントラスト ${contrast}% ・ 彩度 ${saturate}% に調整しました。`;
+  }
+
+  function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
+
+  autoEnhanceBtn.addEventListener('click', autoEnhance);
+  resetBtn.addEventListener('click', () => { resetControls(); render(); autoHint.textContent = '画像のヒストグラムから最適な明るさ・コントラストを推定します。'; });
+
+  downloadBtn.addEventListener('click', () => {
+    canvas.toBlob((blob) => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'lumen-edit.png';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }, 'image/png');
+  });
+
+  /* ---------- presets ---------- */
+  const presetGrid = document.getElementById('presetGrid');
+  PRESETS.forEach((p) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'preset-btn';
+    btn.textContent = p.name;
+    btn.addEventListener('click', () => {
+      if (!srcImage) return;
+      sliders.brightness.value = p.v.brightness;
+      sliders.contrast.value = p.v.contrast;
+      sliders.saturate.value = p.v.saturate;
+      sliders.hue.value = p.v.hue;
+      render();
+    });
+    presetGrid.appendChild(btn);
+  });
+
+  /* ---------- input wiring ---------- */
+  dropzone.addEventListener('click', () => fileInput.click());
+  document.getElementById('changeImageBtn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => loadImage(e.target.files[0]));
+
+  ['dragenter', 'dragover'].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('drag'); })
+  );
+  ['dragleave', 'drop'].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); })
+  );
+  dropzone.addEventListener('drop', (e) => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    loadImage(file);
+  });
+
+})();
+</script>
+</body>
+</html>
