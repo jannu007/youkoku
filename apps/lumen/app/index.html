@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lumen — AI画像編集 | Youkoku Records</title>
+<title>Lumen — AI画像編集 | AI Records</title>
 <meta name="description" content="AIによる自動補正とスタイルプリセットで写真を仕上げる画像編集アプリ">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2290%22>◎</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -144,6 +144,17 @@ window.YOUKOKU_BG_THEMES = [
     <p>写真を読み込むと、ヒストグラムを解析してAIオートエンハンスが最適な補正値を提案します。データはこのブラウザだけで処理され、外部には送信されません。</p>
   </div>
 
+  <div class="card" style="margin-bottom:2.2rem;">
+    <h3>AI Prompt</h3>
+    <p class="hint">好きな文章を入力すると、その内容（緊張・穏やかのバランス）に応じたジェネラティブアートを自動生成します（AIイラスト生成ではなく、文章解析に基づく抽象アートです）。</p>
+    <textarea id="promptInput" rows="3" placeholder="例: 静かな夜の海辺で、星空を見上げる少女。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+    <div class="btn-row" style="margin-top:.7rem;">
+      <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
+      <button type="button" class="btn btn-primary" id="generateArtBtn"><span>✦ テキストから生成</span></button>
+    </div>
+    <p class="hint" id="generateArtStatus"></p>
+  </div>
+
   <div class="workspace">
     <div class="canvas-panel">
       <div class="dropzone" id="dropzone">
@@ -230,14 +241,7 @@ window.YOUKOKU_BG_THEMES = [
       </div>
 
       <div class="card">
-        <h3>Studio — AI Prompt</h3>
-        <p class="hint">好きな文章を入力すると、その内容（緊張・穏やかのバランス）に応じたジェネラティブアートを自動生成します（AIイラスト生成ではなく、文章解析に基づく抽象アートです）。</p>
-        <textarea id="promptInput" rows="3" placeholder="例: 静かな夜の海辺で、星空を見上げる少女。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
-        <div class="btn-row" style="margin-top:.7rem;">
-          <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
-          <button type="button" class="btn btn-primary" id="generateArtBtn"><span>✦ テキストから生成</span></button>
-        </div>
-        <p class="hint" id="generateArtStatus"></p>
+        <h3>Studio</h3>
         <p class="hint">この画像を、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
         <div class="btn-row">
           <button type="button" class="btn" id="sendToProjectBtn" disabled><span>→ Studioに送る</span></button>

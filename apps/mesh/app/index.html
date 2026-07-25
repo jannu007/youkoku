@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mesh — AI 3D作成 | Youkoku Records</title>
+<title>Mesh — AI 3D作成 | AI Records</title>
 <meta name="description" content="AIレイアウトとプリミティブ編集でシーンを組み立てる3D作成アプリ">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2290%22>◆</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -118,6 +118,17 @@ window.YOUKOKU_BG_THEMES = [
     <p>プリミティブを追加してシーンを組み立てます。ドラッグでカメラを回転、ホイールでズーム。処理はすべてこのブラウザ内（WebGL）で行われます。</p>
   </div>
 
+  <div class="card" style="margin-bottom:2.2rem;">
+    <h3>AI Prompt</h3>
+    <p class="hint">好きな文章を入力すると、その内容に応じたアートを生成し、明るさを高さに変換した立体地形（レリーフ）としてシーンに追加します（写真から本物の3Dモデルを復元するAIではなく、高さマップによる3D化です）。</p>
+    <textarea id="promptInput" rows="3" placeholder="例: そびえ立つ山々と深い谷。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+    <div class="btn-row" style="margin-top:.7rem;">
+      <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
+      <button type="button" class="btn btn-primary" id="imageToReliefBtn"><span>✦ テキストから3D化</span></button>
+    </div>
+    <p class="hint" id="imageToReliefStatus"></p>
+  </div>
+
   <div class="workspace">
     <div class="canvas-panel">
       <canvas id="glCanvas"></canvas>
@@ -161,23 +172,16 @@ window.YOUKOKU_BG_THEMES = [
         <button type="button" class="btn btn-primary" id="exportObjBtn"><span>↓ OBJ書き出す</span></button>
       </div>
       <p class="hint">書き出した.OBJファイルは Blender など標準的な3Dソフトで読み込めます。</p>
-    </div>
 
-    <div class="card">
-      <h3>Studio — AI Prompt</h3>
-      <p class="hint">好きな文章を入力すると、その内容に応じたアートを生成し、明るさを高さに変換した立体地形（レリーフ）としてシーンに追加します（写真から本物の3Dモデルを復元するAIではなく、高さマップによる3D化です）。</p>
-      <textarea id="promptInput" rows="3" placeholder="例: そびえ立つ山々と深い谷。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
-      <div class="btn-row" style="margin-top:.7rem;">
-        <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
-        <button type="button" class="btn btn-primary" id="imageToReliefBtn"><span>✦ テキストから3D化</span></button>
+      <div class="card">
+        <h3>Studio</h3>
+        <p class="hint">今のシーンのスナップショットを、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
+        <div class="btn-row">
+          <button type="button" class="btn" id="sendToProjectBtn"><span>→ Studioに送る</span></button>
+        </div>
+        <p class="hint" id="sendToProjectStatus"></p>
+        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;">Studioを開く →</a>
       </div>
-      <p class="hint" id="imageToReliefStatus"></p>
-      <p class="hint">今のシーンのスナップショットを、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
-      <div class="btn-row">
-        <button type="button" class="btn" id="sendToProjectBtn"><span>→ Studioに送る</span></button>
-      </div>
-      <p class="hint" id="sendToProjectStatus"></p>
-      <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;">Studioを開く →</a>
     </div>
   </div>
 </main>
@@ -849,7 +853,7 @@ window.YOUKOKU_BG_THEMES = [
   /* ================= OBJ export ================= */
   document.getElementById('exportObjBtn').addEventListener('click', () => {
     if (!scene.length) { alert('シーンにオブジェクトがありません。'); return; }
-    let out = '# Mesh (Youkoku Records) OBJ export\n';
+    let out = '# Mesh (AI Records) OBJ export\n';
     let vOffset = 0;
     scene.forEach((obj, oi) => {
       if (obj.type === 'relief') return;

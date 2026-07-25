@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Studio — 5つのアプリをつなぐ | Youkoku Records</title>
+<title>Studio — 5つのアプリをつなぐ | AI Records</title>
 <meta name="description" content="Lumen・Flux・Echo・Quill・Meshの作品を1本の動画に組み合わせて書き出すStudio。会員登録不要・完全無料・インストール不要。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2290%22>✦</text></svg>">
 <meta name="theme-color" content="#070c26">
@@ -111,7 +111,7 @@ window.YOUKOKU_BG_THEMES = [
 <script src="../shared/wav-encoder.js"></script>
 
 <header class="topbar">
-  <a href="../../index.html" class="back">← Youkoku Records</a>
+  <a href="../../index.html" class="back">← AI Records</a>
   <div class="applogo"><span class="dot"></span>Studio</div>
 </header>
 
@@ -319,7 +319,7 @@ window.YOUKOKU_BG_THEMES = [
 
     if (slots.text || (slots.image && appEnabled.image)) {
       const bgImg = (slots.image && appEnabled.image) ? await loadImage(slots.image.blob) : null;
-      const title = (slots.text && slots.text.json && slots.text.json.title) || 'Youkoku Records';
+      const title = (slots.text && slots.text.json && slots.text.json.title) || 'AI Records';
       const chapter = (slots.text && slots.text.json && slots.text.json.chapters && slots.text.json.chapters[0]) || { content: '' };
       segments.push({
         type: 'intro', duration: 6,

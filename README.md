@@ -1,4 +1,4 @@
-# Youkoku Records — 芸術系AI創作アプリ販売サイト
+# AI Records — 芸術系AI創作アプリ販売サイト
 
 画像・映像・音楽・小説・3Dの制作に特化したAI創作アプリを紹介・提供するための、完全無料で運用できるホームページです。
 [spacex.com](https://www.spacex.com/) を参考に、大胆なタイポグラフィと全画面セクション構成のダークなデザインにしています。
@@ -22,7 +22,7 @@
 
 ```
 .
-├── index.html                  # Youkoku Records ホームページ本体
+├── index.html                  # AI Records ホームページ本体
 ├── assets/
 │   ├── css/style.css           # スタイル（デザインの中心）
 │   └── js/main.js              # スクロール演出・ヒーローのパーティクル背景など

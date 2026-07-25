@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Echo — AI音楽編集 | Youkoku Records</title>
+<title>Echo — AI音楽編集 | AI Records</title>
 <meta name="description" content="AIマスタリングと波形編集で音源を仕上げる音楽編集アプリ">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2290%22>♪</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -114,6 +114,14 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 .btn-row{ display:flex; gap:.7rem; }
 .btn-row .btn{ width:auto; flex:1; }
 
+.timbre-row{ display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.7rem; }
+.timbre-btn{
+  flex:1; min-width:5.5rem; border:1px solid var(--line); background:var(--panel2); border-radius:10px;
+  padding:.55rem .5rem; font-size:.74rem; color:var(--ink-soft); text-align:center;
+  transition:border-color .25s var(--ease), color .25s var(--ease);
+}
+.timbre-btn:hover, .timbre-btn.active{ border-color:var(--cyan); color:var(--ink); }
+
 .hint{ font-size:.76rem; color:var(--ink-soft); margin-top:.6rem; line-height:1.7; }
 
 .result{ margin-top:1.4rem; display:none; }
@@ -144,6 +152,24 @@ window.YOUKOKU_BG_THEMES = [
   <div class="intro">
     <h1>音の輪郭を、整える。</h1>
     <p>音源を読み込んで波形を確認しながらトリム・フェード編集。AIマスタリングを有効にすると音圧と質感を自動で整えます。処理はすべてこのブラウザ内で行われます。</p>
+  </div>
+
+  <div class="card" style="margin-bottom:2.2rem;">
+    <h3>AI Prompt</h3>
+    <p class="hint">好きな文章を入力すると、その内容（緊張・穏やかのバランス）に応じて曲調とテンポが変わる楽曲を自動作曲します（AI生成ではなく、ルールベースの作曲エンジンです）。</p>
+    <textarea id="promptInput" rows="3" placeholder="例: 争いの絶えない戦場。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+    <div class="timbre-row">
+      <button type="button" class="timbre-btn active" id="timbrePad" data-timbre="pad">パッド</button>
+      <button type="button" class="timbre-btn" id="timbrePiano" data-timbre="piano">ピアノ</button>
+      <button type="button" class="timbre-btn" id="timbreGuitar" data-timbre="guitar">ギター</button>
+      <button type="button" class="timbre-btn" id="timbreSynth" data-timbre="synth">アナログシンセ</button>
+    </div>
+    <p class="hint">音色は実在の技術（多倍音の減衰・Karplus-Strong弦モデル・デチューンしたフィルター synth）で合成しています。サンプル音源は使用していません。</p>
+    <div class="btn-row" style="margin-top:.7rem;">
+      <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
+      <button type="button" class="btn btn-primary" id="autoComposeBtn"><span>✦ テキストから作曲</span></button>
+    </div>
+    <p class="hint" id="autoComposeStatus"></p>
   </div>
 
   <div class="workspace">
@@ -192,17 +218,6 @@ window.YOUKOKU_BG_THEMES = [
     </div>
 
     <div class="panel-side">
-      <div class="card">
-        <h3>Studio — AI Prompt</h3>
-        <p class="hint">好きな文章を入力すると、その内容（緊張・穏やかのバランス）に応じて曲調とテンポが変わる楽曲を自動作曲します（AI生成ではなく、ルールベースの作曲エンジンです）。</p>
-        <textarea id="promptInput" rows="3" placeholder="例: 争いの絶えない戦場。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
-        <div class="btn-row" style="margin-top:.7rem;">
-          <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
-          <button type="button" class="btn btn-primary" id="autoComposeBtn"><span>✦ テキストから作曲</span></button>
-        </div>
-        <p class="hint" id="autoComposeStatus"></p>
-      </div>
-
       <div class="card">
         <h3>AI Mastering</h3>
         <div class="toggle-row">
@@ -315,6 +330,14 @@ window.YOUKOKU_BG_THEMES = [
   const autoComposeStatus = document.getElementById('autoComposeStatus');
   const promptInput = document.getElementById('promptInput');
   const loadQuillTextBtn = document.getElementById('loadQuillTextBtn');
+
+  let selectedTimbre = 'pad';
+  document.querySelectorAll('.timbre-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedTimbre = btn.dataset.timbre;
+      document.querySelectorAll('.timbre-btn').forEach((b) => b.classList.toggle('active', b === btn));
+    });
+  });
   const remixBtn = document.getElementById('remixBtn');
   const remixSwitch = document.getElementById('remixSwitch');
   const remixHint = document.getElementById('remixHint');
@@ -472,7 +495,7 @@ window.YOUKOKU_BG_THEMES = [
     autoComposeStatus.textContent = '作曲しています…';
     try {
       const mood = window.YoukokuTextToArt.scoreText(text).mood;
-      const buf = await window.YoukokuMusic.generate({ mood, duration: 20 });
+      const buf = await window.YoukokuMusic.generate({ mood, duration: 20, timbre: selectedTimbre });
       originalBuffer = buf;
       reversedBuffer = null;
       remixBuffer = null;
