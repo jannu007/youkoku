@@ -20,6 +20,7 @@
 }
 *,*::before,*::after{ box-sizing:border-box; }
 body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.7; -webkit-font-smoothing:antialiased; }
+#bgCanvas{ position:fixed; inset:0; z-index:-2; width:100%; height:100%; pointer-events:none; }
 a{ color:inherit; text-decoration:none; }
 button{ font-family:inherit; cursor:pointer; color:inherit; }
 input, textarea{ font-family:inherit; }
@@ -107,6 +108,14 @@ main{ max-width:1180px; margin:0 auto; padding:2.6rem 5vw 5rem; }
 </head>
 <body>
 
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<script>
+window.YOUKOKU_BG_THEMES = [
+  { type: 'embers', colors: ['245,158,11','251,113,133'] },
+  { type: 'bokeh', colors: ['245,158,11','251,113,133'] },
+];
+</script>
+<script src="../../shared/detail-bg.js?v=1"></script>
 <script src="../../shared/project-store.js"></script>
 
 <header class="topbar">
