@@ -706,9 +706,10 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
     return clamp(playStartOffset + elapsed, trimIn, trimOut);
   }
 
-  function playFrom(pos) {
+  async function playFrom(pos) {
     const buf = activeBuffer();
     if (!buf) return;
+    if (audioCtx.state === 'suspended') { await audioCtx.resume(); }
     const speed = getSpeed();
     const source = audioCtx.createBufferSource();
     source.buffer = buf;
