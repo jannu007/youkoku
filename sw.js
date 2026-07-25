@@ -1,4 +1,4 @@
-const CACHE = 'prism-ai-v1';
+const CACHE = 'youkoku-v1';
 const ASSETS = ['./', './index.html', './assets/css/style.css', './assets/js/main.js', './manifest.json'];
 
 self.addEventListener('install', (e) => {

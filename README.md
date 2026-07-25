@@ -1,4 +1,4 @@
-# PRISM AI — 芸術系AI創作アプリ販売サイト
+# Youkoku — 芸術系AI創作アプリ販売サイト
 
 画像・映像・音楽の制作に特化したAI創作アプリを紹介・提供するための、完全無料で運用できるホームページです。
 [spacex.com](https://www.spacex.com/) を参考に、大胆なタイポグラフィと全画面セクション構成のダークなデザインにしています。
@@ -20,7 +20,7 @@
 
 ```
 .
-├── index.html                  # PRISM AI ホームページ本体
+├── index.html                  # Youkoku ホームページ本体
 ├── assets/
 │   ├── css/style.css           # スタイル（デザインの中心）
 │   └── js/main.js              # スクロール演出・ヒーローのパーティクル背景など
@@ -68,7 +68,7 @@ python3 -m http.server 8000
 - **掲載アプリ**: `index.html` の `<section class="apps">` 内、`.app-item` を複製して追加・編集
 - **配色**: `assets/css/style.css` 冒頭の `:root` 変数（`--violet` `--magenta` `--cyan` など）
 - **料金**: `<section class="pricing">` 内の `.pricing-card`
-- **問い合わせ先**: `index.html` 内の `mailto:hello@prism-ai.app` を実際のメールアドレスに変更
+- **問い合わせ先**: `index.html` 内の `mailto:hello@youkoku.app` を実際のメールアドレスに変更
 - **お知らせ**: `<section class="news">` 内の `<li class="news-item">` を編集
 
 ## ライセンス

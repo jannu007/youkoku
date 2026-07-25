@@ -1,7 +1,7 @@
 {
-  "name": "PRISM AI — 芸術系AI創作アプリ",
-  "short_name": "PRISM AI",
-  "description": "画像・映像・音楽の制作に特化したAI創作アプリ Lumen / Flux / Echo を無料で提供する PRISM AI の公式サイト",
+  "name": "Youkoku — 芸術系AI創作アプリ",
+  "short_name": "Youkoku",
+  "description": "画像・映像・音楽の制作に特化したAI創作アプリ Lumen / Flux / Echo を無料で提供する Youkoku の公式サイト",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
