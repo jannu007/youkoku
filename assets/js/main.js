@@ -104,7 +104,7 @@
 
     function drawStarfield() {
       const grad = bctx.createLinearGradient(0, 0, 0, bh);
-      grad.addColorStop(0, '#05050f'); grad.addColorStop(1, '#0a0a18');
+      grad.addColorStop(0, '#070c26'); grad.addColorStop(1, '#0b1338');
       bctx.fillStyle = grad; bctx.fillRect(0, 0, bw, bh);
 
       nebulae.forEach((n) => {
@@ -146,7 +146,7 @@
 
     function drawAurora() {
       const grad = bctx.createLinearGradient(0, 0, 0, bh);
-      grad.addColorStop(0, '#04060c'); grad.addColorStop(1, '#070912');
+      grad.addColorStop(0, '#060a20'); grad.addColorStop(1, '#0a1030');
       bctx.fillStyle = grad; bctx.fillRect(0, 0, bw, bh);
 
       bctx.globalCompositeOperation = 'lighter';
