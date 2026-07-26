@@ -191,20 +191,41 @@ window.YoukokuAIStyle = (() => {
      Lumen's non-destructive render() does) shouldn't see the canvas's own dimensions change
      out from under them. Returns a new canvas the caller can use as its next source image;
      it never reads from and writes to the same canvas in the same operation. */
+  /* the real-device debug dump showed canvas/content/style all at sane sizes (1200x800,
+     1200x800, 256x256) yet the old bundled tfjs inside @magenta/image@0.2.1 still requested
+     a fixed [6000x5120] texture — on a device reporting devicePixelRatio=3.5. That old
+     (~2018) WebGL backend is a known-era source of devicePixelRatio-related canvas texture
+     bugs, so as a targeted experiment: temporarily force devicePixelRatio to 1 for the
+     duration of the stylize() call (some environments allow redefining it; if not, this is
+     a harmless no-op) to see whether that's actually what's driving the oversized request. */
+  function withForcedDevicePixelRatio(fn) {
+    let restore = null;
+    try {
+      const original = window.devicePixelRatio;
+      if (original !== 1) {
+        Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
+        restore = () => Object.defineProperty(window, 'devicePixelRatio', { value: original, configurable: true });
+      }
+    } catch (e) { /* non-configurable in this browser — proceed without the override */ }
+    return fn().finally(() => { if (restore) restore(); });
+  }
+
   async function applyStyle(canvas, styleKey, strength) {
     if (!model) throw new Error('model-not-loaded');
     const styleImg = getStyleImage(styleKey);
     const content = downscaleForStylize(canvas);
     let imageData;
     try {
-      imageData = await model.stylize(content, styleImg);
+      imageData = await withForcedDevicePixelRatio(() => model.stylize(content, styleImg));
     } catch (e) {
       // diagnostic: the real-device failures reported a fixed [6000x5120] texture
       // request regardless of actual content size, which none of canvas/content/style
       // dimensions here should ever produce — surfacing all of them to find the mismatch.
+      const de = document.documentElement;
       const dims = `canvas=${canvas.width}x${canvas.height} content=${content.width}x${content.height} `
         + `style=${styleImg.width}x${styleImg.height} dpr=${window.devicePixelRatio} `
-        + `window=${window.innerWidth}x${window.innerHeight}`;
+        + `window=${window.innerWidth}x${window.innerHeight} `
+        + `doc=${de.scrollWidth}x${de.scrollHeight} body=${document.body.scrollWidth}x${document.body.scrollHeight}`;
       const msg = (e && e.message) || String(e);
       throw new Error(`${msg} [debug: ${dims}]`);
     }
