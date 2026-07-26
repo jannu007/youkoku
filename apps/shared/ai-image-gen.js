@@ -38,9 +38,20 @@ window.YoukokuAIImageGen = (() => {
   let ready = false;
   let loadingPromise = null;
 
-  /* ---------- capability detection ---------- */
+  /* ---------- capability detection ----------
+     Real-device testing crashed the whole tab (not a catchable JS error — the renderer
+     process itself got OOM-killed) while onnxruntime-web parsed the 1.7GB text encoder
+     into memory. Downloading it is cheap to make memory-safe; loading it as a model is
+     not — ORT needs the full file as a contiguous buffer to parse. navigator.deviceMemory
+     (Chromium-only, capped at 8 for privacy) is a rough but useful signal to decline
+     upfront on devices likely too memory-constrained, rather than downloading 2.4GB only
+     to crash the tab at the very end. */
+  const MIN_DEVICE_MEMORY_GB = 6;
   async function isSupported() {
     if (!('gpu' in navigator)) return { ok: false, reason: 'no-webgpu' };
+    if (typeof navigator.deviceMemory === 'number' && navigator.deviceMemory < MIN_DEVICE_MEMORY_GB) {
+      return { ok: false, reason: 'low-memory' };
+    }
     try {
       const adapter = await navigator.gpu.requestAdapter();
       if (!adapter) return { ok: false, reason: 'no-adapter' };

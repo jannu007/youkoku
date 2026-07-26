@@ -1094,7 +1094,7 @@ window.YOUKOKU_BG_THEMES = [
     if (!window.YoukokuAIImageGen) { aiGenStatus.textContent = t('common.browserUnsupported'); return; }
     const support = await window.YoukokuAIImageGen.isSupported();
     if (!support.ok) {
-      aiGenStatus.textContent = t('lumen.tool.aiGenUnsupported');
+      aiGenStatus.textContent = support.reason === 'low-memory' ? t('lumen.tool.aiGenLowMemory') : t('lumen.tool.aiGenUnsupported');
       return;
     }
     if (!aiGenModelsReady) {
