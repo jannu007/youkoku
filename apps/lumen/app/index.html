@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="../../shared/i18n-data.js"></script>
 <style>
 :root{
   --bg:#070c26; --panel:#0d1642; --panel2:#11204f; --ink:#f4f5fa; --ink-soft:#8d8fa3; --line:#2a3868;
@@ -120,7 +121,7 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 .parallax-controls{ margin-top:1.2rem; max-width:320px; }
 </style>
 </head>
-<body>
+<body data-i18n-doctitle="lumen.tool.docTitle">
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 <script>
@@ -134,23 +135,23 @@ window.YOUKOKU_BG_THEMES = [
 <script src="../../shared/text-to-art.js"></script>
 
 <header class="topbar">
-  <a href="../index.html" class="back">← Lumen について</a>
+  <a href="../index.html" class="back" data-i18n="lumen.backToDetail">← Lumen について</a>
   <div class="applogo"><span class="dot"></span>Lumen</div>
 </header>
 
 <main>
   <div class="intro">
-    <h1>光と色を、思いのままに。</h1>
-    <p>写真を読み込むと、ヒストグラムを解析してAIオートエンハンスが最適な補正値を提案します。データはこのブラウザだけで処理され、外部には送信されません。</p>
+    <h1 data-i18n="lumen.tool.h1">光と色を、思いのままに。</h1>
+    <p data-i18n="lumen.tool.p">写真を読み込むと、ヒストグラムを解析してAIオートエンハンスが最適な補正値を提案します。データはこのブラウザだけで処理され、外部には送信されません。</p>
   </div>
 
   <div class="card" style="margin-bottom:2.2rem;">
     <h3>AI Prompt</h3>
-    <p class="hint">好きな文章を入力すると、その内容（緊張・穏やかのバランス）に応じたジェネラティブアートを自動生成します（AIイラスト生成ではなく、文章解析に基づく抽象アートです）。</p>
-    <textarea id="promptInput" rows="3" placeholder="例: 静かな夜の海辺で、星空を見上げる少女。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+    <p class="hint" data-i18n="lumen.tool.aiPromptHint">好きな文章を入力すると、その内容（緊張・穏やかのバランス）に応じたジェネラティブアートを自動生成します（AIイラスト生成ではなく、文章解析に基づく抽象アートです）。</p>
+    <textarea id="promptInput" rows="3" placeholder="例: 静かな夜の海辺で、星空を見上げる少女。" data-i18n-placeholder="lumen.tool.promptPlaceholder" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
     <div class="btn-row" style="margin-top:.7rem;">
-      <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
-      <button type="button" class="btn btn-primary" id="generateArtBtn"><span>✦ テキストから生成</span></button>
+      <button type="button" class="btn" id="loadQuillTextBtn"><span data-i18n="common.loadQuillText">Quillの文章を読み込む</span></button>
+      <button type="button" class="btn btn-primary" id="generateArtBtn"><span data-i18n="lumen.tool.generateArtBtn">✦ テキストから生成</span></button>
     </div>
     <p class="hint" id="generateArtStatus"></p>
   </div>
@@ -159,13 +160,13 @@ window.YOUKOKU_BG_THEMES = [
     <div class="canvas-panel">
       <div class="dropzone" id="dropzone">
         <div class="dropzone-icon">◎</div>
-        <h2>画像をドラッグ&ドロップ</h2>
-        <p>または <span class="browse">クリックして選択</span>（JPEG / PNG / WebP）</p>
+        <h2 data-i18n="lumen.tool.dropzoneTitle">画像をドラッグ&ドロップ</h2>
+        <p><span data-i18n="lumen.tool.dropzoneOr">または </span><span class="browse" data-i18n="lumen.tool.dropzoneBrowse">クリックして選択</span><span data-i18n="lumen.tool.dropzoneTypes">（JPEG / PNG / WebP）</span></p>
       </div>
       <div id="canvasWrap">
         <canvas id="previewCanvas"></canvas>
         <p style="text-align:center;color:var(--ink-soft);font-size:.76rem;margin:.9rem 0 0;">
-          <button type="button" id="changeImageBtn" style="background:none;border:none;color:var(--violet);text-decoration:underline;text-underline-offset:.2em;cursor:pointer;font-size:inherit;">別の画像を選ぶ</button>
+          <button type="button" id="changeImageBtn" data-i18n="lumen.tool.changeImageBtn" style="background:none;border:none;color:var(--violet);text-decoration:underline;text-underline-offset:.2em;cursor:pointer;font-size:inherit;">別の画像を選ぶ</button>
         </p>
       </div>
       <input type="file" id="fileInput" accept="image/*" hidden>
@@ -174,26 +175,26 @@ window.YOUKOKU_BG_THEMES = [
     <div class="panel-side">
       <div class="card">
         <h3>AI Auto Enhance</h3>
-        <button type="button" class="btn btn-primary" id="autoEnhanceBtn" disabled><span>✦ 自動で補正する</span></button>
-        <p class="hint" id="autoHint">画像のヒストグラムから最適な明るさ・コントラストを推定します。</p>
+        <button type="button" class="btn btn-primary" id="autoEnhanceBtn" disabled><span data-i18n="lumen.tool.autoEnhanceBtn">✦ 自動で補正する</span></button>
+        <p class="hint" id="autoHint" data-i18n="lumen.tool.autoHintDefault">画像のヒストグラムから最適な明るさ・コントラストを推定します。</p>
       </div>
 
       <div class="card">
         <h3>Adjust</h3>
         <div class="slider-row">
-          <label>明るさ <span id="valBrightness">100%</span></label>
+          <label><span data-i18n="common.brightness">明るさ</span> <span id="valBrightness">100%</span></label>
           <input type="range" id="rBrightness" min="40" max="180" value="100">
         </div>
         <div class="slider-row">
-          <label>コントラスト <span id="valContrast">100%</span></label>
+          <label><span data-i18n="common.contrast">コントラスト</span> <span id="valContrast">100%</span></label>
           <input type="range" id="rContrast" min="40" max="180" value="100">
         </div>
         <div class="slider-row">
-          <label>彩度 <span id="valSaturate">100%</span></label>
+          <label><span data-i18n="common.saturate">彩度</span> <span id="valSaturate">100%</span></label>
           <input type="range" id="rSaturate" min="0" max="220" value="100">
         </div>
         <div class="slider-row">
-          <label>色相 <span id="valHue">0°</span></label>
+          <label><span data-i18n="common.hue">色相</span> <span id="valHue">0°</span></label>
           <input type="range" id="rHue" min="-180" max="180" value="0">
         </div>
       </div>
@@ -201,31 +202,31 @@ window.YOUKOKU_BG_THEMES = [
       <div class="card">
         <h3>Effects</h3>
         <div class="slider-row">
-          <label>ぼかし <span id="valBlur">0px</span></label>
+          <label><span data-i18n="lumen.tool.blur">ぼかし</span> <span id="valBlur">0px</span></label>
           <input type="range" id="rBlur" min="0" max="20" value="0">
         </div>
         <div class="slider-row">
-          <label>ビネット <span id="valVignette">0%</span></label>
+          <label><span data-i18n="common.vignette">ビネット</span> <span id="valVignette">0%</span></label>
           <input type="range" id="rVignette" min="0" max="100" value="0">
         </div>
         <div class="slider-row">
-          <label>グレイン <span id="valGrain">0%</span></label>
+          <label><span data-i18n="common.grain">グレイン</span> <span id="valGrain">0%</span></label>
           <input type="range" id="rGrain" min="0" max="100" value="0">
         </div>
         <div class="slider-row">
-          <label>色収差 <span id="valChroma">0</span></label>
+          <label><span data-i18n="lumen.tool.chroma">色収差</span> <span id="valChroma">0</span></label>
           <input type="range" id="rChroma" min="0" max="20" value="0">
         </div>
         <div class="slider-row">
-          <label>モザイク <span id="valPixelate">0</span></label>
+          <label><span data-i18n="lumen.tool.pixelate">モザイク</span> <span id="valPixelate">0</span></label>
           <input type="range" id="rPixelate" min="0" max="40" value="0">
         </div>
         <div class="toggle-row">
-          <span>デュオトーン</span>
+          <span data-i18n="lumen.tool.duotone">デュオトーン</span>
           <button type="button" class="switch" id="duotoneSwitch" aria-pressed="false"></button>
         </div>
         <div class="toggle-row">
-          <span>スケッチ</span>
+          <span data-i18n="lumen.tool.sketch">スケッチ</span>
           <button type="button" class="switch" id="sketchSwitch" aria-pressed="false"></button>
         </div>
       </div>
@@ -236,18 +237,18 @@ window.YOUKOKU_BG_THEMES = [
       </div>
 
       <div class="btn-row">
-        <button type="button" class="btn" id="resetBtn" disabled><span>リセット</span></button>
-        <button type="button" class="btn btn-primary" id="downloadBtn" disabled><span>↓ 書き出す</span></button>
+        <button type="button" class="btn" id="resetBtn" disabled><span data-i18n="common.reset">リセット</span></button>
+        <button type="button" class="btn btn-primary" id="downloadBtn" disabled><span data-i18n="lumen.tool.downloadBtn">↓ 書き出す</span></button>
       </div>
 
       <div class="card">
         <h3>Studio</h3>
-        <p class="hint">この画像を、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
+        <p class="hint" data-i18n="lumen.tool.studioHint">この画像を、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
         <div class="btn-row">
-          <button type="button" class="btn" id="sendToProjectBtn" disabled><span>→ Studioに送る</span></button>
+          <button type="button" class="btn" id="sendToProjectBtn" disabled><span data-i18n="common.sendToStudio">→ Studioに送る</span></button>
         </div>
         <p class="hint" id="sendToProjectStatus"></p>
-        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;">Studioを開く →</a>
+        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;" data-i18n="common.openStudio">Studioを開く →</a>
       </div>
     </div>
   </div>
@@ -255,13 +256,13 @@ window.YOUKOKU_BG_THEMES = [
   <div class="parallax-section" id="parallaxSection">
     <div class="parallax-card">
       <h3>3D Parallax Preview</h3>
-      <p class="hint">画像から疑似的な奥行きマップを推定し、マウスの動きに合わせて視点が動くような3D風プレビューを生成します。一般的な画像編集アプリにはない体験です。</p>
+      <p class="hint" data-i18n="lumen.tool.parallaxHint">画像から疑似的な奥行きマップを推定し、マウスの動きに合わせて視点が動くような3D風プレビューを生成します。一般的な画像編集アプリにはない体験です。</p>
       <div class="parallax-wrap" id="parallaxWrap">
         <canvas id="parallaxCanvas"></canvas>
       </div>
       <div class="parallax-controls">
         <div class="slider-row">
-          <label>奥行きの強さ <span id="valParallax">18px</span></label>
+          <label><span data-i18n="lumen.tool.parallaxDepthLabel">奥行きの強さ</span> <span id="valParallax">18px</span></label>
           <input type="range" id="rParallax" min="0" max="50" value="18">
         </div>
       </div>
@@ -269,10 +270,12 @@ window.YOUKOKU_BG_THEMES = [
   </div>
 </main>
 
+<script src="../../shared/i18n.js"></script>
 <script>
 (() => {
   'use strict';
 
+  const t = (key, vars) => window.YoukokuI18n.t(key, vars);
   const dropzone = document.getElementById('dropzone');
   const canvasWrap = document.getElementById('canvasWrap');
   const canvas = document.getElementById('previewCanvas');
@@ -720,13 +723,13 @@ window.YOUKOKU_BG_THEMES = [
     sliders.saturate.value = saturate;
     sliders.hue.value = 0;
     render();
-    autoHint.textContent = `解析結果: 明るさ ${brightness}% ・ コントラスト ${contrast}% ・ 彩度 ${saturate}% に調整しました。`;
+    autoHint.textContent = t('lumen.tool.autoHintResult', { brightness, contrast, saturate });
   }
 
   function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
 
   autoEnhanceBtn.addEventListener('click', autoEnhance);
-  resetBtn.addEventListener('click', () => { resetControls(); render(); autoHint.textContent = '画像のヒストグラムから最適な明るさ・コントラストを推定します。'; });
+  resetBtn.addEventListener('click', () => { resetControls(); render(); autoHint.textContent = t('lumen.tool.autoHintDefault'); });
 
   downloadBtn.addEventListener('click', () => {
     canvas.toBlob((blob) => {
@@ -739,22 +742,22 @@ window.YOUKOKU_BG_THEMES = [
   });
 
   loadQuillTextBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject) { generateArtStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuProject) { generateArtStatus.textContent = t('common.browserUnsupported'); return; }
     const textSlot = await window.YoukokuProject.getSlot('text');
     if (!textSlot || !textSlot.json) {
-      generateArtStatus.textContent = 'Quillにまだ何も送信されていません。';
+      generateArtStatus.textContent = t('common.quillNotSentYet');
       return;
     }
     const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
     promptInput.value = fullText;
-    generateArtStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」を読み込みました。`;
+    generateArtStatus.textContent = t('common.loadedQuillTitle', { title: textSlot.json.title || t('studio.untitledStory') });
   });
 
   generateArtBtn.addEventListener('click', () => {
-    if (!window.YoukokuTextToArt) { generateArtStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuTextToArt) { generateArtStatus.textContent = t('common.browserUnsupported'); return; }
     const text = promptInput.value.trim();
     if (!text) {
-      generateArtStatus.textContent = 'テキストを入力してください。';
+      generateArtStatus.textContent = t('common.enterTextErr');
       return;
     }
     const artCanvas = document.createElement('canvas');
@@ -773,17 +776,17 @@ window.YOUKOKU_BG_THEMES = [
     resetBtn.disabled = false;
     downloadBtn.disabled = false;
     sendToProjectBtn.disabled = false;
-    generateArtStatus.textContent = '✓ テキストからアートを生成しました。';
+    generateArtStatus.textContent = t('lumen.tool.generateArtSuccess');
   });
 
   sendToProjectBtn.addEventListener('click', () => {
-    if (!window.YoukokuProject) { sendToProjectStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuProject) { sendToProjectStatus.textContent = t('common.browserUnsupported'); return; }
     canvas.toBlob(async (blob) => {
       try {
         await window.YoukokuProject.saveSlot('image', { blob, from: 'Lumen' });
-        sendToProjectStatus.textContent = '✓ Studioに送信しました。';
+        sendToProjectStatus.textContent = t('common.sentToStudio');
       } catch (err) {
-        sendToProjectStatus.textContent = '送信に失敗しました: ' + err.message;
+        sendToProjectStatus.textContent = t('common.sendFailedPrefix') + err.message;
       }
     }, 'image/png');
   });

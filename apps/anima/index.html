@@ -13,8 +13,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../shared/prism-detail.css?v=2">
+<script src="../shared/i18n-data.js"></script>
 </head>
-<body>
+<body data-i18n-doctitle="anima.docTitle">
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 <script>
@@ -35,16 +36,16 @@ window.YOUKOKU_BG_THEMES = [
     <div class="hero-text">
       <span class="work-tag"><span style="background:#f97316"></span>AI Animation</span>
       <h1>Anima</h1>
-      <p class="tagline">一枚一枚が積み重なり、動きになる。</p>
-      <p class="desc">
+      <p class="tagline" data-i18n="anima.tagline">一枚一枚が積み重なり、動きになる。</p>
+      <p class="desc" data-i18n="anima.desc">
         コマ（フレーム）を1枚ずつ描いてつなぐアニメーション作成アプリ。前のコマを半透明に重ねて表示する
         「オニオンスキン」で、なぞりながら自然な動きを描けます。テキストから複数フレームを一括生成する
         AI Promptも搭載。書き上がったアニメーションはWebM動画として書き出せます。処理はすべてブラウザ内で完結します。
       </p>
       <div class="cta-row">
-        <button type="button" class="btn btn-primary install-btn"><span class="btn-label">インストール</span></button>
-        <span class="price-note">¥0 ・ 会員登録不要 ・ ホーム画面に追加できます</span>
-        <a href="app/" class="open-link">ブラウザで直接開く →</a>
+        <button type="button" class="btn btn-primary install-btn"><span class="btn-label" data-i18n="common.install">インストール</span></button>
+        <span class="price-note" data-i18n="common.priceNote">¥0 ・ 会員登録不要 ・ ホーム画面に追加できます</span>
+        <a href="app/" class="open-link" data-i18n="common.openDirect">ブラウザで直接開く →</a>
       </div>
     </div>
     <div class="hero-visual">
@@ -60,28 +61,29 @@ window.YOUKOKU_BG_THEMES = [
   <section class="features">
     <div class="feature">
       <span class="feature-num">01</span>
-      <h3>オニオンスキン</h3>
-      <p>前のコマを半透明に重ねて表示しながら描けるので、動きの連続性を保ったまま次のコマを描き進められます。</p>
+      <h3 data-i18n="anima.feature1.title">オニオンスキン</h3>
+      <p data-i18n="anima.feature1.desc">前のコマを半透明に重ねて表示しながら描けるので、動きの連続性を保ったまま次のコマを描き進められます。</p>
     </div>
     <div class="feature">
       <span class="feature-num">02</span>
-      <h3>AI下絵の一括生成</h3>
-      <p>文章を入力すると、その内容のジェネラティブアートを土台に、ゆっくりとしたパン・ズームを加えた複数フレームを一括で生成します。</p>
+      <h3 data-i18n="anima.feature2.title">AI下絵の一括生成</h3>
+      <p data-i18n="anima.feature2.desc">文章を入力すると、その内容のジェネラティブアートを土台に、ゆっくりとしたパン・ズームを加えた複数フレームを一括で生成します。</p>
     </div>
     <div class="feature">
       <span class="feature-num">03</span>
-      <h3>再生プレビューとWebM書き出し</h3>
-      <p>フレームレートを指定して再生プレビューができ、完成したアニメーションはそのままWebM動画として書き出せます。</p>
+      <h3 data-i18n="anima.feature3.title">再生プレビューとWebM書き出し</h3>
+      <p data-i18n="anima.feature3.desc">フレームレートを指定して再生プレビューができ、完成したアニメーションはそのままWebM動画として書き出せます。</p>
     </div>
   </section>
 
   <section class="bottom-cta">
-    <h2>そのコマを、動かしてみよう。</h2>
-    <button type="button" class="btn btn-primary btn-lg install-btn"><span class="btn-label">インストール</span></button>
-    <a href="../../index.html#apps" class="back-link">← 他のアプリを見る</a>
+    <h2 data-i18n="anima.bottomCta">そのコマを、動かしてみよう。</h2>
+    <button type="button" class="btn btn-primary btn-lg install-btn"><span class="btn-label" data-i18n="common.install">インストール</span></button>
+    <a href="../../index.html#apps" class="back-link" data-i18n="common.backToOtherApps">← 他のアプリを見る</a>
   </section>
 </main>
 
+<script src="../shared/i18n.js"></script>
 <script src="../shared/install.js?v=1"></script>
 </body>
 </html>

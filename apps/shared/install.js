@@ -1,6 +1,8 @@
 (() => {
   'use strict';
 
+  const t = (key) => (window.YoukokuI18n ? window.YoukokuI18n.t(key) : key);
+
   if ('serviceWorker' in navigator) {
     // Register as early as possible (not gated behind window 'load') since
     // Chrome only evaluates installability once a service worker with a
@@ -26,10 +28,10 @@
     buttons().forEach((btn) => {
       btn.dataset.state = state;
       if (state === 'installed') {
-        setLabel(btn, 'インストール済み ✓');
+        setLabel(btn, t('common.installed'));
         btn.disabled = true;
       } else {
-        setLabel(btn, 'インストール');
+        setLabel(btn, t('common.install'));
         btn.disabled = false;
       }
     });
@@ -59,9 +61,9 @@
     overlay.innerHTML = `
       <div class="ios-sheet-backdrop"></div>
       <div class="ios-sheet">
-        <p class="ios-sheet-title">ホーム画面に追加する</p>
+        <p class="ios-sheet-title">${t('install.sheetTitle')}</p>
         ${bodyHtml}
-        <button type="button" class="ios-sheet-close">閉じる</button>
+        <button type="button" class="ios-sheet-close">${t('install.close')}</button>
       </div>
     `;
     document.body.appendChild(overlay);
@@ -73,9 +75,9 @@
   function showIOSSheet() {
     showSheet(`
       <ol>
-        <li>画面下の <strong>共有ボタン</strong>(□に↑)をタップ</li>
-        <li>メニューから <strong>「ホーム画面に追加」</strong> を選択</li>
-        <li>右上の <strong>「追加」</strong> をタップして完了</li>
+        <li>${t('install.iosStep1')}</li>
+        <li>${t('install.iosStep2')}</li>
+        <li>${t('install.iosStep3')}</li>
       </ol>
     `);
   }
@@ -83,22 +85,22 @@
   function showGenericSheet() {
     showSheet(`
       <ol>
-        <li>ブラウザ右上の <strong>メニュー(⋮)</strong> を開く</li>
-        <li><strong>「アプリをインストール」</strong> または <strong>「ホーム画面に追加」</strong> を選択</li>
-        <li>表示に従って追加すれば完了です</li>
+        <li>${t('install.genericStep1')}</li>
+        <li>${t('install.genericStep2')}</li>
+        <li>${t('install.genericStep3')}</li>
       </ol>
-      <p class="ios-sheet-note">メニューにその項目が見当たらない場合は、数秒待ってからボタンをもう一度押してみてください。</p>
+      <p class="ios-sheet-note">${t('install.genericNote')}</p>
     `);
   }
 
   function showInAppBrowserSheet() {
     showSheet(`
       <ol>
-        <li>右上の <strong>「…」または「⋮」メニュー</strong>を開く</li>
-        <li><strong>「他のブラウザで開く」「ブラウザで開く」「Chromeで開く」</strong>などを選択</li>
-        <li>開き直した後、もう一度このページで「インストール」を押してください</li>
+        <li>${t('install.inAppStep1')}</li>
+        <li>${t('install.inAppStep2')}</li>
+        <li>${t('install.inAppStep3')}</li>
       </ol>
-      <p class="ios-sheet-note">LINEやInstagramなどアプリ内のブラウザでは、仕組み上インストールができません。Chromeなど通常のブラウザで開く必要があります。</p>
+      <p class="ios-sheet-note">${t('install.inAppNote')}</p>
     `);
   }
 
@@ -136,7 +138,7 @@
       // so a real user click reliably gets the native install dialog.
       const originalLabel = btn.textContent;
       btn.disabled = true;
-      setLabel(btn, '準備中…');
+      setLabel(btn, t('common.installPreparing'));
       await waitForPrompt(3000);
       btn.disabled = false;
       setLabel(btn, originalLabel);
@@ -157,4 +159,9 @@
   });
 
   if (isStandalone()) setButtonsState('installed');
+
+  document.addEventListener('youkoku-lang-change', () => {
+    const btn = buttons()[0];
+    setButtonsState(btn && btn.dataset.state === 'installed' ? 'installed' : 'idle');
+  });
 })();

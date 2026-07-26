@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="../../shared/i18n-data.js"></script>
 <style>
 :root{
   --bg:#070c26; --panel:#0d1642; --panel2:#11204f; --ink:#f4f5fa; --ink-soft:#8d8fa3; --line:#2a3868;
@@ -93,7 +94,7 @@ input[type="color"]{ width:100%; height:2.4rem; border:1px solid var(--line); bo
 .hint{ font-size:.76rem; color:var(--ink-soft); margin-top:.6rem; line-height:1.7; }
 </style>
 </head>
-<body>
+<body data-i18n-doctitle="mesh.tool.docTitle">
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 <script>
@@ -108,23 +109,23 @@ window.YOUKOKU_BG_THEMES = [
 <script src="../../shared/text-to-art.js"></script>
 
 <header class="topbar">
-  <a href="../index.html" class="back">← Mesh について</a>
+  <a href="../index.html" class="back" data-i18n="mesh.backToDetail">← Mesh について</a>
   <div class="applogo"><span class="dot"></span>Mesh</div>
 </header>
 
 <main>
   <div class="intro">
-    <h1>形を、置いていく。</h1>
-    <p>プリミティブを追加してシーンを組み立てます。ドラッグでカメラを回転、ホイールでズーム。処理はすべてこのブラウザ内（WebGL）で行われます。</p>
+    <h1 data-i18n="mesh.tool.h1">形を、置いていく。</h1>
+    <p data-i18n="mesh.tool.p">プリミティブを追加してシーンを組み立てます。ドラッグでカメラを回転、ホイールでズーム。処理はすべてこのブラウザ内（WebGL）で行われます。</p>
   </div>
 
   <div class="card" style="margin-bottom:2.2rem;">
     <h3>AI Prompt</h3>
-    <p class="hint">好きな文章を入力すると、その内容に応じたアートを生成し、明るさを高さに変換した立体地形（レリーフ）としてシーンに追加します（写真から本物の3Dモデルを復元するAIではなく、高さマップによる3D化です）。</p>
-    <textarea id="promptInput" rows="3" placeholder="例: そびえ立つ山々と深い谷。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+    <p class="hint" data-i18n="mesh.tool.aiPromptHint">好きな文章を入力すると、その内容に応じたアートを生成し、明るさを高さに変換した立体地形（レリーフ）としてシーンに追加します（写真から本物の3Dモデルを復元するAIではなく、高さマップによる3D化です）。</p>
+    <textarea id="promptInput" rows="3" placeholder="例: そびえ立つ山々と深い谷。" data-i18n-placeholder="mesh.tool.promptPlaceholder" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
     <div class="btn-row" style="margin-top:.7rem;">
-      <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
-      <button type="button" class="btn btn-primary" id="imageToReliefBtn"><span>✦ テキストから3D化</span></button>
+      <button type="button" class="btn" id="loadQuillTextBtn"><span data-i18n="common.loadQuillText">Quillの文章を読み込む</span></button>
+      <button type="button" class="btn btn-primary" id="imageToReliefBtn"><span data-i18n="mesh.tool.generateBtn">✦ テキストから3D化</span></button>
     </div>
     <p class="hint" id="imageToReliefStatus"></p>
   </div>
@@ -132,12 +133,12 @@ window.YOUKOKU_BG_THEMES = [
   <div class="workspace">
     <div class="canvas-panel">
       <canvas id="glCanvas"></canvas>
-      <span class="canvas-hint">ドラッグ: 回転 ・ ホイール: ズーム</span>
+      <span class="canvas-hint" data-i18n="mesh.tool.canvasHint">ドラッグ: 回転 ・ ホイール: ズーム</span>
       <div class="add-row">
-        <button type="button" class="add-btn" data-type="cube">＋ 立方体</button>
-        <button type="button" class="add-btn" data-type="sphere">＋ 球</button>
-        <button type="button" class="add-btn" data-type="cone">＋ 円錐</button>
-        <button type="button" class="add-btn" data-type="cylinder">＋ 円柱</button>
+        <button type="button" class="add-btn" data-type="cube" data-i18n="mesh.tool.addCube">＋ 立方体</button>
+        <button type="button" class="add-btn" data-type="sphere" data-i18n="mesh.tool.addSphere">＋ 球</button>
+        <button type="button" class="add-btn" data-type="cone" data-i18n="mesh.tool.addCone">＋ 円錐</button>
+        <button type="button" class="add-btn" data-type="cylinder" data-i18n="mesh.tool.addCylinder">＋ 円柱</button>
       </div>
     </div>
 
@@ -146,49 +147,53 @@ window.YOUKOKU_BG_THEMES = [
         <h3>Scene</h3>
         <div class="scene-list" id="sceneList"></div>
         <div class="btn-row">
-          <button type="button" class="btn btn-primary" id="autoLayoutBtn"><span>✦ AIレイアウト</span></button>
-          <button type="button" class="btn" id="gravityDropBtn"><span>💥 落下レイアウト</span></button>
+          <button type="button" class="btn btn-primary" id="autoLayoutBtn"><span data-i18n="mesh.tool.autoLayoutBtn">✦ AIレイアウト</span></button>
+          <button type="button" class="btn" id="gravityDropBtn"><span data-i18n="mesh.tool.gravityDropBtn">💥 落下レイアウト</span></button>
         </div>
-        <p class="hint">オブジェクトを空中に飛ばし、物理シミュレーションで重力落下・バウンドさせて自然に配置します。一般的な3D入門ツールにはない機能です。</p>
+        <p class="hint" data-i18n="mesh.tool.gravityHint">オブジェクトを空中に飛ばし、物理シミュレーションで重力落下・バウンドさせて自然に配置します。一般的な3D入門ツールにはない機能です。</p>
       </div>
 
       <div class="card" id="transformCard">
         <h3>Transform</h3>
         <div id="transformControls">
-          <p class="disabled-note">オブジェクトを追加・選択すると編集できます。</p>
+          <p class="disabled-note" data-i18n="mesh.tool.noSelectionHint">オブジェクトを追加・選択すると編集できます。</p>
         </div>
       </div>
 
       <div class="card">
         <h3>Scene Settings</h3>
         <div class="slider-row">
-          <label>明るさ <span id="valAmbient">45%</span></label>
+          <label><span data-i18n="common.brightness">明るさ</span> <span id="valAmbient">45%</span></label>
           <input type="range" id="rAmbient" min="10" max="90" value="45">
         </div>
       </div>
 
       <div class="btn-row">
-        <button type="button" class="btn" id="clearSceneBtn"><span>クリア</span></button>
-        <button type="button" class="btn btn-primary" id="exportObjBtn"><span>↓ OBJ書き出す</span></button>
+        <button type="button" class="btn" id="clearSceneBtn"><span data-i18n="common.clear">クリア</span></button>
+        <button type="button" class="btn btn-primary" id="exportObjBtn"><span data-i18n="mesh.tool.exportBtn">↓ OBJ書き出す</span></button>
       </div>
-      <p class="hint">書き出した.OBJファイルは Blender など標準的な3Dソフトで読み込めます。</p>
+      <p class="hint" data-i18n="mesh.tool.exportHint">書き出した.OBJファイルは Blender など標準的な3Dソフトで読み込めます。</p>
 
       <div class="card">
         <h3>Studio</h3>
-        <p class="hint">今のシーンのスナップショットを、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
+        <p class="hint" data-i18n="mesh.tool.studioHint">今のシーンのスナップショットを、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
         <div class="btn-row">
-          <button type="button" class="btn" id="sendToProjectBtn"><span>→ Studioに送る</span></button>
+          <button type="button" class="btn" id="sendToProjectBtn"><span data-i18n="common.sendToStudio">→ Studioに送る</span></button>
         </div>
         <p class="hint" id="sendToProjectStatus"></p>
-        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;">Studioを開く →</a>
+        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;" data-i18n="common.openStudio">Studioを開く →</a>
       </div>
     </div>
   </div>
 </main>
 
+<script src="../../shared/i18n.js"></script>
+
 <script>
 (() => {
   'use strict';
+
+  const t = (key, vars) => window.YoukokuI18n.t(key, vars);
 
   /* ================= matrix / vector helpers ================= */
   function deg2rad(d) { return d * Math.PI / 180; }
@@ -582,19 +587,19 @@ window.YOUKOKU_BG_THEMES = [
     btn.addEventListener('click', () => addObject(btn.dataset.type));
   });
 
-  const TYPE_LABEL = { cube: '立方体', sphere: '球', cone: '円錐', cylinder: '円柱', relief: '立体アート' };
+  function typeLabel(type) { return t('mesh.tool.type.' + type); }
 
   function renderSceneList() {
     const list = document.getElementById('sceneList');
     list.innerHTML = '';
     if (!scene.length) {
-      list.innerHTML = '<p class="empty-note">オブジェクトを追加してみましょう。</p>';
+      list.innerHTML = `<p class="empty-note">${t('mesh.tool.emptySceneNote')}</p>`;
       return;
     }
     scene.forEach((obj) => {
       const row = document.createElement('div');
       row.className = 'scene-item' + (obj.id === selectedId ? ' active' : '');
-      row.innerHTML = `<span class="swatch" style="background:${obj.color}"></span><span class="label">${TYPE_LABEL[obj.type]} #${obj.id}</span><span class="del" data-del="${obj.id}">✕</span>`;
+      row.innerHTML = `<span class="swatch" style="background:${obj.color}"></span><span class="label">${typeLabel(obj.type)} #${obj.id}</span><span class="del" data-del="${obj.id}">✕</span>`;
       row.addEventListener('click', (e) => {
         if (e.target.closest('.del')) return;
         selectedId = obj.id;
@@ -612,18 +617,18 @@ window.YOUKOKU_BG_THEMES = [
     const container = document.getElementById('transformControls');
     const obj = selectedObject();
     if (!obj) {
-      container.innerHTML = '<p class="disabled-note">オブジェクトを追加・選択すると編集できます。</p>';
+      container.innerHTML = `<p class="disabled-note">${t('mesh.tool.noSelectionHint')}</p>`;
       return;
     }
     container.innerHTML = `
-      <div class="slider-row"><label>位置 X <span id="lblPX">${obj.position.x.toFixed(1)}</span></label><input type="range" id="ctlPX" min="-4" max="4" step="0.1" value="${obj.position.x}"></div>
-      <div class="slider-row"><label>位置 Y <span id="lblPY">${obj.position.y.toFixed(1)}</span></label><input type="range" id="ctlPY" min="-4" max="4" step="0.1" value="${obj.position.y}"></div>
-      <div class="slider-row"><label>位置 Z <span id="lblPZ">${obj.position.z.toFixed(1)}</span></label><input type="range" id="ctlPZ" min="-4" max="4" step="0.1" value="${obj.position.z}"></div>
-      <div class="slider-row"><label>回転 X <span id="lblRX">${obj.rotation.x}°</span></label><input type="range" id="ctlRX" min="0" max="360" value="${obj.rotation.x}"></div>
-      <div class="slider-row"><label>回転 Y <span id="lblRY">${obj.rotation.y}°</span></label><input type="range" id="ctlRY" min="0" max="360" value="${obj.rotation.y}"></div>
-      <div class="slider-row"><label>回転 Z <span id="lblRZ">${obj.rotation.z}°</span></label><input type="range" id="ctlRZ" min="0" max="360" value="${obj.rotation.z}"></div>
-      <div class="slider-row"><label>スケール <span id="lblSC">${obj.scale.toFixed(2)}</span></label><input type="range" id="ctlSC" min="0.2" max="3" step="0.05" value="${obj.scale}"></div>
-      <div class="slider-row"><label>カラー</label><input type="color" id="ctlColor" value="${obj.color}"></div>
+      <div class="slider-row"><label>${t('mesh.tool.posX')} <span id="lblPX">${obj.position.x.toFixed(1)}</span></label><input type="range" id="ctlPX" min="-4" max="4" step="0.1" value="${obj.position.x}"></div>
+      <div class="slider-row"><label>${t('mesh.tool.posY')} <span id="lblPY">${obj.position.y.toFixed(1)}</span></label><input type="range" id="ctlPY" min="-4" max="4" step="0.1" value="${obj.position.y}"></div>
+      <div class="slider-row"><label>${t('mesh.tool.posZ')} <span id="lblPZ">${obj.position.z.toFixed(1)}</span></label><input type="range" id="ctlPZ" min="-4" max="4" step="0.1" value="${obj.position.z}"></div>
+      <div class="slider-row"><label>${t('mesh.tool.rotX')} <span id="lblRX">${obj.rotation.x}°</span></label><input type="range" id="ctlRX" min="0" max="360" value="${obj.rotation.x}"></div>
+      <div class="slider-row"><label>${t('mesh.tool.rotY')} <span id="lblRY">${obj.rotation.y}°</span></label><input type="range" id="ctlRY" min="0" max="360" value="${obj.rotation.y}"></div>
+      <div class="slider-row"><label>${t('mesh.tool.rotZ')} <span id="lblRZ">${obj.rotation.z}°</span></label><input type="range" id="ctlRZ" min="0" max="360" value="${obj.rotation.z}"></div>
+      <div class="slider-row"><label>${t('mesh.tool.scaleLabel')} <span id="lblSC">${obj.scale.toFixed(2)}</span></label><input type="range" id="ctlSC" min="0.2" max="3" step="0.05" value="${obj.scale}"></div>
+      <div class="slider-row"><label>${t('mesh.tool.colorLabel')}</label><input type="color" id="ctlColor" value="${obj.color}"></div>
     `;
     const bind = (id, lbl, fmt, apply) => {
       const el = document.getElementById(id);
@@ -736,7 +741,7 @@ window.YOUKOKU_BG_THEMES = [
 
   document.getElementById('clearSceneBtn').addEventListener('click', () => {
     if (!scene.length) return;
-    if (!confirm('シーン内のすべてのオブジェクトを削除しますか？')) return;
+    if (!confirm(t('mesh.tool.confirmClearScene'))) return;
     scene.forEach(o => disposeRelief(o.id));
     scene = [];
     selectedId = null;
@@ -852,7 +857,7 @@ window.YOUKOKU_BG_THEMES = [
 
   /* ================= OBJ export ================= */
   document.getElementById('exportObjBtn').addEventListener('click', () => {
-    if (!scene.length) { alert('シーンにオブジェクトがありません。'); return; }
+    if (!scene.length) { alert(t('mesh.tool.noObjectsAlert')); return; }
     let out = '# Mesh (AI Records) OBJ export\n';
     let vOffset = 0;
     scene.forEach((obj, oi) => {
@@ -891,22 +896,22 @@ window.YOUKOKU_BG_THEMES = [
   const loadQuillTextBtn = document.getElementById('loadQuillTextBtn');
 
   loadQuillTextBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject) { imageToReliefStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuProject) { imageToReliefStatus.textContent = t('common.browserUnsupported'); return; }
     const textSlot = await window.YoukokuProject.getSlot('text');
     if (!textSlot || !textSlot.json) {
-      imageToReliefStatus.textContent = 'Quillにまだ何も送信されていません。';
+      imageToReliefStatus.textContent = t('common.quillNotSentYet');
       return;
     }
     const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
     promptInput.value = fullText;
-    imageToReliefStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」を読み込みました。`;
+    imageToReliefStatus.textContent = t('common.loadedQuillTitle', { title: textSlot.json.title || t('studio.untitledStory') });
   });
 
   imageToReliefBtn.addEventListener('click', () => {
-    if (!window.YoukokuTextToArt || !window.YoukokuRelief) { imageToReliefStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuTextToArt || !window.YoukokuRelief) { imageToReliefStatus.textContent = t('common.browserUnsupported'); return; }
     const text = promptInput.value.trim();
     if (!text) {
-      imageToReliefStatus.textContent = 'テキストを入力してください。';
+      imageToReliefStatus.textContent = t('common.enterTextErr');
       return;
     }
     const artCanvas = document.createElement('canvas');
@@ -914,15 +919,15 @@ window.YOUKOKU_BG_THEMES = [
     window.YoukokuTextToArt.generate(artCanvas, text);
     const imageData = artCanvas.getContext('2d').getImageData(0, 0, 200, 200);
     addReliefFromImageData(imageData);
-    imageToReliefStatus.textContent = '✓ テキストから3D化しました。';
+    imageToReliefStatus.textContent = t('mesh.tool.generateSuccess');
   });
 
   /* ================= send to Studio ================= */
   const sendToProjectBtn = document.getElementById('sendToProjectBtn');
   const sendToProjectStatus = document.getElementById('sendToProjectStatus');
   sendToProjectBtn.addEventListener('click', () => {
-    if (!window.YoukokuProject) { sendToProjectStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
-    if (!scene.length) { sendToProjectStatus.textContent = 'シーンにオブジェクトがありません。'; return; }
+    if (!window.YoukokuProject) { sendToProjectStatus.textContent = t('common.browserUnsupported'); return; }
+    if (!scene.length) { sendToProjectStatus.textContent = t('mesh.tool.noObjectsAlert'); return; }
     canvas.toBlob(async (blob) => {
       try {
         await window.YoukokuProject.saveSlot('model', {
@@ -930,16 +935,16 @@ window.YOUKOKU_BG_THEMES = [
           json: { objects: scene.map(o => ({ type: o.type, position: o.position, rotation: o.rotation, scale: o.scale, color: o.color })) },
           from: 'Mesh',
         });
-        sendToProjectStatus.textContent = '✓ Studioに送信しました。';
+        sendToProjectStatus.textContent = t('common.sentToStudio');
       } catch (err) {
-        sendToProjectStatus.textContent = '送信に失敗しました: ' + err.message;
+        sendToProjectStatus.textContent = t('common.sendFailedPrefix') + err.message;
       }
     }, 'image/png');
   });
 
   /* ================= init ================= */
   if (!glSupported) {
-    document.querySelector('.canvas-panel').innerHTML = '<p style="padding:2rem;color:var(--ink-soft);">お使いのブラウザはWebGLに対応していないようです。別のブラウザでお試しください。</p>';
+    document.querySelector('.canvas-panel').innerHTML = `<p style="padding:2rem;color:var(--ink-soft);">${t('mesh.tool.webglUnsupported')}</p>`;
   } else {
     addObject('cube');
     renderSceneList();
@@ -947,6 +952,11 @@ window.YOUKOKU_BG_THEMES = [
     resizeCanvas();
     requestAnimationFrame(drawScene);
   }
+
+  document.addEventListener('youkoku-lang-change', () => {
+    renderSceneList();
+    renderTransformControls();
+  });
 })();
 </script>
 </body>

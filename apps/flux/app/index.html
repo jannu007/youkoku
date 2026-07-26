@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="../../shared/i18n-data.js"></script>
 <style>
 :root{
   --bg:#070c26; --panel:#0d1642; --panel2:#11204f; --ink:#f4f5fa; --ink-soft:#8d8fa3; --line:#2a3868;
@@ -133,7 +134,7 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 .result video{ width:100%; border-radius:8px; background:#000; }
 </style>
 </head>
-<body>
+<body data-i18n-doctitle="flux.tool.docTitle">
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 <script>
@@ -148,23 +149,23 @@ window.YOUKOKU_BG_THEMES = [
 <script src="../../shared/text-to-art.js"></script>
 
 <header class="topbar">
-  <a href="../index.html" class="back">← Flux について</a>
+  <a href="../index.html" class="back" data-i18n="flux.backToDetail">← Flux について</a>
   <div class="applogo"><span class="dot"></span>Flux</div>
 </header>
 
 <main>
   <div class="intro">
-    <h1>動きを、切り取る。</h1>
-    <p>動画を読み込んでトリムし、AIカラー補正やシーン検出で仕上げます。処理はすべてこのブラウザ内で行われ、動画は外部に送信されません。</p>
+    <h1 data-i18n="flux.tool.h1">動きを、切り取る。</h1>
+    <p data-i18n="flux.tool.p">動画を読み込んでトリムし、AIカラー補正やシーン検出で仕上げます。処理はすべてこのブラウザ内で行われ、動画は外部に送信されません。</p>
   </div>
 
   <div class="card" style="margin-bottom:2.2rem;">
     <h3>AI Prompt</h3>
-    <p class="hint">好きな文章を入力すると、その内容に応じたアートを生成し、3Dレリーフをぐるぐる回転させた動画を自動生成して、この編集画面に読み込みます（AI動画生成ではなく、実際にWebGLで描画した3D回転動画です）。</p>
-    <textarea id="promptInput" rows="3" placeholder="例: 荒れ狂う嵐の海。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+    <p class="hint" data-i18n="flux.tool.aiPromptHint">好きな文章を入力すると、その内容に応じたアートを生成し、3Dレリーフをぐるぐる回転させた動画を自動生成して、この編集画面に読み込みます（AI動画生成ではなく、実際にWebGLで描画した3D回転動画です）。</p>
+    <textarea id="promptInput" rows="3" placeholder="例: 荒れ狂う嵐の海。" data-i18n-placeholder="flux.tool.promptPlaceholder" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
     <div class="btn-row" style="margin-top:.7rem;">
-      <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
-      <button type="button" class="btn btn-primary" id="generateVideoBtn"><span>✦ テキストから動画を生成</span></button>
+      <button type="button" class="btn" id="loadQuillTextBtn"><span data-i18n="common.loadQuillText">Quillの文章を読み込む</span></button>
+      <button type="button" class="btn btn-primary" id="generateVideoBtn"><span data-i18n="flux.tool.generateBtn">✦ テキストから動画を生成</span></button>
     </div>
     <p class="hint" id="generateVideoStatus"></p>
   </div>
@@ -173,8 +174,8 @@ window.YOUKOKU_BG_THEMES = [
     <div class="canvas-panel">
       <div class="dropzone" id="dropzone">
         <div class="dropzone-icon">▶</div>
-        <h2>動画をドラッグ&ドロップ</h2>
-        <p>または <span class="browse">クリックして選択</span>（MP4 / WebM / MOV）</p>
+        <h2 data-i18n="flux.tool.dropzoneTitle">動画をドラッグ&ドロップ</h2>
+        <p><span data-i18n="flux.tool.dropzoneOr">または</span> <span class="browse" data-i18n="flux.tool.dropzoneBrowse">クリックして選択</span><span data-i18n="flux.tool.dropzoneTypes">（MP4 / WebM / MOV）</span></p>
       </div>
       <div id="editorWrap">
         <div class="video-wrap" id="videoWrap">
@@ -193,31 +194,31 @@ window.YOUKOKU_BG_THEMES = [
         </div>
 
         <div class="timeline">
-          <div class="timeline-label"><span>トリム範囲</span><span id="sceneCount">シーン検出: 未実行</span></div>
+          <div class="timeline-label"><span data-i18n="flux.tool.trimRangeLabel">トリム範囲</span><span id="sceneCount" data-i18n="flux.tool.sceneDetectionIdle">シーン検出: 未実行</span></div>
           <div class="timeline-track" id="timelineTrack">
             <div class="timeline-fill" id="timelineFill"></div>
             <div class="timeline-playhead" id="timelinePlayhead"></div>
           </div>
           <div class="trim-inputs">
             <div class="trim-field">
-              <label>開始 (秒)</label>
+              <label data-i18n="flux.tool.trimStartLabel">開始 (秒)</label>
               <div class="trim-field-row">
                 <input type="number" id="trimInField" min="0" step="0.1" value="0">
-                <button type="button" class="mini-btn" id="setInBtn">現在位置</button>
+                <button type="button" class="mini-btn" id="setInBtn" data-i18n="flux.tool.setPositionBtn">現在位置</button>
               </div>
             </div>
             <div class="trim-field">
-              <label>終了 (秒)</label>
+              <label data-i18n="flux.tool.trimEndLabel">終了 (秒)</label>
               <div class="trim-field-row">
                 <input type="number" id="trimOutField" min="0" step="0.1" value="0">
-                <button type="button" class="mini-btn" id="setOutBtn">現在位置</button>
+                <button type="button" class="mini-btn" id="setOutBtn" data-i18n="flux.tool.setPositionBtn">現在位置</button>
               </div>
             </div>
           </div>
         </div>
 
         <p style="text-align:center;margin-top:1rem;">
-          <button type="button" id="changeVideoBtn" style="background:none;border:none;color:var(--magenta);text-decoration:underline;text-underline-offset:.2em;cursor:pointer;font-size:.76rem;">別の動画を選ぶ</button>
+          <button type="button" id="changeVideoBtn" style="background:none;border:none;color:var(--magenta);text-decoration:underline;text-underline-offset:.2em;cursor:pointer;font-size:.76rem;" data-i18n="flux.tool.changeVideoBtn">別の動画を選ぶ</button>
         </p>
       </div>
       <input type="file" id="fileInput" accept="video/*" hidden>
@@ -226,29 +227,29 @@ window.YOUKOKU_BG_THEMES = [
     <div class="panel-side">
       <div class="card">
         <h3>AI Tools</h3>
-        <button type="button" class="btn btn-primary" id="autoColorBtn" disabled><span>✦ AIカラー補正</span></button>
+        <button type="button" class="btn btn-primary" id="autoColorBtn" disabled><span data-i18n="flux.tool.autoColorBtn">✦ AIカラー補正</span></button>
         <div class="btn-row" style="margin-top:.7rem;">
-          <button type="button" class="btn" id="detectScenesBtn" disabled><span>シーン検出</span></button>
+          <button type="button" class="btn" id="detectScenesBtn" disabled><span data-i18n="flux.tool.detectScenesBtn">シーン検出</span></button>
         </div>
-        <p class="hint" id="aiHint">明るさ・コントラスト・彩度を自動解析し、見栄えの良いトーンに補正します。</p>
+        <p class="hint" id="aiHint" data-i18n="flux.tool.aiHintDefault">明るさ・コントラスト・彩度を自動解析し、見栄えの良いトーンに補正します。</p>
       </div>
 
       <div class="card">
         <h3>Color</h3>
         <div class="slider-row">
-          <label>明るさ <span id="valBrightness">100%</span></label>
+          <label><span data-i18n="common.brightness">明るさ</span> <span id="valBrightness">100%</span></label>
           <input type="range" id="rBrightness" min="40" max="180" value="100">
         </div>
         <div class="slider-row">
-          <label>コントラスト <span id="valContrast">100%</span></label>
+          <label><span data-i18n="common.contrast">コントラスト</span> <span id="valContrast">100%</span></label>
           <input type="range" id="rContrast" min="40" max="180" value="100">
         </div>
         <div class="slider-row">
-          <label>彩度 <span id="valSaturate">100%</span></label>
+          <label><span data-i18n="common.saturate">彩度</span> <span id="valSaturate">100%</span></label>
           <input type="range" id="rSaturate" min="0" max="220" value="100">
         </div>
         <div class="slider-row">
-          <label>再生速度 <span id="valSpeed">1.0x</span></label>
+          <label><span data-i18n="flux.tool.playbackSpeedLabel">再生速度</span> <span id="valSpeed">1.0x</span></label>
           <input type="range" id="rSpeed" min="50" max="200" value="100" step="5">
         </div>
       </div>
@@ -256,42 +257,42 @@ window.YOUKOKU_BG_THEMES = [
       <div class="card">
         <h3>Effects</h3>
         <div class="slider-row">
-          <label>ビネット <span id="valVignette">0%</span></label>
+          <label><span data-i18n="common.vignette">ビネット</span> <span id="valVignette">0%</span></label>
           <input type="range" id="rVignette" min="0" max="100" value="0">
         </div>
         <div class="slider-row">
-          <label>グレイン <span id="valGrain">0%</span></label>
+          <label><span data-i18n="common.grain">グレイン</span> <span id="valGrain">0%</span></label>
           <input type="range" id="rGrain" min="0" max="100" value="0">
         </div>
         <div class="slider-row">
-          <label>モーショントレイル <span id="valTrail">0%</span></label>
+          <label><span data-i18n="flux.tool.motionTrailLabel">モーショントレイル</span> <span id="valTrail">0%</span></label>
           <input type="range" id="rTrail" min="0" max="100" value="0">
         </div>
         <div class="toggle-row">
-          <span>デュオトーン</span>
+          <span data-i18n="flux.tool.duotoneLabel">デュオトーン</span>
           <button type="button" class="switch" id="duotoneSwitch" aria-pressed="false"></button>
         </div>
         <div class="toggle-row">
-          <span>グリッチ</span>
+          <span data-i18n="flux.tool.glitchLabel">グリッチ</span>
           <button type="button" class="switch" id="glitchSwitch" aria-pressed="false"></button>
         </div>
       </div>
 
       <div class="btn-row">
-        <button type="button" class="btn" id="resetBtn" disabled><span>リセット</span></button>
-        <button type="button" class="btn btn-primary" id="exportBtn" disabled><span>↓ 書き出す</span></button>
+        <button type="button" class="btn" id="resetBtn" disabled><span data-i18n="common.reset">リセット</span></button>
+        <button type="button" class="btn btn-primary" id="exportBtn" disabled><span data-i18n="flux.tool.exportBtn">↓ 書き出す</span></button>
       </div>
       <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
 
       <div class="result" id="resultBox">
-        <h3 style="font-family:var(--display);font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 .8rem;">書き出し結果</h3>
+        <h3 style="font-family:var(--display);font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 .8rem;" data-i18n="flux.tool.resultTitle">書き出し結果</h3>
         <video id="resultVideo" controls></video>
         <div class="btn-row" style="margin-top:.8rem;">
-          <a class="btn btn-primary" id="downloadLink" download="flux-edit.webm"><span>ダウンロード</span></a>
-          <button type="button" class="btn" id="sendToProjectBtn"><span>→ Studioに送る</span></button>
+          <a class="btn btn-primary" id="downloadLink" download="flux-edit.webm"><span data-i18n="common.download">ダウンロード</span></a>
+          <button type="button" class="btn" id="sendToProjectBtn"><span data-i18n="common.sendToStudio">→ Studioに送る</span></button>
         </div>
         <p class="hint" id="sendToProjectStatus"></p>
-        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;">Studioを開く →</a>
+        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;" data-i18n="common.openStudio">Studioを開く →</a>
       </div>
     </div>
   </div>
@@ -300,9 +301,12 @@ window.YOUKOKU_BG_THEMES = [
 <canvas id="exportCanvas" hidden></canvas>
 <canvas id="sampleCanvas" width="160" height="90" hidden></canvas>
 
+<script src="../../shared/i18n.js"></script>
 <script>
 (() => {
   'use strict';
+
+  const t = (key, vars) => window.YoukokuI18n.t(key, vars);
 
   const dropzone = document.getElementById('dropzone');
   const editorWrap = document.getElementById('editorWrap');
@@ -541,8 +545,8 @@ window.YOUKOKU_BG_THEMES = [
     updateTimeline();
     updateTimeLabel();
     [autoColorBtn, detectScenesBtn, resetBtn, exportBtn].forEach(b => b.disabled = false);
-    aiHint.textContent = '明るさ・コントラスト・彩度を自動解析し、見栄えの良いトーンに補正します。';
-    sceneCountLabel.textContent = 'シーン検出: 未実行';
+    aiHint.textContent = t('flux.tool.aiHintDefault');
+    sceneCountLabel.textContent = t('flux.tool.sceneDetectionIdle');
   });
 
   dropzone.addEventListener('click', () => fileInput.click());
@@ -554,26 +558,26 @@ window.YOUKOKU_BG_THEMES = [
 
   /* ---------- generate video from a text prompt (art -> 3D turntable) ---------- */
   loadQuillTextBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject) { generateVideoStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuProject) { generateVideoStatus.textContent = t('common.browserUnsupported'); return; }
     const textSlot = await window.YoukokuProject.getSlot('text');
     if (!textSlot || !textSlot.json) {
-      generateVideoStatus.textContent = 'Quillにまだ何も送信されていません。';
+      generateVideoStatus.textContent = t('common.quillNotSentYet');
       return;
     }
     const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
     promptInput.value = fullText;
-    generateVideoStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」を読み込みました。`;
+    generateVideoStatus.textContent = t('common.loadedQuillTitle', { title: textSlot.json.title || t('studio.untitledStory') });
   });
 
   generateVideoBtn.addEventListener('click', async () => {
-    if (!window.YoukokuTextToArt || !window.YoukokuRelief) { generateVideoStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuTextToArt || !window.YoukokuRelief) { generateVideoStatus.textContent = t('common.browserUnsupported'); return; }
     const text = promptInput.value.trim();
     if (!text) {
-      generateVideoStatus.textContent = 'テキストを入力してください。';
+      generateVideoStatus.textContent = t('common.enterTextErr');
       return;
     }
     generateVideoBtn.disabled = true;
-    generateVideoStatus.textContent = '3D動画を生成しています…';
+    generateVideoStatus.textContent = t('flux.tool.generatingVideo');
     try {
       const artCanvas = document.createElement('canvas');
       artCanvas.width = 200; artCanvas.height = 200;
@@ -581,9 +585,9 @@ window.YOUKOKU_BG_THEMES = [
       const imageData = artCanvas.getContext('2d').getImageData(0, 0, 200, 200);
       const blob = await window.YoukokuRelief.renderTurntable(imageData, { width: 960, height: 540, duration: 4, fps: 24 });
       loadFile(blob);
-      generateVideoStatus.textContent = '✓ テキストから動画を生成しました。';
+      generateVideoStatus.textContent = t('flux.tool.generateVideoSuccess');
     } catch (err) {
-      generateVideoStatus.textContent = '生成に失敗しました: ' + err.message;
+      generateVideoStatus.textContent = t('flux.tool.generateFailedPrefix') + err.message;
     } finally {
       generateVideoBtn.disabled = false;
     }
@@ -687,7 +691,7 @@ window.YOUKOKU_BG_THEMES = [
     sliders.contrast.value = contrast;
     sliders.saturate.value = saturate;
     applyLiveFilter();
-    aiHint.textContent = `現在フレームを解析: 明るさ ${brightness}% ・ コントラスト ${contrast}% ・ 彩度 ${saturate}% に補正しました。`;
+    aiHint.textContent = t('flux.tool.aiHintResult', { brightness, contrast, saturate });
   });
 
   /* ---------- AI scene detection ---------- */
@@ -705,7 +709,7 @@ window.YOUKOKU_BG_THEMES = [
     const wasPaused = video.paused;
     video.pause();
     detectScenesBtn.disabled = true;
-    detectScenesBtn.querySelector('span').textContent = '解析中…';
+    detectScenesBtn.querySelector('span').textContent = t('flux.tool.detectScenesAnalyzing');
 
     const N = 36;
     const sctx = sampleCanvas.getContext('2d');
@@ -731,9 +735,9 @@ window.YOUKOKU_BG_THEMES = [
 
     sceneMarkers = markers;
     renderSceneMarkers();
-    sceneCountLabel.textContent = `シーン検出: ${markers.length}件`;
+    sceneCountLabel.textContent = t('flux.tool.sceneDetectionResult', { n: markers.length });
     detectScenesBtn.disabled = false;
-    detectScenesBtn.querySelector('span').textContent = 'シーン検出';
+    detectScenesBtn.querySelector('span').textContent = t('flux.tool.detectScenesBtn');
     await seekAndWait(startTime);
     if (!wasPaused) video.play();
   });
@@ -745,7 +749,7 @@ window.YOUKOKU_BG_THEMES = [
       const el = document.createElement('div');
       el.className = 'scene-marker';
       el.style.left = ((t / duration) * 100) + '%';
-      el.title = `シーン変化: ${fmt(t)}`;
+      el.title = window.YoukokuI18n.t('flux.tool.sceneMarkerTooltip', { time: fmt(t) });
       el.addEventListener('click', (e) => { e.stopPropagation(); video.currentTime = t; });
       timelineTrack.appendChild(el);
     });
@@ -816,7 +820,7 @@ window.YOUKOKU_BG_THEMES = [
   /* ---------- export ---------- */
   exportBtn.addEventListener('click', async () => {
     if (!duration || typeof MediaRecorder === 'undefined') {
-      aiHint.textContent = 'このブラウザは書き出し機能に対応していません。';
+      aiHint.textContent = t('flux.tool.exportUnsupported');
       return;
     }
     exportBtn.disabled = true;
@@ -910,13 +914,13 @@ window.YOUKOKU_BG_THEMES = [
   });
 
   sendToProjectBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject) { sendToProjectStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuProject) { sendToProjectStatus.textContent = t('common.browserUnsupported'); return; }
     if (!lastExportBlob) return;
     try {
       await window.YoukokuProject.saveSlot('video', { blob: lastExportBlob, from: 'Flux' });
-      sendToProjectStatus.textContent = '✓ Studioに送信しました。';
+      sendToProjectStatus.textContent = t('common.sentToStudio');
     } catch (err) {
-      sendToProjectStatus.textContent = '送信に失敗しました: ' + err.message;
+      sendToProjectStatus.textContent = t('common.sendFailedPrefix') + err.message;
     }
   });
 

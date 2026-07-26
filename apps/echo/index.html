@@ -13,8 +13,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../shared/prism-detail.css?v=2">
+<script src="../shared/i18n-data.js"></script>
 </head>
-<body>
+<body data-i18n-doctitle="echo.docTitle">
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 <script>
@@ -35,15 +36,15 @@ window.YOUKOKU_BG_THEMES = [
     <div class="hero-text">
       <span class="work-tag"><span style="background:#22d3ee"></span>AI Music Editor</span>
       <h1>Echo</h1>
-      <p class="tagline">音の余白まで、AIが整える音楽編集。</p>
-      <p class="desc">
+      <p class="tagline" data-i18n="echo.tagline">音の余白まで、AIが整える音楽編集。</p>
+      <p class="desc" data-i18n="echo.desc">
         音源を読み込み、波形を見ながら自由にトリム・フェード編集。AIマスタリングを有効にすると、
         EQとコンプレッションのチェーンが自動で音圧・音色を整え、配信にそのまま使える仕上がりに近づけます。
       </p>
       <div class="cta-row">
-        <button type="button" class="btn btn-primary install-btn"><span class="btn-label">インストール</span></button>
-        <span class="price-note">¥0 ・ 会員登録不要 ・ ホーム画面に追加できます</span>
-        <a href="app/" class="open-link">ブラウザで直接開く →</a>
+        <button type="button" class="btn btn-primary install-btn"><span class="btn-label" data-i18n="common.install">インストール</span></button>
+        <span class="price-note" data-i18n="common.priceNote">¥0 ・ 会員登録不要 ・ ホーム画面に追加できます</span>
+        <a href="app/" class="open-link" data-i18n="common.openDirect">ブラウザで直接開く →</a>
       </div>
     </div>
     <div class="hero-visual">
@@ -59,28 +60,29 @@ window.YOUKOKU_BG_THEMES = [
   <section class="features">
     <div class="feature">
       <span class="feature-num">01</span>
-      <h3>AIマスタリング</h3>
-      <p>ハイパスフィルター・EQ・コンプレッションのチェーンを自動適用し、音圧と質感を整えます。</p>
+      <h3 data-i18n="echo.feature1.title">AIマスタリング</h3>
+      <p data-i18n="echo.feature1.desc">ハイパスフィルター・EQ・コンプレッションのチェーンを自動適用し、音圧と質感を整えます。</p>
     </div>
     <div class="feature">
       <span class="feature-num">02</span>
-      <h3>波形編集・トリム</h3>
-      <p>波形を見ながらドラッグでトリム範囲を指定。フェードイン/アウトも自由に調整できます。</p>
+      <h3 data-i18n="echo.feature2.title">波形編集・トリム</h3>
+      <p data-i18n="echo.feature2.desc">波形を見ながらドラッグでトリム範囲を指定。フェードイン/アウトも自由に調整できます。</p>
     </div>
     <div class="feature">
       <span class="feature-num">03</span>
-      <h3>音源は端末の外に出ません</h3>
-      <p>読み込み・編集・書き出しのすべてがブラウザ内（Web Audio API）で行われます。</p>
+      <h3 data-i18n="echo.feature3.title">音源は端末の外に出ません</h3>
+      <p data-i18n="echo.feature3.desc">読み込み・編集・書き出しのすべてがブラウザ内（Web Audio API）で行われます。</p>
     </div>
   </section>
 
   <section class="bottom-cta">
-    <h2>その音を、届けたい形に。</h2>
-    <button type="button" class="btn btn-primary btn-lg install-btn"><span class="btn-label">インストール</span></button>
-    <a href="../../index.html#apps" class="back-link">← 他のアプリを見る</a>
+    <h2 data-i18n="echo.bottomCta">その音を、届けたい形に。</h2>
+    <button type="button" class="btn btn-primary btn-lg install-btn"><span class="btn-label" data-i18n="common.install">インストール</span></button>
+    <a href="../../index.html#apps" class="back-link" data-i18n="common.backToOtherApps">← 他のアプリを見る</a>
   </section>
 </main>
 
+<script src="../shared/i18n.js"></script>
 <script src="../shared/install.js?v=1"></script>
 <script>
   (() => {

@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="../../shared/i18n-data.js"></script>
 <style>
 :root{
   --bg:#070c26; --panel:#0d1642; --panel2:#11204f; --ink:#f4f5fa; --ink-soft:#8d8fa3; --line:#2a3868;
@@ -93,7 +94,7 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 .switch.on::after{ transform:translateX(1.1rem); }
 </style>
 </head>
-<body>
+<body data-i18n-doctitle="fleur.tool.docTitle">
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 <script>
@@ -106,23 +107,23 @@ window.YOUKOKU_BG_THEMES = [
 <script src="../../shared/text-to-art.js"></script>
 
 <header class="topbar">
-  <a href="../index.html" class="back">← Fleur について</a>
+  <a href="../index.html" class="back" data-i18n="fleur.backToDetail">← Fleur について</a>
   <div class="applogo"><span class="dot"></span>Fleur</div>
 </header>
 
 <main>
   <div class="intro">
-    <h1>一筆が、花びらのように広がる。</h1>
-    <p>キャンバスに自由に描くだけでなく、万華鏡シンメトリーで線対称に描いたり、AI下絵から描き始めたりできます。データはこのブラウザだけで処理され、外部には送信されません。</p>
+    <h1 data-i18n="fleur.tool.h1">一筆が、花びらのように広がる。</h1>
+    <p data-i18n="fleur.tool.p">キャンバスに自由に描くだけでなく、万華鏡シンメトリーで線対称に描いたり、AI下絵から描き始めたりできます。データはこのブラウザだけで処理され、外部には送信されません。</p>
   </div>
 
   <div class="card" style="margin-bottom:2.2rem;">
     <h3>AI Prompt</h3>
-    <p class="hint">好きな文章を入力すると、その内容（緊張・穏やかのバランス）に応じたジェネラティブアートを下絵として自動生成します（AIイラスト生成ではなく、文章解析に基づく抽象アートです）。</p>
-    <textarea id="promptInput" rows="3" placeholder="例: 春の庭に咲く一輪の花。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+    <p class="hint" data-i18n="fleur.tool.aiPromptHint">好きな文章を入力すると、その内容（緊張・穏やかのバランス）に応じたジェネラティブアートを下絵として自動生成します（AIイラスト生成ではなく、文章解析に基づく抽象アートです）。</p>
+    <textarea id="promptInput" rows="3" placeholder="例: 春の庭に咲く一輪の花。" data-i18n-placeholder="fleur.tool.promptPlaceholder" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
     <div class="btn-row" style="margin-top:.7rem;">
-      <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
-      <button type="button" class="btn btn-primary" id="generateArtBtn"><span>✦ テキストから下絵を生成</span></button>
+      <button type="button" class="btn" id="loadQuillTextBtn"><span data-i18n="common.loadQuillText">Quillの文章を読み込む</span></button>
+      <button type="button" class="btn btn-primary" id="generateArtBtn"><span data-i18n="fleur.tool.generateArtBtn">✦ テキストから下絵を生成</span></button>
     </div>
     <p class="hint" id="generateArtStatus"></p>
   </div>
@@ -134,68 +135,70 @@ window.YOUKOKU_BG_THEMES = [
 
     <div class="panel-side">
       <div class="card">
-        <h3>Brush</h3>
+        <h3 data-i18n="fleur.tool.brushCardTitle">Brush</h3>
         <div class="color-row">
           <input type="color" id="colorPicker" value="#fb7185">
-          <span>ブラシの色</span>
+          <span data-i18n="fleur.tool.brushColorLabel">ブラシの色</span>
         </div>
         <div class="swatches" id="swatchRow"></div>
         <div class="slider-row">
-          <label>太さ <span id="valSize">10px</span></label>
+          <label><span data-i18n="fleur.tool.sizeLabel">太さ</span> <span id="valSize">10px</span></label>
           <input type="range" id="rSize" min="1" max="60" value="10">
         </div>
         <div class="slider-row">
-          <label>不透明度 <span id="valOpacity">100%</span></label>
+          <label><span data-i18n="fleur.tool.opacityLabel">不透明度</span> <span id="valOpacity">100%</span></label>
           <input type="range" id="rOpacity" min="5" max="100" value="100">
         </div>
         <div class="toggle-row">
-          <span>消しゴム</span>
+          <span data-i18n="fleur.tool.eraser">消しゴム</span>
           <button type="button" class="switch" id="eraserSwitch" aria-pressed="false"></button>
         </div>
       </div>
 
       <div class="card">
-        <h3>万華鏡シンメトリー</h3>
+        <h3 data-i18n="fleur.tool.symmetryCardTitle">万華鏡シンメトリー</h3>
         <div class="toggle-row">
-          <span>シンメトリーモード</span>
+          <span data-i18n="fleur.tool.symmetryToggle">シンメトリーモード</span>
           <button type="button" class="switch" id="symmetrySwitch" aria-pressed="false"></button>
         </div>
         <div class="slider-row">
-          <label>分割数 <span id="valFolds">6</span></label>
+          <label><span data-i18n="fleur.tool.foldsLabel">分割数</span> <span id="valFolds">6</span></label>
           <input type="range" id="rFolds" min="2" max="8" value="6">
         </div>
-        <p class="hint">オンにすると、一筆が中心を軸に線対称・回転対称で反射され、花や紋様のような模様が自動で広がります。</p>
+        <p class="hint" data-i18n="fleur.tool.symmetryHint">オンにすると、一筆が中心を軸に線対称・回転対称で反射され、花や紋様のような模様が自動で広がります。</p>
       </div>
 
       <div class="card">
-        <h3>History</h3>
+        <h3 data-i18n="fleur.tool.historyCardTitle">History</h3>
         <div class="btn-row">
-          <button type="button" class="btn" id="undoBtn" disabled><span>↺ 戻す</span></button>
-          <button type="button" class="btn" id="redoBtn" disabled><span>↻ やり直す</span></button>
+          <button type="button" class="btn" id="undoBtn" disabled><span data-i18n="fleur.tool.undoBtn">↺ 戻す</span></button>
+          <button type="button" class="btn" id="redoBtn" disabled><span data-i18n="fleur.tool.redoBtn">↻ やり直す</span></button>
         </div>
         <div class="btn-row" style="margin-top:.7rem;">
-          <button type="button" class="btn" id="clearBtn"><span>クリア</span></button>
-          <button type="button" class="btn btn-primary" id="downloadBtn"><span>↓ 書き出す</span></button>
+          <button type="button" class="btn" id="clearBtn"><span data-i18n="common.clear">クリア</span></button>
+          <button type="button" class="btn btn-primary" id="downloadBtn"><span data-i18n="fleur.tool.downloadBtn">↓ 書き出す</span></button>
         </div>
       </div>
 
       <div class="card">
         <h3>Studio</h3>
-        <p class="hint">この絵を、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
+        <p class="hint" data-i18n="fleur.tool.studioHint">この絵を、Quillの小説やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
         <div class="btn-row">
-          <button type="button" class="btn" id="sendToProjectBtn"><span>→ Studioに送る</span></button>
+          <button type="button" class="btn" id="sendToProjectBtn"><span data-i18n="common.sendToStudio">→ Studioに送る</span></button>
         </div>
         <p class="hint" id="sendToProjectStatus"></p>
-        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;">Studioを開く →</a>
+        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;" data-i18n="common.openStudio">Studioを開く →</a>
       </div>
     </div>
   </div>
 </main>
 
+<script src="../../shared/i18n.js"></script>
 <script>
 (() => {
   'use strict';
 
+  const t = (key, vars) => window.YoukokuI18n.t(key, vars);
   const canvas = document.getElementById('paintCanvas');
   const ctx = canvas.getContext('2d');
 
@@ -400,39 +403,39 @@ window.YOUKOKU_BG_THEMES = [
   });
 
   sendToProjectBtn.addEventListener('click', () => {
-    if (!window.YoukokuProject) { sendToProjectStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuProject) { sendToProjectStatus.textContent = t('common.browserUnsupported'); return; }
     canvas.toBlob(async (blob) => {
       try {
         await window.YoukokuProject.saveSlot('image', { blob, from: 'Fleur' });
-        sendToProjectStatus.textContent = '✓ Studioに送信しました。';
+        sendToProjectStatus.textContent = t('common.sentToStudio');
       } catch (err) {
-        sendToProjectStatus.textContent = '送信に失敗しました: ' + err.message;
+        sendToProjectStatus.textContent = t('common.sendFailedPrefix') + err.message;
       }
     }, 'image/png');
   });
 
   loadQuillTextBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject) { generateArtStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuProject) { generateArtStatus.textContent = t('common.browserUnsupported'); return; }
     const textSlot = await window.YoukokuProject.getSlot('text');
     if (!textSlot || !textSlot.json) {
-      generateArtStatus.textContent = 'Quillにまだ何も送信されていません。';
+      generateArtStatus.textContent = t('common.quillNotSentYet');
       return;
     }
     const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
     promptInput.value = fullText;
-    generateArtStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」を読み込みました。`;
+    generateArtStatus.textContent = t('common.loadedQuillTitle', { title: textSlot.json.title || t('studio.untitledStory') });
   });
 
   generateArtBtn.addEventListener('click', () => {
-    if (!window.YoukokuTextToArt) { generateArtStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuTextToArt) { generateArtStatus.textContent = t('common.browserUnsupported'); return; }
     const text = promptInput.value.trim();
     if (!text) {
-      generateArtStatus.textContent = 'テキストを入力してください。';
+      generateArtStatus.textContent = t('common.enterTextErr');
       return;
     }
     pushHistory();
     window.YoukokuTextToArt.generate(canvas, text);
-    generateArtStatus.textContent = '✓ テキストから下絵を生成しました。この上に描き込めます。';
+    generateArtStatus.textContent = t('fleur.tool.generateArtSuccess');
   });
 
   updateUndoRedoButtons();

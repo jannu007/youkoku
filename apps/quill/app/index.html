@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Shippori+Mincho:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="../../shared/i18n-data.js"></script>
 <style>
 :root{
   --bg:#070c26; --panel:#0d1642; --panel2:#11204f; --ink:#f4f5fa; --ink-soft:#8d8fa3; --line:#2a3868;
@@ -106,7 +107,7 @@ main{ max-width:1180px; margin:0 auto; padding:2.6rem 5vw 5rem; }
 .hint{ font-size:.76rem; color:var(--ink-soft); margin-top:.6rem; line-height:1.7; }
 </style>
 </head>
-<body>
+<body data-i18n-doctitle="quill.tool.docTitle">
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 <script>
@@ -119,83 +120,85 @@ window.YOUKOKU_BG_THEMES = [
 <script src="../../shared/project-store.js"></script>
 
 <header class="topbar">
-  <a href="../index.html" class="back">← Quill について</a>
+  <a href="../index.html" class="back" data-i18n="quill.backToDetail">← Quill について</a>
   <div class="applogo"><span class="dot"></span>Quill</div>
 </header>
 
 <main>
   <div class="intro">
-    <h1>物語を、書き進める。</h1>
-    <p>章ごとに書き分けて、AIプロットジェネレーターや文章解析を使いながら仕上げます。原稿はこのブラウザだけに保存されます。</p>
+    <h1 data-i18n="quill.tool.h1">物語を、書き進める。</h1>
+    <p data-i18n="quill.tool.p">章ごとに書き分けて、AIプロットジェネレーターや文章解析を使いながら仕上げます。原稿はこのブラウザだけに保存されます。</p>
   </div>
 
   <div class="workspace">
     <div class="editor-panel">
       <div class="chapter-tabs" id="chapterTabs"></div>
-      <input type="text" class="title-input" id="novelTitle" placeholder="作品タイトル">
-      <input type="text" class="chapter-title-input" id="chapterTitle" placeholder="章タイトル">
-      <textarea class="content-textarea" id="contentArea" placeholder="ここから物語を書き始めましょう…"></textarea>
+      <input type="text" class="title-input" id="novelTitle" placeholder="作品タイトル" data-i18n-placeholder="quill.tool.titlePlaceholder">
+      <input type="text" class="chapter-title-input" id="chapterTitle" placeholder="章タイトル" data-i18n-placeholder="quill.tool.chapterTitlePlaceholder">
+      <textarea class="content-textarea" id="contentArea" placeholder="ここから物語を書き始めましょう…" data-i18n-placeholder="quill.tool.contentPlaceholder"></textarea>
     </div>
 
     <div class="panel-side">
       <div class="card">
         <h3>Stats</h3>
         <div class="stat-grid">
-          <div class="stat"><span class="stat-num" id="statChars">0</span><span class="stat-label">文字数（この章）</span></div>
-          <div class="stat"><span class="stat-num" id="statTotalChars">0</span><span class="stat-label">文字数（全体）</span></div>
-          <div class="stat"><span class="stat-num" id="statSentences">0</span><span class="stat-label">文の数</span></div>
-          <div class="stat"><span class="stat-num" id="statReadTime">0分</span><span class="stat-label">読了時間（目安）</span></div>
+          <div class="stat"><span class="stat-num" id="statChars">0</span><span class="stat-label" data-i18n="quill.tool.stat.charsChapter">文字数（この章）</span></div>
+          <div class="stat"><span class="stat-num" id="statTotalChars">0</span><span class="stat-label" data-i18n="quill.tool.stat.charsTotal">文字数（全体）</span></div>
+          <div class="stat"><span class="stat-num" id="statSentences">0</span><span class="stat-label" data-i18n="quill.tool.stat.sentences">文の数</span></div>
+          <div class="stat"><span class="stat-num" id="statReadTime">0分</span><span class="stat-label" data-i18n="quill.tool.stat.readTime">読了時間（目安）</span></div>
         </div>
       </div>
 
       <div class="card">
         <h3>AI Plot Generator</h3>
-        <button type="button" class="btn btn-primary" id="generatePlotBtn"><span>✦ プロットを生成</span></button>
-        <div class="plot-output empty" id="plotOutput">ボタンを押すと、物語の着想になるプロットの種を提案します。</div>
+        <button type="button" class="btn btn-primary" id="generatePlotBtn"><span data-i18n="quill.tool.generatePlotBtn">✦ プロットを生成</span></button>
+        <div class="plot-output empty" id="plotOutput" data-i18n="quill.tool.plotPlaceholder">ボタンを押すと、物語の着想になるプロットの種を提案します。</div>
         <div class="btn-row">
-          <button type="button" class="btn" id="insertPlotBtn" disabled><span>章に挿入</span></button>
+          <button type="button" class="btn" id="insertPlotBtn" disabled><span data-i18n="quill.tool.insertPlotBtn">章に挿入</span></button>
         </div>
       </div>
 
       <div class="card">
-        <h3>文章解析</h3>
-        <button type="button" class="btn btn-primary" id="analyzeBtn"><span>✦ この章を解析</span></button>
+        <h3 data-i18n="quill.tool.analysisCardTitle">文章解析</h3>
+        <button type="button" class="btn btn-primary" id="analyzeBtn"><span data-i18n="quill.tool.analyzeBtn">✦ この章を解析</span></button>
         <div class="analysis-list" id="analysisList"></div>
       </div>
 
       <div class="card">
         <h3>Emotional Arc</h3>
-        <button type="button" class="btn btn-primary" id="arcBtn"><span>✦ 起伏グラフを更新</span></button>
+        <button type="button" class="btn btn-primary" id="arcBtn"><span data-i18n="quill.tool.arcBtn">✦ 起伏グラフを更新</span></button>
         <canvas id="arcCanvas" style="width:100%;height:140px;margin-top:1rem;display:block;"></canvas>
-        <p class="hint">章ごとの緊張・穏やかさのバランスをキーワード解析で可視化します。一般的な小説作成ツールにはない機能です。</p>
+        <p class="hint" data-i18n="quill.tool.arcHint">章ごとの緊張・穏やかさのバランスをキーワード解析で可視化します。一般的な小説作成ツールにはない機能です。</p>
       </div>
 
       <div class="card">
         <h3>Project</h3>
-        <button type="button" class="btn btn-primary" id="exportBtn"><span>↓ テキストで書き出す</span></button>
+        <button type="button" class="btn btn-primary" id="exportBtn"><span data-i18n="quill.tool.exportBtn">↓ テキストで書き出す</span></button>
         <div class="btn-row">
-          <button type="button" class="btn" id="newProjectBtn"><span>新規作成</span></button>
+          <button type="button" class="btn" id="newProjectBtn"><span data-i18n="quill.tool.newProjectBtn">新規作成</span></button>
         </div>
-        <p class="hint">自動保存はこのブラウザ内（localStorage）のみです。書き出しておくと安全に保管できます。</p>
+        <p class="hint" data-i18n="quill.tool.projectHint">自動保存はこのブラウザ内（localStorage）のみです。書き出しておくと安全に保管できます。</p>
       </div>
 
       <div class="card">
         <h3>Studio</h3>
-        <p class="hint">この物語を、Lumenの挿絵やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
+        <p class="hint" data-i18n="quill.tool.studioHint">この物語を、Lumenの挿絵やFluxの動画・Echoの音楽と組み合わせて、1本の作品として書き出せます。</p>
         <div class="btn-row">
-          <button type="button" class="btn" id="sendToProjectBtn"><span>→ Studioに送る</span></button>
+          <button type="button" class="btn" id="sendToProjectBtn"><span data-i18n="common.sendToStudio">→ Studioに送る</span></button>
         </div>
         <p class="hint" id="sendToProjectStatus"></p>
-        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;">Studioを開く →</a>
+        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;" data-i18n="common.openStudio">Studioを開く →</a>
       </div>
     </div>
   </div>
 </main>
 
+<script src="../../shared/i18n.js"></script>
 <script>
 (() => {
   'use strict';
 
+  const t = (key, vars) => window.YoukokuI18n.t(key, vars);
   const STORE_KEY = 'quill_project_v1';
 
   const chapterTabs = document.getElementById('chapterTabs');
@@ -220,7 +223,7 @@ window.YOUKOKU_BG_THEMES = [
 
   function defaultProject() {
     const id = uid();
-    return { title: '無題の物語', chapters: [{ id, title: '第1章', content: '' }], selectedId: id };
+    return { title: t('studio.untitledStory'), chapters: [{ id, title: t('quill.tool.chapterDefaultTitle', { n: 1 }), content: '' }], selectedId: id };
   }
 
   function loadProject() {
@@ -253,7 +256,7 @@ window.YOUKOKU_BG_THEMES = [
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'chapter-chip' + (c.id === project.selectedId ? ' active' : '');
-      chip.innerHTML = `<span>${escapeHtml(c.title || '無題の章')}</span>` + (project.chapters.length > 1 ? '<span class="del" data-del="' + c.id + '">✕</span>' : '');
+      chip.innerHTML = `<span>${escapeHtml(c.title || t('quill.tool.untitledChapter'))}</span>` + (project.chapters.length > 1 ? '<span class="del" data-del="' + c.id + '">✕</span>' : '');
       chip.addEventListener('click', (e) => {
         if (e.target.closest('.del')) return;
         selectChapter(c.id);
@@ -288,7 +291,7 @@ window.YOUKOKU_BG_THEMES = [
 
   function addChapter() {
     const id = uid();
-    project.chapters.push({ id, title: `第${project.chapters.length + 1}章`, content: '' });
+    project.chapters.push({ id, title: t('quill.tool.chapterDefaultTitle', { n: project.chapters.length + 1 }), content: '' });
     project.selectedId = id;
     renderChapterTabs();
     renderEditor();
@@ -297,7 +300,7 @@ window.YOUKOKU_BG_THEMES = [
 
   function deleteChapter(id) {
     if (project.chapters.length <= 1) return;
-    if (!confirm('この章を削除しますか？')) return;
+    if (!confirm(t('quill.tool.confirmDeleteChapter'))) return;
     const idx = project.chapters.findIndex(c => c.id === id);
     project.chapters.splice(idx, 1);
     if (project.selectedId === id) project.selectedId = project.chapters[Math.max(0, idx - 1)].id;
@@ -328,7 +331,7 @@ window.YOUKOKU_BG_THEMES = [
 
   /* ---------- stats ---------- */
   function countSentences(text) {
-    return text.split(/[。！？]/).map(s => s.trim()).filter(Boolean);
+    return text.split(/[。！？.!?]/).map(s => s.trim()).filter(Boolean);
   }
 
   function updateStats() {
@@ -339,22 +342,22 @@ window.YOUKOKU_BG_THEMES = [
     statChars.textContent = chars.toLocaleString();
     statTotalChars.textContent = totalChars.toLocaleString();
     statSentences.textContent = sentences.length.toLocaleString();
-    statReadTime.textContent = Math.max(1, Math.round(totalChars / 500)) + '分';
+    statReadTime.textContent = Math.max(1, Math.round(totalChars / 500)) + t('quill.tool.minuteUnit');
   }
 
   /* ---------- AI plot generator (procedural combinator) ---------- */
-  const GENRES = ['ファンタジー', 'SF', 'ミステリー', '恋愛', 'ホラー', '歴史', '青春', '冒険'];
-  const PROTAGONISTS = ['記憶を失った剣士', '引退した魔女', '孤独な発明家', '元刑事の少女', '言葉を話せない王子', '時間を操れる図書館員', '死者と話せる庭師', '街を出られない占い師'];
-  const CONFLICTS = ['失われた故郷を取り戻そうとする', '裏切った友人と対峙することになる', '世界を滅ぼす予言に立ち向かう', '過去の罪を償おうとする', '正体を隠したまま生き延びようとする'];
-  const SETTINGS = ['浮遊する群島', '忘れられた地下都市', '終わらない冬に閉ざされた街', '星が墜ちてくる海辺の村', '機械たちが眠る廃墟', '記憶を売り買いする市場町'];
-  const TWISTS = ['実は敵こそがかつての恩人だった', '鍵を握るのは主人公自身の記憶だった', '願いが叶うたび何かを失っていた', 'すべてはもっと大きな物語の一部に過ぎなかった'];
-
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
   let lastPlot = '';
   generatePlotBtn.addEventListener('click', () => {
-    const genre = pick(GENRES);
-    const plot = `【${genre}】${pick(PROTAGONISTS)}が、${pick(SETTINGS)}で${pick(CONFLICTS)}。しかし${pick(TWISTS)}。`;
+    const genre = pick(JSON.parse(t('quill.tool.genres')));
+    const plot = t('quill.tool.plotTemplate', {
+      genre,
+      protagonist: pick(JSON.parse(t('quill.tool.protagonists'))),
+      setting: pick(JSON.parse(t('quill.tool.settings'))),
+      conflict: pick(JSON.parse(t('quill.tool.conflicts'))),
+      twist: pick(JSON.parse(t('quill.tool.twists'))),
+    });
     lastPlot = plot;
     plotOutput.textContent = plot;
     plotOutput.classList.remove('empty');
@@ -382,11 +385,11 @@ window.YOUKOKU_BG_THEMES = [
     const longSentences = sentences.filter(s => s.length > 100).length;
 
     analysisList.innerHTML = `
-      <div class="analysis-row"><span>文の数</span><span>${sentences.length}</span></div>
-      <div class="analysis-row"><span>平均文長</span><span>${avgLen}文字</span></div>
-      <div class="analysis-row"><span>最長の文</span><span>${longest}文字</span></div>
-      <div class="analysis-row"><span>会話文の比率</span><span>${dialogueRatio}%</span></div>
-      <div class="analysis-row${longSentences > 0 ? ' analysis-warn' : ''}"><span>100文字を超える文</span><span>${longSentences}件</span></div>
+      <div class="analysis-row"><span>${t('quill.tool.stat.sentences')}</span><span>${sentences.length}</span></div>
+      <div class="analysis-row"><span>${t('quill.tool.avgLen')}</span><span>${avgLen}${t('quill.tool.charsUnit')}</span></div>
+      <div class="analysis-row"><span>${t('quill.tool.longestSentence')}</span><span>${longest}${t('quill.tool.charsUnit')}</span></div>
+      <div class="analysis-row"><span>${t('quill.tool.dialogueRatio')}</span><span>${dialogueRatio}%</span></div>
+      <div class="analysis-row${longSentences > 0 ? ' analysis-warn' : ''}"><span>${t('quill.tool.longSentenceCount')}</span><span>${longSentences}${t('quill.tool.countUnit')}</span></div>
     `;
   });
 
@@ -403,20 +406,20 @@ window.YOUKOKU_BG_THEMES = [
   });
 
   newProjectBtn.addEventListener('click', () => {
-    if (!confirm('現在の作品を消して新規作成しますか？（書き出していない内容は失われます）')) return;
+    if (!confirm(t('quill.tool.confirmNewProject'))) return;
     project = defaultProject();
     localStorage.setItem(STORE_KEY, JSON.stringify(project));
     renderChapterTabs();
     renderEditor();
     analysisList.innerHTML = '';
-    plotOutput.textContent = 'ボタンを押すと、物語の着想になるプロットの種を提案します。';
+    plotOutput.textContent = t('quill.tool.plotPlaceholder');
     plotOutput.classList.add('empty');
     insertPlotBtn.disabled = true;
   });
 
   /* ---------- emotional arc ---------- */
-  const TENSE_WORDS = ['泣','叫','恐怖','死','戦','怒','悲し','絶望','痛み','逃げ','血','銃','剣','争い','恐ろし','苦し','崩れ','壊れ','裏切り','孤独'];
-  const CALM_WORDS = ['笑','幸せ','平和','安心','喜び','愛','希望','美しい','穏やか','優しい','温かい','眠り','光','花','祝','感謝'];
+  const TENSE_WORDS = ['泣','叫','恐怖','死','戦','怒','悲し','絶望','痛み','逃げ','血','銃','剣','争い','恐ろし','苦し','崩れ','壊れ','裏切り','孤独', 'fear', 'death', 'war', 'angry', 'sad', 'despair', 'pain', 'blood', 'scream', 'terrible', 'lonely', 'betray'];
+  const CALM_WORDS = ['笑','幸せ','平和','安心','喜び','愛','希望','美しい','穏やか','優しい','温かい','眠り','光','花','祝','感謝', 'happy', 'peace', 'joy', 'love', 'hope', 'beautiful', 'calm', 'gentle', 'warm', 'sleep', 'light', 'flower', 'grateful'];
   const arcBtn = document.getElementById('arcBtn');
   const arcCanvas = document.getElementById('arcCanvas');
 
@@ -460,8 +463,8 @@ window.YOUKOKU_BG_THEMES = [
 
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = '11px sans-serif';
-    ctx.fillText('緊張', 4, padY);
-    ctx.fillText('穏やか', 4, h - 8);
+    ctx.fillText(t('quill.tool.arcTense'), 4, padY);
+    ctx.fillText(t('quill.tool.arcCalm'), 4, h - 8);
 
     if (chapters.length < 1) return;
     const maxAbs = Math.max(1, ...scores.map((s) => Math.abs(s)));
@@ -503,16 +506,21 @@ window.YOUKOKU_BG_THEMES = [
   });
 
   sendToProjectBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject) { sendToProjectStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuProject) { sendToProjectStatus.textContent = t('common.browserUnsupported'); return; }
     try {
       await window.YoukokuProject.saveSlot('text', {
         json: { title: project.title, chapters: project.chapters.map(c => ({ title: c.title, content: c.content })) },
         from: 'Quill',
       });
-      sendToProjectStatus.textContent = '✓ Studioに送信しました。';
+      sendToProjectStatus.textContent = t('common.sentToStudio');
     } catch (err) {
-      sendToProjectStatus.textContent = '送信に失敗しました: ' + err.message;
+      sendToProjectStatus.textContent = t('common.sendFailedPrefix') + err.message;
     }
+  });
+
+  document.addEventListener('youkoku-lang-change', () => {
+    renderChapterTabs();
+    drawArc();
   });
 })();
 </script>

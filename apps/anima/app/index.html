@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="../../shared/i18n-data.js"></script>
 <style>
 :root{
   --bg:#070c26; --panel:#0d1642; --panel2:#11204f; --ink:#f4f5fa; --ink-soft:#8d8fa3; --line:#2a3868;
@@ -127,7 +128,7 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 .result video{ width:100%; border-radius:8px; background:#000; margin-bottom:.8rem; }
 </style>
 </head>
-<body>
+<body data-i18n-doctitle="anima.tool.docTitle">
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 <script>
@@ -140,27 +141,27 @@ window.YOUKOKU_BG_THEMES = [
 <script src="../../shared/text-to-art.js"></script>
 
 <header class="topbar">
-  <a href="../index.html" class="back">← Anima について</a>
+  <a href="../index.html" class="back" data-i18n="anima.backToDetail">← Anima について</a>
   <div class="applogo"><span class="dot"></span>Anima</div>
 </header>
 
 <main>
   <div class="intro">
-    <h1>一枚一枚が、動きになる。</h1>
-    <p>コマを1枚ずつ描いてつなぐと、パラパラ漫画のように動きが生まれます。オニオンスキンで前のコマをなぞりながら描けます。データはこのブラウザだけで処理され、外部には送信されません。</p>
+    <h1 data-i18n="anima.tool.h1">一枚一枚が、動きになる。</h1>
+    <p data-i18n="anima.tool.p">コマを1枚ずつ描いてつなぐと、パラパラ漫画のように動きが生まれます。オニオンスキンで前のコマをなぞりながら描けます。データはこのブラウザだけで処理され、外部には送信されません。</p>
   </div>
 
   <div class="card" style="margin-bottom:2.2rem;">
     <h3>AI Prompt</h3>
-    <p class="hint">好きな文章を入力すると、その内容に応じたジェネラティブアートを土台に、ゆっくりとしたパン・ズームを加えた複数フレームを一括生成します（AI動画生成ではなく、1枚の生成アートに動きを加えた手続き的なアニメーションです）。生成すると現在のフレームはすべて置き換わります。</p>
-    <textarea id="promptInput" rows="3" placeholder="例: 風にそよぐ一本の木。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+    <p class="hint" data-i18n="anima.tool.aiPromptHint">好きな文章を入力すると、その内容に応じたジェネラティブアートを土台に、ゆっくりとしたパン・ズームを加えた複数フレームを一括生成します（AI動画生成ではなく、1枚の生成アートに動きを加えた手続き的なアニメーションです）。生成すると現在のフレームはすべて置き換わります。</p>
+    <textarea id="promptInput" rows="3" placeholder="例: 風にそよぐ一本の木。" data-i18n-placeholder="anima.tool.promptPlaceholder" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
     <div class="slider-row" style="margin-top:.9rem;">
-      <label>生成するフレーム数 <span id="valFrameCount">12</span></label>
+      <label><span data-i18n="anima.tool.frameCountLabel">生成するフレーム数</span> <span id="valFrameCount">12</span></label>
       <input type="range" id="rFrameCount" min="4" max="24" value="12">
     </div>
     <div class="btn-row" style="margin-top:.7rem;">
-      <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
-      <button type="button" class="btn btn-primary" id="generateFramesBtn"><span>✦ テキストからフレームを生成</span></button>
+      <button type="button" class="btn" id="loadQuillTextBtn"><span data-i18n="common.loadQuillText">Quillの文章を読み込む</span></button>
+      <button type="button" class="btn btn-primary" id="generateFramesBtn"><span data-i18n="anima.tool.generateFramesBtn">✦ テキストからフレームを生成</span></button>
     </div>
     <p class="hint" id="generateFramesStatus"></p>
   </div>
@@ -174,60 +175,60 @@ window.YOUKOKU_BG_THEMES = [
       <canvas id="playbackCanvas" width="640" height="480"></canvas>
 
       <div class="transport">
-        <button type="button" class="play-btn" id="playBtn"><span>▶ 再生</span></button>
+        <button type="button" class="play-btn" id="playBtn"><span data-i18n="anima.tool.playBtn">▶ 再生</span></button>
         <div class="fps-row">
-          <span>FPS <span id="valFps">8</span></span>
+          <span><span data-i18n="anima.tool.fpsLabel">FPS</span> <span id="valFps">8</span></span>
           <input type="range" id="rFps" min="2" max="24" value="8">
         </div>
       </div>
 
       <div class="frame-strip" id="frameStrip"></div>
       <div class="frame-actions">
-        <button type="button" class="btn" id="newFrameBtn"><span>+ 新しいフレーム</span></button>
-        <button type="button" class="btn" id="duplicateFrameBtn"><span>複製</span></button>
-        <button type="button" class="btn" id="deleteFrameBtn"><span>削除</span></button>
+        <button type="button" class="btn" id="newFrameBtn"><span data-i18n="anima.tool.newFrameBtn">+ 新しいフレーム</span></button>
+        <button type="button" class="btn" id="duplicateFrameBtn"><span data-i18n="anima.tool.duplicateFrameBtn">複製</span></button>
+        <button type="button" class="btn" id="deleteFrameBtn"><span data-i18n="anima.tool.deleteFrameBtn">削除</span></button>
       </div>
     </div>
 
     <div class="panel-side">
       <div class="card">
-        <h3>Brush</h3>
+        <h3 data-i18n="anima.tool.brushCardTitle">Brush</h3>
         <div class="color-row">
           <input type="color" id="colorPicker" value="#f97316">
-          <span>ブラシの色</span>
+          <span data-i18n="anima.tool.brushColorLabel">ブラシの色</span>
         </div>
         <div class="slider-row">
-          <label>太さ <span id="valSize">8px</span></label>
+          <label><span data-i18n="anima.tool.sizeLabel">太さ</span> <span id="valSize">8px</span></label>
           <input type="range" id="rSize" min="1" max="40" value="8">
         </div>
         <div class="toggle-row">
-          <span>消しゴム</span>
+          <span data-i18n="anima.tool.eraser">消しゴム</span>
           <button type="button" class="switch" id="eraserSwitch" aria-pressed="false"></button>
         </div>
       </div>
 
       <div class="card">
-        <h3>オニオンスキン</h3>
+        <h3 data-i18n="anima.tool.onionCardTitle">オニオンスキン</h3>
         <div class="toggle-row">
-          <span>前のコマを半透明表示</span>
+          <span data-i18n="anima.tool.onionToggle">前のコマを半透明表示</span>
           <button type="button" class="switch on" id="onionSwitch" aria-pressed="true"></button>
         </div>
-        <p class="hint">オンにすると、1つ前のコマが薄く表示され、なぞりながら次のコマを描けます。書き出したアニメーションには含まれません。</p>
+        <p class="hint" data-i18n="anima.tool.onionHint">オンにすると、1つ前のコマが薄く表示され、なぞりながら次のコマを描けます。書き出したアニメーションには含まれません。</p>
       </div>
 
       <div class="card">
-        <h3>Export</h3>
-        <button type="button" class="btn btn-primary" id="exportBtn"><span>↓ WebMで書き出す</span></button>
+        <h3 data-i18n="anima.tool.exportCardTitle">Export</h3>
+        <button type="button" class="btn btn-primary" id="exportBtn"><span data-i18n="anima.tool.exportBtn">↓ WebMで書き出す</span></button>
         <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
         <p class="hint" id="exportStatus"></p>
         <div class="result" id="resultBox">
           <video id="resultVideo" controls loop></video>
           <div class="btn-row">
-            <a class="btn btn-primary" id="downloadLink" download="anima-animation.webm"><span>ダウンロード</span></a>
-            <button type="button" class="btn" id="sendToProjectBtn"><span>→ Studioに送る</span></button>
+            <a class="btn btn-primary" id="downloadLink" download="anima-animation.webm"><span data-i18n="common.download">ダウンロード</span></a>
+            <button type="button" class="btn" id="sendToProjectBtn"><span data-i18n="common.sendToStudio">→ Studioに送る</span></button>
           </div>
           <p class="hint" id="sendToProjectStatus"></p>
-          <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;">Studioを開く →</a>
+          <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;" data-i18n="common.openStudio">Studioを開く →</a>
         </div>
       </div>
     </div>
@@ -236,10 +237,12 @@ window.YOUKOKU_BG_THEMES = [
 
 <canvas id="exportCanvas" hidden></canvas>
 
+<script src="../../shared/i18n.js"></script>
 <script>
 (() => {
   'use strict';
 
+  const t = (key, vars) => window.YoukokuI18n.t(key, vars);
   const FRAME_W = 640, FRAME_H = 480;
   const BASE_FILL = '#fdfbf7';
 
@@ -446,7 +449,7 @@ window.YOUKOKU_BG_THEMES = [
 
   function stopPlayback() {
     playing = false;
-    playBtn.querySelector('span').textContent = '▶ 再生';
+    playBtn.querySelector('span').textContent = t('anima.tool.playBtn');
     if (playTimerId) clearTimeout(playTimerId);
     playTimerId = null;
     canvasStack.style.display = '';
@@ -457,7 +460,7 @@ window.YOUKOKU_BG_THEMES = [
     if (playing) { stopPlayback(); return; }
     commitCurrentFrame();
     playing = true;
-    playBtn.querySelector('span').textContent = '■ 停止';
+    playBtn.querySelector('span').textContent = t('anima.tool.stopBtn');
     canvasStack.style.display = 'none';
     playbackCanvas.style.display = 'block';
     let i = 0;
@@ -475,22 +478,22 @@ window.YOUKOKU_BG_THEMES = [
 
   /* ---------- AI Prompt: generate multiple frames from text (pan/zoom over one generative art image) ---------- */
   loadQuillTextBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject) { generateFramesStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuProject) { generateFramesStatus.textContent = t('common.browserUnsupported'); return; }
     const textSlot = await window.YoukokuProject.getSlot('text');
     if (!textSlot || !textSlot.json) {
-      generateFramesStatus.textContent = 'Quillにまだ何も送信されていません。';
+      generateFramesStatus.textContent = t('common.quillNotSentYet');
       return;
     }
     const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
     promptInput.value = fullText;
-    generateFramesStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」を読み込みました。`;
+    generateFramesStatus.textContent = t('common.loadedQuillTitle', { title: textSlot.json.title || t('studio.untitledStory') });
   });
 
   generateFramesBtn.addEventListener('click', () => {
-    if (!window.YoukokuTextToArt) { generateFramesStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuTextToArt) { generateFramesStatus.textContent = t('common.browserUnsupported'); return; }
     const text = promptInput.value.trim();
     if (!text) {
-      generateFramesStatus.textContent = 'テキストを入力してください。';
+      generateFramesStatus.textContent = t('common.enterTextErr');
       return;
     }
     if (playing) stopPlayback();
@@ -524,7 +527,7 @@ window.YOUKOKU_BG_THEMES = [
     loadFrameIntoDrawCanvas(0);
     renderOnion();
     refreshAfterEdit();
-    generateFramesStatus.textContent = `✓ ${count}枚のフレームを生成しました。既存のフレームは置き換えられました。`;
+    generateFramesStatus.textContent = t('anima.tool.generateFramesSuccess', { n: count });
   });
 
   /* ---------- export to WebM ---------- */
@@ -532,7 +535,7 @@ window.YOUKOKU_BG_THEMES = [
 
   exportBtn.addEventListener('click', async () => {
     if (typeof MediaRecorder === 'undefined') {
-      exportStatus.textContent = 'このブラウザは書き出し機能に対応していません。';
+      exportStatus.textContent = t('anima.tool.unsupportedBrowser');
       return;
     }
     if (playing) stopPlayback();
@@ -541,7 +544,7 @@ window.YOUKOKU_BG_THEMES = [
     resultBox.classList.remove('active');
     progressTrack.classList.add('active');
     progressFill.style.width = '3%';
-    exportStatus.textContent = '書き出しています…';
+    exportStatus.textContent = t('anima.tool.exportingStatus');
 
     try {
       const fps = Number(rFps.value);
@@ -575,9 +578,9 @@ window.YOUKOKU_BG_THEMES = [
       downloadLink.href = url;
       resultBox.classList.add('active');
       progressFill.style.width = '100%';
-      exportStatus.textContent = '✓ 書き出しが完了しました。';
+      exportStatus.textContent = t('anima.tool.exportSuccess');
     } catch (err) {
-      exportStatus.textContent = '書き出しに失敗しました: ' + err.message;
+      exportStatus.textContent = t('anima.tool.exportFailedPrefix') + err.message;
     } finally {
       setTimeout(() => progressTrack.classList.remove('active'), 600);
       exportBtn.disabled = false;
@@ -585,14 +588,18 @@ window.YOUKOKU_BG_THEMES = [
   });
 
   sendToProjectBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject) { sendToProjectStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuProject) { sendToProjectStatus.textContent = t('common.browserUnsupported'); return; }
     if (!lastExportBlob) return;
     try {
       await window.YoukokuProject.saveSlot('video', { blob: lastExportBlob, from: 'Anima' });
-      sendToProjectStatus.textContent = '✓ Studioに送信しました。';
+      sendToProjectStatus.textContent = t('common.sentToStudio');
     } catch (err) {
-      sendToProjectStatus.textContent = '送信に失敗しました: ' + err.message;
+      sendToProjectStatus.textContent = t('common.sendFailedPrefix') + err.message;
     }
+  });
+
+  document.addEventListener('youkoku-lang-change', () => {
+    playBtn.querySelector('span').textContent = t(playing ? 'anima.tool.stopBtn' : 'anima.tool.playBtn');
   });
 
   renderOnion();

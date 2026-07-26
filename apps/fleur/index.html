@@ -13,8 +13,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../shared/prism-detail.css?v=2">
+<script src="../shared/i18n-data.js"></script>
 </head>
-<body>
+<body data-i18n-doctitle="fleur.docTitle">
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 <script>
@@ -35,16 +36,16 @@ window.YOUKOKU_BG_THEMES = [
     <div class="hero-text">
       <span class="work-tag"><span style="background:#fb7185"></span>AI Painting</span>
       <h1>Fleur</h1>
-      <p class="tagline">一筆が花びらのように、幾重にも咲いていく絵画。</p>
-      <p class="desc">
+      <p class="tagline" data-i18n="fleur.tagline">一筆が花びらのように、幾重にも咲いていく絵画。</p>
+      <p class="desc" data-i18n="fleur.desc">
         筆で自由に描くだけでなく、万華鏡のように2〜8分割で線対称に広がる「シンメトリーモード」で、
         花や紋様のような構図を誰でも簡単に描けます。テキストからAI下絵を生成して、その上に描き込むこともできます。
         処理はすべてブラウザ内で完結し、データは外部に送信されません。
       </p>
       <div class="cta-row">
-        <button type="button" class="btn btn-primary install-btn"><span class="btn-label">インストール</span></button>
-        <span class="price-note">¥0 ・ 会員登録不要 ・ ホーム画面に追加できます</span>
-        <a href="app/" class="open-link">ブラウザで直接開く →</a>
+        <button type="button" class="btn btn-primary install-btn"><span class="btn-label" data-i18n="common.install">インストール</span></button>
+        <span class="price-note" data-i18n="common.priceNote">¥0 ・ 会員登録不要 ・ ホーム画面に追加できます</span>
+        <a href="app/" class="open-link" data-i18n="common.openDirect">ブラウザで直接開く →</a>
       </div>
     </div>
     <div class="hero-visual">
@@ -60,28 +61,29 @@ window.YOUKOKU_BG_THEMES = [
   <section class="features">
     <div class="feature">
       <span class="feature-num">01</span>
-      <h3>万華鏡シンメトリー</h3>
-      <p>2〜8分割の線対称モードで描くと、一筆がそのまま花びらや紋様のように広がります。他の絵画アプリにはない体験です。</p>
+      <h3 data-i18n="fleur.feature1.title">万華鏡シンメトリー</h3>
+      <p data-i18n="fleur.feature1.desc">2〜8分割の線対称モードで描くと、一筆がそのまま花びらや紋様のように広がります。他の絵画アプリにはない体験です。</p>
     </div>
     <div class="feature">
       <span class="feature-num">02</span>
-      <h3>AI下絵ジェネレーター</h3>
-      <p>文章を入力すると、その内容の雰囲気に応じたジェネラティブアートを下絵として自動生成。その上から描き込めます。</p>
+      <h3 data-i18n="fleur.feature2.title">AI下絵ジェネレーター</h3>
+      <p data-i18n="fleur.feature2.desc">文章を入力すると、その内容の雰囲気に応じたジェネラティブアートを下絵として自動生成。その上から描き込めます。</p>
     </div>
     <div class="feature">
       <span class="feature-num">03</span>
-      <h3>Undo / Redoで自由に</h3>
-      <p>何度でも描き直せる履歴管理と、完成した絵をPNGとしてそのまま書き出せる機能を搭載。データはブラウザ内だけで生成されます。</p>
+      <h3 data-i18n="fleur.feature3.title">Undo / Redoで自由に</h3>
+      <p data-i18n="fleur.feature3.desc">何度でも描き直せる履歴管理と、完成した絵をPNGとしてそのまま書き出せる機能を搭載。データはブラウザ内だけで生成されます。</p>
     </div>
   </section>
 
   <section class="bottom-cta">
-    <h2>その一筆を、咲かせてみよう。</h2>
-    <button type="button" class="btn btn-primary btn-lg install-btn"><span class="btn-label">インストール</span></button>
-    <a href="../../index.html#apps" class="back-link">← 他のアプリを見る</a>
+    <h2 data-i18n="fleur.bottomCta">その一筆を、咲かせてみよう。</h2>
+    <button type="button" class="btn btn-primary btn-lg install-btn"><span class="btn-label" data-i18n="common.install">インストール</span></button>
+    <a href="../../index.html#apps" class="back-link" data-i18n="common.backToOtherApps">← 他のアプリを見る</a>
   </section>
 </main>
 
+<script src="../shared/i18n.js"></script>
 <script src="../shared/install.js?v=1"></script>
 </body>
 </html>

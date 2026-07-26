@@ -13,8 +13,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../shared/prism-detail.css?v=2">
+<script src="../shared/i18n-data.js"></script>
 </head>
-<body>
+<body data-i18n-doctitle="flux.docTitle">
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 <script>
@@ -35,15 +36,15 @@ window.YOUKOKU_BG_THEMES = [
     <div class="hero-text">
       <span class="work-tag"><span style="background:#ec4899"></span>AI Video Editor</span>
       <h1>Flux</h1>
-      <p class="tagline">動きを切り取り、物語をつなぐ映像編集。</p>
-      <p class="desc">
+      <p class="tagline" data-i18n="flux.tagline">動きを切り取り、物語をつなぐ映像編集。</p>
+      <p class="desc" data-i18n="flux.desc">
         動画を読み込んで、AIのシーン検出でカットの候補を見つけ、カラーグレーディングをワンタップで適用。
         トリム範囲を指定してそのまま書き出せます。処理はすべてブラウザ内で完結し、動画はサーバーに送信されません。
       </p>
       <div class="cta-row">
-        <button type="button" class="btn btn-primary install-btn"><span class="btn-label">インストール</span></button>
-        <span class="price-note">¥0 ・ 会員登録不要 ・ ホーム画面に追加できます</span>
-        <a href="app/" class="open-link">ブラウザで直接開く →</a>
+        <button type="button" class="btn btn-primary install-btn"><span class="btn-label" data-i18n="common.install">インストール</span></button>
+        <span class="price-note" data-i18n="common.priceNote">¥0 ・ 会員登録不要 ・ ホーム画面に追加できます</span>
+        <a href="app/" class="open-link" data-i18n="common.openDirect">ブラウザで直接開く →</a>
       </div>
     </div>
     <div class="hero-visual">
@@ -63,28 +64,29 @@ window.YOUKOKU_BG_THEMES = [
   <section class="features">
     <div class="feature">
       <span class="feature-num">01</span>
-      <h3>AIシーン検出</h3>
-      <p>フレームの変化を解析し、カットの切れ目になりそうな位置をタイムライン上に自動でマーキングします。</p>
+      <h3 data-i18n="flux.feature1.title">AIシーン検出</h3>
+      <p data-i18n="flux.feature1.desc">フレームの変化を解析し、カットの切れ目になりそうな位置をタイムライン上に自動でマーキングします。</p>
     </div>
     <div class="feature">
       <span class="feature-num">02</span>
-      <h3>ワンタップカラー補正</h3>
-      <p>映像の明るさ・コントラスト・彩度を解析し、見栄えの良いトーンにワンタップで整えます。</p>
+      <h3 data-i18n="flux.feature2.title">ワンタップカラー補正</h3>
+      <p data-i18n="flux.feature2.desc">映像の明るさ・コントラスト・彩度を解析し、見栄えの良いトーンにワンタップで整えます。</p>
     </div>
     <div class="feature">
       <span class="feature-num">03</span>
-      <h3>動画は端末の外に出ません</h3>
-      <p>読み込み・編集・書き出しのすべてがブラウザ内で行われ、動画がサーバーに送信されることはありません。</p>
+      <h3 data-i18n="flux.feature3.title">動画は端末の外に出ません</h3>
+      <p data-i18n="flux.feature3.desc">読み込み・編集・書き出しのすべてがブラウザ内で行われ、動画がサーバーに送信されることはありません。</p>
     </div>
   </section>
 
   <section class="bottom-cta">
-    <h2>その映像を、思い描いた通りに。</h2>
-    <button type="button" class="btn btn-primary btn-lg install-btn"><span class="btn-label">インストール</span></button>
-    <a href="../../index.html#apps" class="back-link">← 他のアプリを見る</a>
+    <h2 data-i18n="flux.bottomCta">その映像を、思い描いた通りに。</h2>
+    <button type="button" class="btn btn-primary btn-lg install-btn"><span class="btn-label" data-i18n="common.install">インストール</span></button>
+    <a href="../../index.html#apps" class="back-link" data-i18n="common.backToOtherApps">← 他のアプリを見る</a>
   </section>
 </main>
 
+<script src="../shared/i18n.js"></script>
 <script src="../shared/install.js?v=1"></script>
 </body>
 </html>

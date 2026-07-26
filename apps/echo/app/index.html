@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="../../shared/i18n-data.js"></script>
 <style>
 :root{
   --bg:#070c26; --panel:#0d1642; --panel2:#11204f; --ink:#f4f5fa; --ink-soft:#8d8fa3; --line:#2a3868;
@@ -129,7 +130,7 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 .result audio{ width:100%; }
 </style>
 </head>
-<body>
+<body data-i18n-doctitle="echo.tool.docTitle">
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 <script>
@@ -144,30 +145,30 @@ window.YOUKOKU_BG_THEMES = [
 <script src="../../shared/music-generator.js"></script>
 
 <header class="topbar">
-  <a href="../index.html" class="back">← Echo について</a>
+  <a href="../index.html" class="back" data-i18n="echo.backToDetail">← Echo について</a>
   <div class="applogo"><span class="dot"></span>Echo</div>
 </header>
 
 <main>
   <div class="intro">
-    <h1>音の輪郭を、整える。</h1>
-    <p>音源を読み込んで波形を確認しながらトリム・フェード編集。AIマスタリングを有効にすると音圧と質感を自動で整えます。処理はすべてこのブラウザ内で行われます。</p>
+    <h1 data-i18n="echo.tool.h1">音の輪郭を、整える。</h1>
+    <p data-i18n="echo.tool.p">音源を読み込んで波形を確認しながらトリム・フェード編集。AIマスタリングを有効にすると音圧と質感を自動で整えます。処理はすべてこのブラウザ内で行われます。</p>
   </div>
 
   <div class="card" style="margin-bottom:2.2rem;">
     <h3>AI Prompt</h3>
-    <p class="hint">好きな文章を入力すると、その内容（緊張・穏やかのバランス）に応じて曲調とテンポが変わる楽曲を自動作曲します（AI生成ではなく、ルールベースの作曲エンジンです）。</p>
-    <textarea id="promptInput" rows="3" placeholder="例: 争いの絶えない戦場。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+    <p class="hint" data-i18n="echo.tool.aiPromptHint">好きな文章を入力すると、その内容（緊張・穏やかのバランス）に応じて曲調とテンポが変わる楽曲を自動作曲します（AI生成ではなく、ルールベースの作曲エンジンです）。</p>
+    <textarea id="promptInput" rows="3" placeholder="例: 争いの絶えない戦場。" data-i18n-placeholder="echo.tool.promptPlaceholder" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
     <div class="timbre-row">
-      <button type="button" class="timbre-btn active" id="timbrePad" data-timbre="pad">パッド</button>
-      <button type="button" class="timbre-btn" id="timbrePiano" data-timbre="piano">ピアノ</button>
-      <button type="button" class="timbre-btn" id="timbreGuitar" data-timbre="guitar">ギター</button>
-      <button type="button" class="timbre-btn" id="timbreSynth" data-timbre="synth">アナログシンセ</button>
+      <button type="button" class="timbre-btn active" id="timbrePad" data-timbre="pad" data-i18n="echo.tool.timbrePad">パッド</button>
+      <button type="button" class="timbre-btn" id="timbrePiano" data-timbre="piano" data-i18n="echo.tool.timbrePiano">ピアノ</button>
+      <button type="button" class="timbre-btn" id="timbreGuitar" data-timbre="guitar" data-i18n="echo.tool.timbreGuitar">ギター</button>
+      <button type="button" class="timbre-btn" id="timbreSynth" data-timbre="synth" data-i18n="echo.tool.timbreSynth">アナログシンセ</button>
     </div>
-    <p class="hint">音色は実在の技術（多倍音の減衰・Karplus-Strong弦モデル・デチューンしたフィルター synth）で合成しています。サンプル音源は使用していません。</p>
+    <p class="hint" data-i18n="echo.tool.timbreHint">音色は実在の技術（多倍音の減衰・Karplus-Strong弦モデル・デチューンしたフィルター synth）で合成しています。サンプル音源は使用していません。</p>
     <div class="btn-row" style="margin-top:.7rem;">
-      <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
-      <button type="button" class="btn btn-primary" id="autoComposeBtn"><span>✦ テキストから作曲</span></button>
+      <button type="button" class="btn" id="loadQuillTextBtn"><span data-i18n="common.loadQuillText">Quillの文章を読み込む</span></button>
+      <button type="button" class="btn btn-primary" id="autoComposeBtn"><span data-i18n="echo.tool.generateBtn">✦ テキストから作曲</span></button>
     </div>
     <p class="hint" id="autoComposeStatus"></p>
   </div>
@@ -176,8 +177,8 @@ window.YOUKOKU_BG_THEMES = [
     <div class="canvas-panel">
       <div class="dropzone" id="dropzone">
         <div class="dropzone-icon">♪</div>
-        <h2>音源をドラッグ&ドロップ</h2>
-        <p>または <span class="browse">クリックして選択</span>（MP3 / WAV / M4A）</p>
+        <h2 data-i18n="echo.tool.dropzoneTitle">音源をドラッグ&ドロップ</h2>
+        <p><span data-i18n="echo.tool.dropzoneOr">または</span> <span class="browse" data-i18n="echo.tool.dropzoneBrowse">クリックして選択</span><span data-i18n="echo.tool.dropzoneTypes">（MP3 / WAV / M4A）</span></p>
       </div>
 
       <div id="editorWrap">
@@ -197,22 +198,22 @@ window.YOUKOKU_BG_THEMES = [
 
         <div class="trim-inputs">
           <div class="trim-field">
-            <label>開始 (秒)</label>
+            <label data-i18n="echo.tool.trimStartLabel">開始 (秒)</label>
             <div class="trim-field-row">
               <input type="number" id="trimInField" min="0" step="0.1" value="0">
-              <button type="button" class="mini-btn" id="setInBtn">再生位置</button>
+              <button type="button" class="mini-btn" id="setInBtn" data-i18n="echo.tool.setPositionBtn">再生位置</button>
             </div>
           </div>
           <div class="trim-field">
-            <label>終了 (秒)</label>
+            <label data-i18n="echo.tool.trimEndLabel">終了 (秒)</label>
             <div class="trim-field-row">
               <input type="number" id="trimOutField" min="0" step="0.1" value="0">
-              <button type="button" class="mini-btn" id="setOutBtn">再生位置</button>
+              <button type="button" class="mini-btn" id="setOutBtn" data-i18n="echo.tool.setPositionBtn">再生位置</button>
             </div>
           </div>
         </div>
 
-        <p class="change-audio"><button type="button" id="changeAudioBtn">別の音源を選ぶ</button></p>
+        <p class="change-audio"><button type="button" id="changeAudioBtn" data-i18n="echo.tool.changeAudioBtn">別の音源を選ぶ</button></p>
       </div>
       <input type="file" id="fileInput" accept="audio/*" hidden>
     </div>
@@ -221,42 +222,42 @@ window.YOUKOKU_BG_THEMES = [
       <div class="card">
         <h3>AI Mastering</h3>
         <div class="toggle-row">
-          <span>自動マスタリング</span>
+          <span data-i18n="echo.tool.autoMasteringLabel">自動マスタリング</span>
           <button type="button" class="switch" id="masterSwitch" aria-pressed="false"></button>
         </div>
-        <p class="hint" id="masterHint">ハイパス・EQ・コンプレッションのチェーンで音圧と質感を自動調整します。</p>
+        <p class="hint" id="masterHint" data-i18n="echo.tool.masterHintDefault">ハイパス・EQ・コンプレッションのチェーンで音圧と質感を自動調整します。</p>
       </div>
 
       <div class="card">
         <h3>AI Remix</h3>
-        <button type="button" class="btn btn-primary" id="remixBtn" disabled><span>🔀 リミックスを生成</span></button>
+        <button type="button" class="btn btn-primary" id="remixBtn" disabled><span data-i18n="echo.tool.remixBtn">🔀 リミックスを生成</span></button>
         <div class="toggle-row" style="margin-top:1rem;">
-          <span>リミックス版を再生</span>
+          <span data-i18n="echo.tool.remixPlayToggleLabel">リミックス版を再生</span>
           <button type="button" class="switch" id="remixSwitch" aria-pressed="false" disabled></button>
         </div>
-        <p class="hint" id="remixHint">トリム範囲を8つのブロックに分割し、シャッフル・一部逆再生して新しいバージョンを生成します。</p>
+        <p class="hint" id="remixHint" data-i18n="echo.tool.remixHintDefault">トリム範囲を8つのブロックに分割し、シャッフル・一部逆再生して新しいバージョンを生成します。</p>
       </div>
 
       <div class="card">
         <h3>Adjust</h3>
         <div class="slider-row">
-          <label>ボリューム <span id="valVolume">100%</span></label>
+          <label><span data-i18n="echo.tool.volumeLabel">ボリューム</span> <span id="valVolume">100%</span></label>
           <input type="range" id="rVolume" min="0" max="150" value="100">
         </div>
         <div class="slider-row">
-          <label>フェードイン <span id="valFadeIn">0.0s</span></label>
+          <label><span data-i18n="echo.tool.fadeInLabel">フェードイン</span> <span id="valFadeIn">0.0s</span></label>
           <input type="range" id="rFadeIn" min="0" max="30" value="0" step="1">
         </div>
         <div class="slider-row">
-          <label>フェードアウト <span id="valFadeOut">0.0s</span></label>
+          <label><span data-i18n="echo.tool.fadeOutLabel">フェードアウト</span> <span id="valFadeOut">0.0s</span></label>
           <input type="range" id="rFadeOut" min="0" max="30" value="0" step="1">
         </div>
         <div class="slider-row">
-          <label>再生速度 <span id="valSpeed">1.0x</span></label>
+          <label><span data-i18n="echo.tool.playbackSpeedLabel">再生速度</span> <span id="valSpeed">1.0x</span></label>
           <input type="range" id="rSpeed" min="50" max="200" value="100" step="5">
         </div>
         <div class="toggle-row">
-          <span>逆再生</span>
+          <span data-i18n="echo.tool.reverseLabel">逆再生</span>
           <button type="button" class="switch" id="reverseSwitch" aria-pressed="false"></button>
         </div>
       </div>
@@ -264,49 +265,52 @@ window.YOUKOKU_BG_THEMES = [
       <div class="card">
         <h3>Effects</h3>
         <div class="slider-row">
-          <label>ベース <span id="valBass">0dB</span></label>
+          <label><span data-i18n="echo.tool.bassLabel">ベース</span> <span id="valBass">0dB</span></label>
           <input type="range" id="rBass" min="-12" max="12" value="0">
         </div>
         <div class="slider-row">
-          <label>トレブル <span id="valTreble">0dB</span></label>
+          <label><span data-i18n="echo.tool.trebleLabel">トレブル</span> <span id="valTreble">0dB</span></label>
           <input type="range" id="rTreble" min="-12" max="12" value="0">
         </div>
         <div class="slider-row">
-          <label>リバーブ <span id="valReverb">0%</span></label>
+          <label><span data-i18n="echo.tool.reverbLabel">リバーブ</span> <span id="valReverb">0%</span></label>
           <input type="range" id="rReverb" min="0" max="100" value="0">
         </div>
         <div class="slider-row">
-          <label>ディレイ (Echo) <span id="valDelay">0%</span></label>
+          <label><span data-i18n="echo.tool.delayLabel">ディレイ (Echo)</span> <span id="valDelay">0%</span></label>
           <input type="range" id="rDelay" min="0" max="100" value="0">
         </div>
         <div class="slider-row">
-          <label>ディストーション <span id="valDistortion">0%</span></label>
+          <label><span data-i18n="echo.tool.distortionLabel">ディストーション</span> <span id="valDistortion">0%</span></label>
           <input type="range" id="rDistortion" min="0" max="100" value="0">
         </div>
       </div>
 
       <div class="btn-row">
-        <button type="button" class="btn" id="resetBtn" disabled><span>リセット</span></button>
-        <button type="button" class="btn btn-primary" id="exportBtn" disabled><span>↓ 書き出す</span></button>
+        <button type="button" class="btn" id="resetBtn" disabled><span data-i18n="common.reset">リセット</span></button>
+        <button type="button" class="btn btn-primary" id="exportBtn" disabled><span data-i18n="echo.tool.exportBtn">↓ 書き出す</span></button>
       </div>
 
       <div class="result" id="resultBox">
-        <h3 style="font-family:var(--display);font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 .8rem;">書き出し結果</h3>
+        <h3 style="font-family:var(--display);font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 .8rem;" data-i18n="echo.tool.resultTitle">書き出し結果</h3>
         <audio id="resultAudio" controls></audio>
         <div class="btn-row" style="margin-top:.8rem;">
-          <a class="btn btn-primary" id="downloadLink" download="echo-edit.wav"><span>ダウンロード (WAV)</span></a>
-          <button type="button" class="btn" id="sendToProjectBtn"><span>→ Studioに送る</span></button>
+          <a class="btn btn-primary" id="downloadLink" download="echo-edit.wav"><span data-i18n="echo.tool.downloadWavBtn">ダウンロード (WAV)</span></a>
+          <button type="button" class="btn" id="sendToProjectBtn"><span data-i18n="common.sendToStudio">→ Studioに送る</span></button>
         </div>
         <p class="hint" id="sendToProjectStatus"></p>
-        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;">Studioを開く →</a>
+        <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;" data-i18n="common.openStudio">Studioを開く →</a>
       </div>
     </div>
   </div>
 </main>
 
+<script src="../../shared/i18n.js"></script>
 <script>
 (() => {
   'use strict';
+
+  const t = (key, vars) => window.YoukokuI18n.t(key, vars);
 
   const dropzone = document.getElementById('dropzone');
   const editorWrap = document.getElementById('editorWrap');
@@ -444,7 +448,7 @@ window.YOUKOKU_BG_THEMES = [
         remixSwitch.classList.remove('on');
         remixSwitch.setAttribute('aria-pressed', 'false');
         remixSwitch.disabled = true;
-        remixHint.textContent = 'トリム範囲を8つのブロックに分割し、シャッフル・一部逆再生して新しいバージョンを生成します。';
+        remixHint.textContent = t('echo.tool.remixHintDefault');
         duration = buf.duration;
         trimIn = 0; trimOut = duration;
         playPosition = 0;
@@ -458,7 +462,7 @@ window.YOUKOKU_BG_THEMES = [
         updateTimeLabel();
         [resetBtn, exportBtn, remixBtn].forEach(b => b.disabled = false);
       } catch (err) {
-        alert('この音声ファイルを読み込めませんでした。');
+        alert(t('echo.tool.loadFileError'));
       }
     };
     reader.readAsArrayBuffer(file);
@@ -473,26 +477,26 @@ window.YOUKOKU_BG_THEMES = [
 
   /* ---------- auto-compose from a text prompt ---------- */
   loadQuillTextBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject) { autoComposeStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuProject) { autoComposeStatus.textContent = t('common.browserUnsupported'); return; }
     const textSlot = await window.YoukokuProject.getSlot('text');
     if (!textSlot || !textSlot.json) {
-      autoComposeStatus.textContent = 'Quillにまだ何も送信されていません。';
+      autoComposeStatus.textContent = t('common.quillNotSentYet');
       return;
     }
     const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
     promptInput.value = fullText;
-    autoComposeStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」を読み込みました。`;
+    autoComposeStatus.textContent = t('common.loadedQuillTitle', { title: textSlot.json.title || t('studio.untitledStory') });
   });
 
   autoComposeBtn.addEventListener('click', async () => {
-    if (!window.YoukokuMusic || !window.YoukokuTextToArt) { autoComposeStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuMusic || !window.YoukokuTextToArt) { autoComposeStatus.textContent = t('common.browserUnsupported'); return; }
     const text = promptInput.value.trim();
     if (!text) {
-      autoComposeStatus.textContent = 'テキストを入力してください。';
+      autoComposeStatus.textContent = t('common.enterTextErr');
       return;
     }
     autoComposeBtn.disabled = true;
-    autoComposeStatus.textContent = '作曲しています…';
+    autoComposeStatus.textContent = t('echo.tool.composingStatus');
     try {
       const mood = window.YoukokuTextToArt.scoreText(text).mood;
       const buf = await window.YoukokuMusic.generate({ mood, duration: 20, timbre: selectedTimbre, text });
@@ -506,7 +510,7 @@ window.YOUKOKU_BG_THEMES = [
       remixSwitch.classList.remove('on');
       remixSwitch.setAttribute('aria-pressed', 'false');
       remixSwitch.disabled = true;
-      remixHint.textContent = 'トリム範囲を8つのブロックに分割し、シャッフル・一部逆再生して新しいバージョンを生成します。';
+      remixHint.textContent = t('echo.tool.remixHintDefault');
       duration = buf.duration;
       trimIn = 0; trimOut = duration;
       playPosition = 0;
@@ -519,9 +523,9 @@ window.YOUKOKU_BG_THEMES = [
       updateHandles();
       updateTimeLabel();
       [resetBtn, exportBtn, remixBtn].forEach(b => b.disabled = false);
-      autoComposeStatus.textContent = '✓ 自動作曲が完成しました。';
+      autoComposeStatus.textContent = t('echo.tool.composeSuccess');
     } catch (err) {
-      autoComposeStatus.textContent = '作曲に失敗しました: ' + err.message;
+      autoComposeStatus.textContent = t('echo.tool.composeFailedPrefix') + err.message;
     } finally {
       autoComposeBtn.disabled = false;
     }
@@ -831,8 +835,8 @@ window.YOUKOKU_BG_THEMES = [
     masterSwitch.classList.toggle('on', masteringOn);
     masterSwitch.setAttribute('aria-pressed', String(masteringOn));
     masterHint.textContent = masteringOn
-      ? 'AIマスタリング適用中: ハイパス・EQ(3.2kHz +3.5dB)・コンプレッション(3.2:1)を適用します。'
-      : 'ハイパス・EQ・コンプレッションのチェーンで音圧と質感を自動調整します。';
+      ? t('echo.tool.masterHintOn')
+      : t('echo.tool.masterHintDefault');
   });
 
   function buildReversed() {
@@ -874,7 +878,7 @@ window.YOUKOKU_BG_THEMES = [
     const N = 8;
     const segLen = Math.floor(totalLen / N);
     if (segLen <= 0) {
-      remixHint.textContent = 'リミックスするには、もう少し長い範囲をトリムしてください。';
+      remixHint.textContent = t('echo.tool.remixHintTooShort');
       return;
     }
 
@@ -910,7 +914,7 @@ window.YOUKOKU_BG_THEMES = [
     drawWaveform();
     updatePlayheadVisual();
     const reversedCount = reverseFlags.filter(Boolean).length;
-    remixHint.textContent = `8ブロックをシャッフルして生成しました（${reversedCount}ブロックを逆再生）。もう一度押すと別のバージョンになります。`;
+    remixHint.textContent = t('echo.tool.remixHintResult', { n: reversedCount });
   }
 
   remixBtn.addEventListener('click', generateRemix);
@@ -984,7 +988,7 @@ window.YOUKOKU_BG_THEMES = [
     const buf = activeBuffer();
     if (!buf) return;
     exportBtn.disabled = true;
-    exportBtn.querySelector('span').textContent = '書き出し中…';
+    exportBtn.querySelector('span').textContent = t('echo.tool.exportingLabel');
     try {
       const speed = getSpeed();
       const segDuration = (trimOut - trimIn) / speed;
@@ -1007,10 +1011,10 @@ window.YOUKOKU_BG_THEMES = [
       sendToProjectStatus.textContent = '';
       resultBox.classList.add('active');
     } catch (err) {
-      alert('書き出しに失敗しました: ' + err.message);
+      alert(t('echo.tool.exportFailedAlert') + err.message);
     } finally {
       exportBtn.disabled = false;
-      exportBtn.querySelector('span').textContent = '↓ 書き出す';
+      exportBtn.querySelector('span').textContent = t('echo.tool.exportBtn');
     }
   });
 
@@ -1018,13 +1022,13 @@ window.YOUKOKU_BG_THEMES = [
   updateTimeLabelInit();
 
   sendToProjectBtn.addEventListener('click', async () => {
-    if (!window.YoukokuProject) { sendToProjectStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!window.YoukokuProject) { sendToProjectStatus.textContent = t('common.browserUnsupported'); return; }
     if (!lastExportBlob) return;
     try {
       await window.YoukokuProject.saveSlot('audio', { blob: lastExportBlob, from: 'Echo' });
-      sendToProjectStatus.textContent = '✓ Studioに送信しました。';
+      sendToProjectStatus.textContent = t('common.sentToStudio');
     } catch (err) {
-      sendToProjectStatus.textContent = '送信に失敗しました: ' + err.message;
+      sendToProjectStatus.textContent = t('common.sendFailedPrefix') + err.message;
     }
   });
 
