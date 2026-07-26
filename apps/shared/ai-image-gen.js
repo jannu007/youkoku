@@ -55,6 +55,25 @@ window.YoukokuAIImageGen = (() => {
   function isReady() { return ready; }
   function totalDownloadMB() { return TOTAL_MB; }
 
+  /* some browsers have already dropped GPUAdapter.requestAdapterInfo() in favor of the
+     synchronous adapter.info property, but onnxruntime-web's webgpu backend still calls
+     the old method internally when it creates its own adapter — patch it back in so
+     session creation doesn't crash with "no available backend found". Documented
+     community workaround for https://github.com/microsoft/onnxruntime/issues/26107 */
+  let adapterShimApplied = false;
+  function applyAdapterInfoShim() {
+    if (adapterShimApplied || !('gpu' in navigator)) return;
+    adapterShimApplied = true;
+    const origRequestAdapter = navigator.gpu.requestAdapter.bind(navigator.gpu);
+    navigator.gpu.requestAdapter = async (...args) => {
+      const adapter = await origRequestAdapter(...args);
+      if (adapter && typeof adapter.requestAdapterInfo !== 'function') {
+        adapter.requestAdapterInfo = async () => (adapter.info || {});
+      }
+      return adapter;
+    };
+  }
+
   /* ---------- how much is already cached, so the UI can skip the confirm step ---------- */
   async function getCacheStatus() {
     try {
@@ -107,6 +126,7 @@ window.YoukokuAIImageGen = (() => {
 
     loadingPromise = (async () => {
       report('runtime');
+      applyAdapterInfoShim();
       const ortMod = await import(/* webpackIgnore: true */ ORT_ESM_URL);
       ort = ortMod.default || ortMod;
       ort.env.wasm.wasmPaths = ORT_BASE;
