@@ -448,7 +448,7 @@ section{ position:relative; padding:9rem 6vw; max-width:1440px; margin:0 auto; }
 .footer-col a{ font-size:.85rem; color:var(--ink-soft); }
 .footer-col a:hover{ color:var(--ink); }
 .footer-app-credit{ display:flex; flex-direction:column; gap:.15rem; }
-.footer-app-by{ font-size:.72rem; color:var(--ink-faint); }
+.footer-app-by{ font-size:.72rem; color:var(--ink-faint); padding-left:1.1em; }
 
 .footer-bottom{
   display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;
