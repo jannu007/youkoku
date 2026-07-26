@@ -108,6 +108,18 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
 .switch.on{ background:linear-gradient(95deg,var(--violet),var(--blue)); }
 .switch.on::after{ transform:translateX(1.1rem); }
 
+.mini-btn{
+  border:1px solid var(--line); background:transparent; color:var(--ink-soft); border-radius:8px;
+  padding:.45rem .8rem; font-size:.72rem; white-space:nowrap; display:inline-flex; align-items:center; gap:.35em;
+}
+.mini-btn:hover{ border-color:var(--ink); color:var(--ink); }
+.mini-btn:disabled{ opacity:.4; cursor:default; }
+.edit-toolbar{ display:flex; gap:.6rem; justify-content:center; margin:.9rem 0 0; flex-wrap:wrap; }
+#curveCanvas{ display:block; width:100%; aspect-ratio:1; border-radius:8px; background:var(--panel2); cursor:pointer; touch-action:none; }
+#histogramCanvas{ display:block; width:100%; height:80px; border-radius:8px; background:var(--panel2); }
+.crop-actions{ display:none; margin-top:.7rem; }
+.crop-actions.active{ display:flex; }
+
 .parallax-section{ display:none; margin-top:2rem; }
 .parallax-section.active{ display:block; }
 .parallax-card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:1.5rem; }
@@ -165,7 +177,12 @@ window.YOUKOKU_BG_THEMES = [
       </div>
       <div id="canvasWrap">
         <canvas id="previewCanvas"></canvas>
-        <p style="text-align:center;color:var(--ink-soft);font-size:.76rem;margin:.9rem 0 0;">
+        <div class="edit-toolbar">
+          <button type="button" class="mini-btn" id="undoBtn" disabled>↺ <span data-i18n="lumen.tool.undoBtn">元に戻す</span></button>
+          <button type="button" class="mini-btn" id="redoBtn" disabled>↻ <span data-i18n="lumen.tool.redoBtn">やり直す</span></button>
+          <button type="button" class="mini-btn" id="compareBtn"><span data-i18n="lumen.tool.compareBtn">押して比較</span></button>
+        </div>
+        <p style="text-align:center;color:var(--ink-soft);font-size:.76rem;margin:.7rem 0 0;">
           <button type="button" id="changeImageBtn" data-i18n="lumen.tool.changeImageBtn" style="background:none;border:none;color:var(--violet);text-decoration:underline;text-underline-offset:.2em;cursor:pointer;font-size:inherit;">別の画像を選ぶ</button>
         </p>
       </div>
@@ -177,6 +194,11 @@ window.YOUKOKU_BG_THEMES = [
         <h3>AI Auto Enhance</h3>
         <button type="button" class="btn btn-primary" id="autoEnhanceBtn" disabled><span data-i18n="lumen.tool.autoEnhanceBtn">✦ 自動で補正する</span></button>
         <p class="hint" id="autoHint" data-i18n="lumen.tool.autoHintDefault">画像のヒストグラムから最適な明るさ・コントラストを推定します。</p>
+      </div>
+
+      <div class="card">
+        <h3>Histogram</h3>
+        <canvas id="histogramCanvas" width="280" height="80"></canvas>
       </div>
 
       <div class="card">
@@ -200,10 +222,35 @@ window.YOUKOKU_BG_THEMES = [
       </div>
 
       <div class="card">
+        <h3>White Balance</h3>
+        <div class="slider-row">
+          <label><span data-i18n="lumen.tool.temperature">色温度</span> <span id="valTemp">0</span></label>
+          <input type="range" id="rTemp" min="-50" max="50" value="0">
+        </div>
+        <div class="slider-row">
+          <label><span data-i18n="lumen.tool.tint">色かぶり補正</span> <span id="valTint">0</span></label>
+          <input type="range" id="rTint" min="-50" max="50" value="0">
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Curves</h3>
+        <p class="hint" data-i18n="lumen.tool.curveHint">中央のポイントをドラッグしてトーンカーブを調整できます。上に動かすと中間調が明るく、下に動かすと暗くなります。</p>
+        <canvas id="curveCanvas" width="220" height="220"></canvas>
+        <div class="btn-row" style="margin-top:.7rem;">
+          <button type="button" class="btn" id="resetCurveBtn"><span data-i18n="lumen.tool.resetCurveBtn">カーブをリセット</span></button>
+        </div>
+      </div>
+
+      <div class="card">
         <h3>Effects</h3>
         <div class="slider-row">
           <label><span data-i18n="lumen.tool.blur">ぼかし</span> <span id="valBlur">0px</span></label>
           <input type="range" id="rBlur" min="0" max="20" value="0">
+        </div>
+        <div class="slider-row">
+          <label><span data-i18n="lumen.tool.sharpen">シャープ</span> <span id="valSharpen">0</span></label>
+          <input type="range" id="rSharpen" min="0" max="100" value="0">
         </div>
         <div class="slider-row">
           <label><span data-i18n="common.vignette">ビネット</span> <span id="valVignette">0%</span></label>
@@ -229,6 +276,22 @@ window.YOUKOKU_BG_THEMES = [
           <span data-i18n="lumen.tool.sketch">スケッチ</span>
           <button type="button" class="switch" id="sketchSwitch" aria-pressed="false"></button>
         </div>
+      </div>
+
+      <div class="card">
+        <h3>Crop &amp; Straighten</h3>
+        <div class="slider-row">
+          <label><span data-i18n="lumen.tool.straighten">水平補正</span> <span id="valStraighten">0°</span></label>
+          <input type="range" id="rStraighten" min="-45" max="45" value="0" step="0.5">
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn" id="startCropBtn"><span data-i18n="lumen.tool.startCropBtn">✂ 切り出す</span></button>
+        </div>
+        <div class="btn-row crop-actions" id="cropActions">
+          <button type="button" class="btn" id="cancelCropBtn"><span data-i18n="lumen.tool.cancelCropBtn">キャンセル</span></button>
+          <button type="button" class="btn btn-primary" id="applyCropBtn"><span data-i18n="lumen.tool.applyCropBtn">切り出しを適用</span></button>
+        </div>
+        <p class="hint" id="cropHint" data-i18n="lumen.tool.cropHint">「切り出す」を押してから、画像上をドラッグして範囲を選び、適用してください。</p>
       </div>
 
       <div class="card">
@@ -291,6 +354,21 @@ window.YOUKOKU_BG_THEMES = [
   const generateArtStatus = document.getElementById('generateArtStatus');
   const promptInput = document.getElementById('promptInput');
   const loadQuillTextBtn = document.getElementById('loadQuillTextBtn');
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  const compareBtn = document.getElementById('compareBtn');
+  const histogramCanvas = document.getElementById('histogramCanvas');
+  const hctx = histogramCanvas.getContext('2d');
+  const curveCanvas = document.getElementById('curveCanvas');
+  const cvctx = curveCanvas.getContext('2d');
+  const resetCurveBtn = document.getElementById('resetCurveBtn');
+  const straightenSlider = document.getElementById('rStraighten');
+  const valStraighten = document.getElementById('valStraighten');
+  const startCropBtn = document.getElementById('startCropBtn');
+  const cancelCropBtn = document.getElementById('cancelCropBtn');
+  const applyCropBtn = document.getElementById('applyCropBtn');
+  const cropActions = document.getElementById('cropActions');
+  const cropHint = document.getElementById('cropHint');
 
   const sliders = {
     brightness: document.getElementById('rBrightness'),
@@ -305,8 +383,19 @@ window.YOUKOKU_BG_THEMES = [
     hue: document.getElementById('valHue'),
   };
 
+  const wbSliders = {
+    temp: document.getElementById('rTemp'),
+    tint: document.getElementById('rTint'),
+  };
+  const wbValues = {
+    temp: document.getElementById('valTemp'),
+    tint: document.getElementById('valTint'),
+  };
+  let curveMidX = 128, curveMidY = 128;
+
   const fxSliders = {
     blur: document.getElementById('rBlur'),
+    sharpen: document.getElementById('rSharpen'),
     vignette: document.getElementById('rVignette'),
     grain: document.getElementById('rGrain'),
     chroma: document.getElementById('rChroma'),
@@ -314,6 +403,7 @@ window.YOUKOKU_BG_THEMES = [
   };
   const fxValues = {
     blur: document.getElementById('valBlur'),
+    sharpen: document.getElementById('valSharpen'),
     vignette: document.getElementById('valVignette'),
     grain: document.getElementById('valGrain'),
     chroma: document.getElementById('valChroma'),
@@ -327,6 +417,14 @@ window.YOUKOKU_BG_THEMES = [
   const MAX_DIM = 2000;
   let srcImage = null; // the loaded HTMLImageElement
   let srcW = 0, srcH = 0;
+
+  let cropMode = false;
+  let cropRect = null; // {x,y,w,h} in canvas pixel coords
+  let cropDragging = false;
+  let cropStartX = 0, cropStartY = 0;
+
+  let historyStack = [];
+  let historyIndex = -1;
 
   const PRESETS = [
     { name: 'Vivid',   v: { brightness: 108, contrast: 118, saturate: 145, hue: 0 } },
@@ -358,15 +456,20 @@ window.YOUKOKU_BG_THEMES = [
     values.saturate.textContent = sliders.saturate.value + '%';
     values.hue.textContent = sliders.hue.value + '°';
     fxValues.blur.textContent = fxSliders.blur.value + 'px';
+    fxValues.sharpen.textContent = fxSliders.sharpen.value;
     fxValues.vignette.textContent = fxSliders.vignette.value + '%';
     fxValues.grain.textContent = fxSliders.grain.value + '%';
     fxValues.chroma.textContent = fxSliders.chroma.value;
     fxValues.pixelate.textContent = fxSliders.pixelate.value;
+    wbValues.temp.textContent = wbSliders.temp.value;
+    wbValues.tint.textContent = wbSliders.tint.value;
+    valStraighten.textContent = straightenSlider.value + '°';
   }
 
   function currentFx() {
     return {
       blur: Number(fxSliders.blur.value),
+      sharpen: Number(fxSliders.sharpen.value),
       vignette: Number(fxSliders.vignette.value),
       grain: Number(fxSliders.grain.value),
       chroma: Number(fxSliders.chroma.value),
@@ -494,6 +597,129 @@ window.YOUKOKU_BG_THEMES = [
     ctx.restore();
   }
 
+  /* ---------- pro tools: sharpen, white balance + tone curve, histogram ---------- */
+  function applySharpen(amount) {
+    const w = canvas.width, h = canvas.height;
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const src = imgData.data;
+    const out = ctx.createImageData(w, h);
+    const od = out.data;
+    const amt = amount / 100;
+    const center = 1 + 4 * amt;
+    const edge = -amt;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = (y * w + x) * 4;
+        const left = x > 0 ? idx - 4 : idx;
+        const right = x < w - 1 ? idx + 4 : idx;
+        const up = y > 0 ? idx - w * 4 : idx;
+        const down = y < h - 1 ? idx + w * 4 : idx;
+        for (let c = 0; c < 3; c++) {
+          const sum = src[idx + c] * center + src[left + c] * edge + src[right + c] * edge + src[up + c] * edge + src[down + c] * edge;
+          od[idx + c] = Math.min(255, Math.max(0, sum));
+        }
+        od[idx + 3] = src[idx + 3];
+      }
+    }
+    ctx.putImageData(out, 0, 0);
+  }
+
+  function buildCurveLUT(midX, midY) {
+    const STEPS = 512;
+    const pts = [];
+    for (let i = 0; i <= STEPS; i++) {
+      const tt = i / STEPS;
+      const x = 2 * tt * (1 - tt) * midX + tt * tt * 255;
+      const y = 2 * tt * (1 - tt) * midY + tt * tt * 255;
+      pts.push([x, y]);
+    }
+    pts.sort((a, b) => a[0] - b[0]);
+    const lut = new Uint8ClampedArray(256);
+    let pi = 0;
+    for (let x = 0; x < 256; x++) {
+      while (pi < pts.length - 2 && pts[pi + 1][0] <= x) pi++;
+      const [x0, y0] = pts[pi];
+      const [x1, y1] = pts[Math.min(pi + 1, pts.length - 1)];
+      const span = (x1 - x0) || 1;
+      const frac = Math.min(1, Math.max(0, (x - x0) / span));
+      lut[x] = y0 + (y1 - y0) * frac;
+    }
+    return lut;
+  }
+
+  function applyColorGrade(temp, tint, lut) {
+    const w = canvas.width, h = canvas.height;
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const d = imgData.data;
+    const gainR = 1 + (temp / 50) * 0.25 + (tint / 50) * 0.12;
+    const gainG = 1 - (tint / 50) * 0.15;
+    const gainB = 1 - (temp / 50) * 0.25 + (tint / 50) * 0.12;
+    for (let i = 0; i < d.length; i += 4) {
+      d[i] = lut[Math.min(255, Math.max(0, Math.round(d[i] * gainR)))];
+      d[i + 1] = lut[Math.min(255, Math.max(0, Math.round(d[i + 1] * gainG)))];
+      d[i + 2] = lut[Math.min(255, Math.max(0, Math.round(d[i + 2] * gainB)))];
+    }
+    ctx.putImageData(imgData, 0, 0);
+  }
+
+  function drawHistogram() {
+    const w = histogramCanvas.width, h = histogramCanvas.height;
+    hctx.clearRect(0, 0, w, h);
+    if (!srcImage) return;
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const d = imgData.data;
+    const rHist = new Array(256).fill(0), gHist = new Array(256).fill(0), bHist = new Array(256).fill(0);
+    const step = 4 * 8;
+    for (let i = 0; i < d.length; i += step) { rHist[d[i]]++; gHist[d[i + 1]]++; bHist[d[i + 2]]++; }
+    let maxV = 1;
+    for (let i = 0; i < 256; i++) maxV = Math.max(maxV, rHist[i], gHist[i], bHist[i]);
+    function drawChannel(hist, color) {
+      hctx.beginPath();
+      hctx.strokeStyle = color;
+      hctx.lineWidth = 1;
+      for (let x = 0; x < 256; x++) {
+        const px = (x / 255) * w;
+        const py = h - (hist[x] / maxV) * h;
+        if (x === 0) hctx.moveTo(px, py); else hctx.lineTo(px, py);
+      }
+      hctx.stroke();
+    }
+    hctx.globalCompositeOperation = 'lighter';
+    drawChannel(rHist, 'rgba(255,90,90,0.9)');
+    drawChannel(gHist, 'rgba(90,255,130,0.9)');
+    drawChannel(bHist, 'rgba(100,150,255,0.9)');
+    hctx.globalCompositeOperation = 'source-over';
+  }
+
+  function drawCurveEditor() {
+    const w = curveCanvas.width, h = curveCanvas.height;
+    cvctx.clearRect(0, 0, w, h);
+    cvctx.strokeStyle = 'rgba(255,255,255,.08)';
+    cvctx.lineWidth = 1;
+    for (let i = 1; i < 4; i++) {
+      const p = (i / 4) * w;
+      cvctx.beginPath(); cvctx.moveTo(p, 0); cvctx.lineTo(p, h); cvctx.stroke();
+      cvctx.beginPath(); cvctx.moveTo(0, p); cvctx.lineTo(w, p); cvctx.stroke();
+    }
+    cvctx.strokeStyle = 'rgba(255,255,255,.15)';
+    cvctx.beginPath(); cvctx.moveTo(0, h); cvctx.lineTo(w, 0); cvctx.stroke();
+
+    const lut = buildCurveLUT(curveMidX, curveMidY);
+    cvctx.strokeStyle = '#8b5cf6';
+    cvctx.lineWidth = 2;
+    cvctx.beginPath();
+    for (let x = 0; x <= 255; x++) {
+      const px = (x / 255) * w;
+      const py = h - (lut[x] / 255) * h;
+      if (x === 0) cvctx.moveTo(px, py); else cvctx.lineTo(px, py);
+    }
+    cvctx.stroke();
+
+    const pointX = (curveMidX / 255) * w, pointY = h - (curveMidY / 255) * h;
+    cvctx.fillStyle = '#fff';
+    cvctx.beginPath(); cvctx.arc(pointX, pointY, 5, 0, Math.PI * 2); cvctx.fill();
+  }
+
   function render() {
     if (!srcImage) return;
     const fx = currentFx();
@@ -501,8 +727,23 @@ window.YOUKOKU_BG_THEMES = [
     ctx.save();
     ctx.filter = buildFilterString(currentValues()) + (fx.blur > 0 ? ` blur(${fx.blur}px)` : '');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(srcImage, 0, 0, srcW, srcH);
+    const straighten = Number(straightenSlider.value);
+    if (straighten !== 0) {
+      const cx = canvas.width / 2, cy = canvas.height / 2;
+      ctx.translate(cx, cy);
+      ctx.rotate(straighten * Math.PI / 180);
+      ctx.drawImage(srcImage, -srcW / 2, -srcH / 2, srcW, srcH);
+    } else {
+      ctx.drawImage(srcImage, 0, 0, srcW, srcH);
+    }
     ctx.restore();
+
+    if (fx.sharpen > 0) applySharpen(fx.sharpen);
+
+    const temp = Number(wbSliders.temp.value), tint = Number(wbSliders.tint.value);
+    if (temp !== 0 || tint !== 0 || curveMidX !== 128 || curveMidY !== 128) {
+      applyColorGrade(temp, tint, buildCurveLUT(curveMidX, curveMidY));
+    }
 
     if (fx.pixelate > 1) applyPixelate(fx.pixelate);
     if (fx.duotone) applyDuotone();
@@ -511,6 +752,8 @@ window.YOUKOKU_BG_THEMES = [
     if (fx.vignette > 0) drawVignette(fx.vignette);
     if (fx.grain > 0) drawGrain(fx.grain);
 
+    drawHistogram();
+    if (cropMode) drawCropOverlay();
     updateLabels();
     highlightMatchingPreset();
     refreshParallax();
@@ -653,6 +896,8 @@ window.YOUKOKU_BG_THEMES = [
       resetBtn.disabled = false;
       downloadBtn.disabled = false;
       sendToProjectBtn.disabled = false;
+      clearHistory();
+      pushHistory();
       URL.revokeObjectURL(url);
     };
     img.src = url;
@@ -664,6 +909,7 @@ window.YOUKOKU_BG_THEMES = [
     sliders.saturate.value = 100;
     sliders.hue.value = 0;
     fxSliders.blur.value = 0;
+    fxSliders.sharpen.value = 0;
     fxSliders.vignette.value = 0;
     fxSliders.grain.value = 0;
     fxSliders.chroma.value = 0;
@@ -674,6 +920,11 @@ window.YOUKOKU_BG_THEMES = [
     duotoneSwitch.setAttribute('aria-pressed', 'false');
     sketchSwitch.classList.remove('on');
     sketchSwitch.setAttribute('aria-pressed', 'false');
+    wbSliders.temp.value = 0;
+    wbSliders.tint.value = 0;
+    curveMidX = 128; curveMidY = 128;
+    straightenSlider.value = 0;
+    drawCurveEditor();
     updateLabels();
   }
 
@@ -688,16 +939,19 @@ window.YOUKOKU_BG_THEMES = [
     const { data } = octx.getImageData(0, 0, srcW, srcH);
 
     const hist = new Array(256).fill(0);
-    let sum = 0;
+    let sum = 0, sumR = 0, sumG = 0, sumB = 0;
     const step = 4 * 4; // sample every 4th pixel for speed
     let sampled = 0;
     for (let i = 0; i < data.length; i += step) {
       const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
       hist[Math.round(lum)]++;
       sum += lum;
+      sumR += data[i]; sumG += data[i + 1]; sumB += data[i + 2];
       sampled++;
     }
     const mean = sum / sampled;
+    const avgR = sumR / sampled, avgG = sumG / sampled, avgB = sumB / sampled;
+    const avgGray = (avgR + avgG + avgB) / 3;
 
     // find 1st and 99th percentile bounds to determine clipping/contrast stretch
     const total = sampled;
@@ -718,18 +972,31 @@ window.YOUKOKU_BG_THEMES = [
     const brightness = Math.round(clamp(100 + (128 - mean) * 0.28, 85, 130));
     const saturate = Math.round(clamp(108 + (128 - mean) * 0.1, 95, 135));
 
+    // gray-world white balance: how far the R/B channels deviate from neutral gray
+    const castAmount = Math.round(clamp(((avgB - avgR) / (avgGray || 1)) * 140, -40, 40));
+
     sliders.brightness.value = brightness;
     sliders.contrast.value = contrast;
     sliders.saturate.value = saturate;
     sliders.hue.value = 0;
+    wbSliders.temp.value = castAmount;
+    wbSliders.tint.value = 0;
     render();
-    autoHint.textContent = t('lumen.tool.autoHintResult', { brightness, contrast, saturate });
+    if (Math.abs(castAmount) >= 4) {
+      autoHint.textContent = t('lumen.tool.autoHintResultWb', {
+        brightness, contrast, saturate,
+        cast: castAmount > 0 ? t('lumen.tool.castCool') : t('lumen.tool.castWarm'),
+      });
+    } else {
+      autoHint.textContent = t('lumen.tool.autoHintResult', { brightness, contrast, saturate });
+    }
+    pushHistory();
   }
 
   function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
 
   autoEnhanceBtn.addEventListener('click', autoEnhance);
-  resetBtn.addEventListener('click', () => { resetControls(); render(); autoHint.textContent = t('lumen.tool.autoHintDefault'); });
+  resetBtn.addEventListener('click', () => { resetControls(); render(); autoHint.textContent = t('lumen.tool.autoHintDefault'); pushHistory(); });
 
   downloadBtn.addEventListener('click', () => {
     canvas.toBlob((blob) => {
@@ -776,6 +1043,8 @@ window.YOUKOKU_BG_THEMES = [
     resetBtn.disabled = false;
     downloadBtn.disabled = false;
     sendToProjectBtn.disabled = false;
+    clearHistory();
+    pushHistory();
     generateArtStatus.textContent = t('lumen.tool.generateArtSuccess');
   });
 
@@ -805,8 +1074,213 @@ window.YOUKOKU_BG_THEMES = [
       sliders.saturate.value = p.v.saturate;
       sliders.hue.value = p.v.hue;
       render();
+      pushHistory();
     });
     presetGrid.appendChild(btn);
+  });
+
+  /* ---------- undo / redo history ---------- */
+  function snapshotState() {
+    return {
+      brightness: sliders.brightness.value, contrast: sliders.contrast.value, saturate: sliders.saturate.value, hue: sliders.hue.value,
+      blur: fxSliders.blur.value, sharpen: fxSliders.sharpen.value, vignette: fxSliders.vignette.value, grain: fxSliders.grain.value,
+      chroma: fxSliders.chroma.value, pixelate: fxSliders.pixelate.value,
+      duotone: duotoneOn, sketch: sketchOn,
+      temp: wbSliders.temp.value, tint: wbSliders.tint.value,
+      curveMidX, curveMidY,
+      straighten: straightenSlider.value,
+    };
+  }
+
+  function restoreState(s) {
+    sliders.brightness.value = s.brightness; sliders.contrast.value = s.contrast; sliders.saturate.value = s.saturate; sliders.hue.value = s.hue;
+    fxSliders.blur.value = s.blur; fxSliders.sharpen.value = s.sharpen; fxSliders.vignette.value = s.vignette; fxSliders.grain.value = s.grain;
+    fxSliders.chroma.value = s.chroma; fxSliders.pixelate.value = s.pixelate;
+    duotoneOn = s.duotone;
+    duotoneSwitch.classList.toggle('on', duotoneOn);
+    duotoneSwitch.setAttribute('aria-pressed', String(duotoneOn));
+    sketchOn = s.sketch;
+    sketchSwitch.classList.toggle('on', sketchOn);
+    sketchSwitch.setAttribute('aria-pressed', String(sketchOn));
+    wbSliders.temp.value = s.temp; wbSliders.tint.value = s.tint;
+    curveMidX = s.curveMidX; curveMidY = s.curveMidY;
+    straightenSlider.value = s.straighten;
+    drawCurveEditor();
+    render();
+  }
+
+  function clearHistory() { historyStack = []; historyIndex = -1; updateUndoRedoButtons(); }
+
+  function pushHistory() {
+    historyStack = historyStack.slice(0, historyIndex + 1);
+    historyStack.push(snapshotState());
+    if (historyStack.length > 40) historyStack.shift();
+    historyIndex = historyStack.length - 1;
+    updateUndoRedoButtons();
+  }
+
+  function undo() {
+    if (historyIndex <= 0) return;
+    historyIndex--;
+    restoreState(historyStack[historyIndex]);
+    updateUndoRedoButtons();
+  }
+  function redo() {
+    if (historyIndex >= historyStack.length - 1) return;
+    historyIndex++;
+    restoreState(historyStack[historyIndex]);
+    updateUndoRedoButtons();
+  }
+  function updateUndoRedoButtons() {
+    undoBtn.disabled = historyIndex <= 0;
+    redoBtn.disabled = !historyStack.length || historyIndex >= historyStack.length - 1;
+  }
+
+  undoBtn.addEventListener('click', undo);
+  redoBtn.addEventListener('click', redo);
+
+  Object.values(sliders).forEach(s => s.addEventListener('change', pushHistory));
+  Object.values(fxSliders).forEach(s => s.addEventListener('change', pushHistory));
+  Object.values(wbSliders).forEach((s) => {
+    s.addEventListener('input', render);
+    s.addEventListener('change', pushHistory);
+  });
+  straightenSlider.addEventListener('input', render);
+  straightenSlider.addEventListener('change', pushHistory);
+
+  duotoneSwitch.addEventListener('click', () => { pushHistory(); });
+  sketchSwitch.addEventListener('click', () => { pushHistory(); });
+
+  /* ---------- before/after compare ---------- */
+  compareBtn.addEventListener('pointerdown', () => {
+    if (!srcImage) return;
+    ctx.save();
+    ctx.filter = 'none';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(srcImage, 0, 0, srcW, srcH);
+    ctx.restore();
+  });
+  compareBtn.addEventListener('pointerup', () => render());
+  compareBtn.addEventListener('pointerleave', () => render());
+
+  /* ---------- tone curve editor ---------- */
+  function curveCanvasCoordsToSpace(clientX, clientY) {
+    const rect = curveCanvas.getBoundingClientRect();
+    const x = ((clientX - rect.left) / rect.width) * 255;
+    const y = 255 - ((clientY - rect.top) / rect.height) * 255;
+    return [Math.min(255, Math.max(0, x)), Math.min(255, Math.max(0, y))];
+  }
+  let curveDragging = false;
+  function updateCurveFromEvent(e) {
+    const [x, y] = curveCanvasCoordsToSpace(e.clientX, e.clientY);
+    curveMidX = x; curveMidY = y;
+    drawCurveEditor();
+    render();
+  }
+  curveCanvas.addEventListener('pointerdown', (e) => {
+    if (!srcImage) return;
+    curveDragging = true;
+    curveCanvas.setPointerCapture(e.pointerId);
+    updateCurveFromEvent(e);
+  });
+  curveCanvas.addEventListener('pointermove', (e) => { if (curveDragging) updateCurveFromEvent(e); });
+  curveCanvas.addEventListener('pointerup', () => { if (curveDragging) { curveDragging = false; pushHistory(); } });
+  resetCurveBtn.addEventListener('click', () => {
+    curveMidX = 128; curveMidY = 128;
+    drawCurveEditor();
+    render();
+    pushHistory();
+  });
+  drawCurveEditor();
+
+  /* ---------- crop & straighten ---------- */
+  function canvasPointFromEvent(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return [(e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY];
+  }
+
+  function drawCropOverlay() {
+    const w = canvas.width, h = canvas.height;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    if (cropRect) {
+      const { x, y, w: rw, h: rh } = cropRect;
+      ctx.fillRect(0, 0, w, y);
+      ctx.fillRect(0, y + rh, w, h - y - rh);
+      ctx.fillRect(0, y, x, rh);
+      ctx.fillRect(x + rw, y, w - x - rw, rh);
+      ctx.strokeStyle = '#8b5cf6';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, rw, rh);
+    } else {
+      ctx.fillRect(0, 0, w, h);
+    }
+    ctx.restore();
+  }
+
+  startCropBtn.addEventListener('click', () => {
+    if (!srcImage) return;
+    cropMode = true;
+    cropRect = null;
+    cropActions.classList.remove('active');
+    cropHint.textContent = t('lumen.tool.cropSelectHint');
+    render();
+  });
+
+  canvas.addEventListener('pointerdown', (e) => {
+    if (!cropMode) return;
+    const [x, y] = canvasPointFromEvent(e);
+    cropDragging = true;
+    cropStartX = x; cropStartY = y;
+    cropRect = { x, y, w: 0, h: 0 };
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!cropMode || !cropDragging) return;
+    const [x, y] = canvasPointFromEvent(e);
+    const x0 = Math.min(cropStartX, x), y0 = Math.min(cropStartY, y);
+    const x1 = Math.max(cropStartX, x), y1 = Math.max(cropStartY, y);
+    cropRect = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    render();
+  });
+  canvas.addEventListener('pointerup', () => {
+    if (!cropMode) return;
+    cropDragging = false;
+    if (cropRect && cropRect.w > 4 && cropRect.h > 4) {
+      cropActions.classList.add('active');
+    }
+  });
+
+  cancelCropBtn.addEventListener('click', () => {
+    cropMode = false;
+    cropRect = null;
+    cropActions.classList.remove('active');
+    cropHint.textContent = t('lumen.tool.cropHint');
+    render();
+  });
+
+  applyCropBtn.addEventListener('click', () => {
+    if (!cropRect || cropRect.w < 4 || cropRect.h < 4) return;
+    cropMode = false;
+    render();
+    const { x, y, w: rw, h: rh } = cropRect;
+    const cropped = document.createElement('canvas');
+    cropped.width = Math.max(1, Math.round(rw));
+    cropped.height = Math.max(1, Math.round(rh));
+    cropped.getContext('2d').drawImage(canvas, x, y, rw, rh, 0, 0, cropped.width, cropped.height);
+
+    srcImage = cropped;
+    srcW = cropped.width; srcH = cropped.height;
+    canvas.width = srcW; canvas.height = srcH;
+    cropRect = null;
+    cropActions.classList.remove('active');
+    cropHint.textContent = t('lumen.tool.cropHint');
+    resetControls();
+    render();
+    clearHistory();
+    pushHistory();
   });
 
   /* ---------- input wiring ---------- */
