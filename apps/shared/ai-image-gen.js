@@ -144,6 +144,30 @@ window.YoukokuAIImageGen = (() => {
     }
   }
 
+  /* ---------- keep the screen from auto-locking during the ~2.4GB download ----------
+     A locked/backgrounded tab gets its network and timers throttled by the OS/browser,
+     which is almost certainly why this stalled on a real phone. Wake Lock only stops the
+     screen from turning off from inactivity — it can't stop someone manually switching
+     apps — but that covers the common "phone sat idle while waiting" case. Re-acquire it
+     if the browser drops it while the tab is still visible (some browsers release it
+     opportunistically), and always release it when done. */
+  let wakeLock = null;
+  async function acquireWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } catch (e) { /* denied or unsupported in this context — nothing more we can do */ }
+  }
+  function releaseWakeLock() {
+    if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && loadingPromise && !wakeLock) acquireWakeLock();
+    });
+  }
+
   /* ---------- load ORT + tokenizer + all three model sessions ---------- */
   async function loadModels(onProgress) {
     if (ready) return;
@@ -152,6 +176,7 @@ window.YoukokuAIImageGen = (() => {
 
     loadingPromise = (async () => {
       report('runtime');
+      await acquireWakeLock();
       applyAdapterInfoShim();
       const ortMod = await import(/* webpackIgnore: true */ ORT_ESM_URL);
       ort = ortMod.default || ortMod;
@@ -209,6 +234,7 @@ window.YoukokuAIImageGen = (() => {
       await loadingPromise;
     } finally {
       loadingPromise = null;
+      releaseWakeLock();
     }
   }
 
