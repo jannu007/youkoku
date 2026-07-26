@@ -167,6 +167,23 @@ window.YoukokuAIStyle = (() => {
     }
   }
 
+  /* real photos (e.g. a phone camera's ~6000x5120 shot) can exceed the GPU's max WebGL
+     texture size — one real-device failure was "texture size [6000x5120] greater than
+     WebGL maximum ... [4096x4096]". 2048 is comfortably under even conservative mobile GPU
+     limits, so the content image handed to the model is capped there; the result still gets
+     rescaled back up to the caller's original canvas size in applyStyle below. */
+  const MAX_STYLIZE_DIM = 2048;
+  function downscaleForStylize(canvas) {
+    const longest = Math.max(canvas.width, canvas.height);
+    if (longest <= MAX_STYLIZE_DIM) return canvas;
+    const scale = MAX_STYLIZE_DIM / longest;
+    const small = document.createElement('canvas');
+    small.width = Math.max(1, Math.round(canvas.width * scale));
+    small.height = Math.max(1, Math.round(canvas.height * scale));
+    small.getContext('2d').drawImage(canvas, 0, 0, small.width, small.height);
+    return small;
+  }
+
   /* ---------- apply a style to whatever is currently on a canvas ----------
      The model's output resolution doesn't necessarily match the input's, so the result is
      always rescaled back onto a fresh canvas at the original width/height rather than
@@ -177,7 +194,8 @@ window.YoukokuAIStyle = (() => {
   async function applyStyle(canvas, styleKey, strength) {
     if (!model) throw new Error('model-not-loaded');
     const styleImg = getStyleImage(styleKey);
-    const imageData = await model.stylize(canvas, styleImg);
+    const content = downscaleForStylize(canvas);
+    const imageData = await model.stylize(content, styleImg);
     const mix = Math.max(0, Math.min(1, strength == null ? 1 : strength));
 
     const stylized = document.createElement('canvas');

@@ -168,6 +168,25 @@ window.YOUKOKU_BG_THEMES = [
       <button type="button" class="btn btn-primary" id="generateArtBtn"><span data-i18n="lumen.tool.generateArtBtn">✦ テキストから生成</span></button>
     </div>
     <p class="hint" id="generateArtStatus"></p>
+
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);">
+      <h3 data-i18n="lumen.tool.aiStyleTitle" style="font-size:.85rem;margin-bottom:.5rem;">AIスタイル仕上げ（実験的機能）</h3>
+      <p class="hint" data-i18n="lumen.tool.aiStyleHint">小型（約12MB）のAIスタイル変換モデルをこのブラウザ内で動かし、手作りのテクスチャを今の画像に混ぜ込みます。本格的なAI生成よりずっと軽量で、大きなダウンロードも不要、スマホでも動作します。</p>
+      <div class="toggle-row" style="margin-bottom:.7rem;">
+        <span data-i18n="lumen.tool.aiStyleAutoLabel">AIスタイルを自動で適用する</span>
+        <button type="button" class="switch" id="aiStyleAutoSwitch" aria-pressed="false" disabled></button>
+      </div>
+      <div class="btn-row" id="aiStylePicker" style="margin-bottom:.7rem;">
+        <button type="button" class="btn ai-style-btn active" data-style="watercolor" data-i18n="lumen.tool.aiStyleWatercolor">水彩</button>
+        <button type="button" class="btn ai-style-btn" data-style="oil" data-i18n="lumen.tool.aiStyleOil">油彩</button>
+        <button type="button" class="btn ai-style-btn" data-style="ink" data-i18n="lumen.tool.aiStyleInk">墨絵</button>
+      </div>
+      <div class="slider-row">
+        <label><span data-i18n="lumen.tool.aiStyleStrength">強さ</span> <span id="valAiStyleStrength">70%</span></label>
+        <input type="range" id="rAiStyleStrength" min="10" max="100" value="70">
+      </div>
+      <p class="hint" id="aiStyleStatus"></p>
+    </div>
   </div>
 
   <div class="workspace">
@@ -278,25 +297,6 @@ window.YOUKOKU_BG_THEMES = [
           <span data-i18n="lumen.tool.sketch">スケッチ</span>
           <button type="button" class="switch" id="sketchSwitch" aria-pressed="false"></button>
         </div>
-      </div>
-
-      <div class="card">
-        <h3 data-i18n="lumen.tool.aiStyleTitle">AIスタイル仕上げ（実験的機能）</h3>
-        <p class="hint" data-i18n="lumen.tool.aiStyleHint">小型（約12MB）のAIスタイル変換モデルをこのブラウザ内で動かし、手作りのテクスチャを今の画像に混ぜ込みます。本格的なAI生成よりずっと軽量で、大きなダウンロードも不要、スマホでも動作します。</p>
-        <div class="toggle-row" style="margin-bottom:.7rem;">
-          <span data-i18n="lumen.tool.aiStyleAutoLabel">AIスタイルを自動で適用する</span>
-          <button type="button" class="switch" id="aiStyleAutoSwitch" aria-pressed="false" disabled></button>
-        </div>
-        <div class="btn-row" id="aiStylePicker" style="margin-bottom:.7rem;">
-          <button type="button" class="btn ai-style-btn active" data-style="watercolor" data-i18n="lumen.tool.aiStyleWatercolor">水彩</button>
-          <button type="button" class="btn ai-style-btn" data-style="oil" data-i18n="lumen.tool.aiStyleOil">油彩</button>
-          <button type="button" class="btn ai-style-btn" data-style="ink" data-i18n="lumen.tool.aiStyleInk">墨絵</button>
-        </div>
-        <div class="slider-row">
-          <label><span data-i18n="lumen.tool.aiStyleStrength">強さ</span> <span id="valAiStyleStrength">70%</span></label>
-          <input type="range" id="rAiStyleStrength" min="10" max="100" value="70">
-        </div>
-        <p class="hint" id="aiStyleStatus"></p>
       </div>
 
       <div class="card">
