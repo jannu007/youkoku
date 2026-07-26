@@ -329,11 +329,6 @@ section{ position:relative; padding:9rem 6vw; max-width:1440px; margin:0 auto; }
   .app-specs{ grid-template-columns:1fr 1fr; }
 }
 
-/* ---------- AI creators (compact footer credit line) ---------- */
-.footer-creators{ border-top:1px solid var(--line); padding:1.6rem 0; }
-.footer-creators-list{ display:flex; flex-direction:column; gap:.4rem; }
-.footer-creators-list span{ font-size:.76rem; color:var(--ink-faint); }
-
 /* ---------- device frame mockups ---------- */
 .app-visual{ perspective:1200px; }
 .device-frame{
@@ -452,6 +447,8 @@ section{ position:relative; padding:9rem 6vw; max-width:1440px; margin:0 auto; }
 .footer-col{ display:flex; flex-direction:column; gap:.7rem; }
 .footer-col a{ font-size:.85rem; color:var(--ink-soft); }
 .footer-col a:hover{ color:var(--ink); }
+.footer-app-credit{ display:flex; flex-direction:column; gap:.15rem; }
+.footer-app-by{ font-size:.72rem; color:var(--ink-faint); }
 
 .footer-bottom{
   display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;
