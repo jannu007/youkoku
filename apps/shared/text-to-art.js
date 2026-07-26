@@ -64,7 +64,7 @@ window.YoukokuTextToArt = (() => {
     forest: ['森','木','木々','林', 'forest', 'tree', 'trees', 'woods'],
     city: ['街','都市','ビル','建物', 'city', 'building', 'buildings', 'urban', 'skyline'],
     snow: ['雪','雪原', 'snow', 'snowy', 'snowfall'],
-    rain: ['雨','雨降り', 'rain', 'rainy', 'raindrop'],
+    rain: ['雨','雨降り','嵐','荒れ狂う','暴風雨', 'rain', 'rainy', 'raindrop', 'storm', 'stormy'],
     fire: ['火','炎','焚き火', 'fire', 'flame', 'flames', 'burning'],
     flower: ['花','花畑','花園', 'flower', 'flowers', 'blossom', 'garden'],
     bird: ['鳥','小鳥', 'bird', 'birds'],
@@ -88,6 +88,10 @@ window.YoukokuTextToArt = (() => {
       if (counts[k] > bestCount) { best = k; bestCount = counts[k]; }
     });
     return best;
+  }
+
+  function pickAll(counts, keys) {
+    return keys.filter((k) => counts[k] > 0);
   }
 
   /* ---------- sky ---------- */
@@ -230,12 +234,23 @@ window.YoukokuTextToArt = (() => {
   }
 
   function drawSnow(ctx, w, h, rand) {
-    const count = 70;
+    const count = 160;
     for (let i = 0; i < count; i++) {
-      const x = rand() * w, y = rand() * h, r = 1 + rand() * 2.4;
-      ctx.fillStyle = `rgba(255,255,255,${0.4 + rand() * 0.5})`;
+      const x = rand() * w, y = rand() * h, r = 1.6 + rand() * 4.2;
+      ctx.save();
+      ctx.shadowColor = 'rgba(255,255,255,0.9)';
+      ctx.shadowBlur = r * 1.5;
+      ctx.fillStyle = `rgba(255,255,255,${0.55 + rand() * 0.4})`;
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
     }
+    // a soft snow-covered ground band, so "snow" reads even without a matching landscape
+    const groundY = h * 0.86;
+    const g = ctx.createLinearGradient(0, groundY, 0, h);
+    g.addColorStop(0, 'rgba(255,255,255,0)');
+    g.addColorStop(1, 'rgba(235,242,250,0.55)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, groundY, w, h - groundY);
   }
 
   function drawFire(ctx, w, h, rand) {
@@ -265,9 +280,11 @@ window.YoukokuTextToArt = (() => {
   }
 
   /* ---------- subject motifs (drawn more prominently, center-ish) ---------- */
-  function drawFlower(ctx, w, h, rand) {
-    const cx = w * (0.35 + rand() * 0.3), cy = h * (0.45 + rand() * 0.2);
-    const scale = Math.min(w, h) * (0.16 + rand() * 0.08);
+  function drawFlower(ctx, w, h, rand, index, total) {
+    const spread = total > 1 ? (index + 0.5) / total : 0.5;
+    const cx = w * (0.12 + spread * 0.76 + (rand() - 0.5) * (0.5 / Math.max(1, total)));
+    const cy = h * (0.5 + rand() * 0.3);
+    const scale = Math.min(w, h) * (total > 1 ? (0.08 + rand() * 0.05) : (0.16 + rand() * 0.08));
     const petalColors = ['#fb7185', '#f472b6', '#ec4899', '#fda4af'];
     ctx.save();
     ctx.strokeStyle = 'rgba(74,155,110,0.85)';
@@ -307,8 +324,12 @@ window.YoukokuTextToArt = (() => {
     }
   }
 
-  function drawSilhouette(ctx, w, h, rand, kind) {
-    const cx = w * (0.4 + rand() * 0.2), groundY = h * 0.88;
+  function drawSilhouette(ctx, w, h, rand, kind, index, total) {
+    const spread = total > 1 ? (index + 0.5) / total : 0.5;
+    const cx = total > 1
+      ? w * (0.15 + spread * 0.7 + (rand() - 0.5) * (0.4 / Math.max(1, total)))
+      : w * (0.4 + rand() * 0.2);
+    const groundY = h * 0.88;
     const scale = Math.min(w, h) * 0.22;
     const halo = ctx.createRadialGradient(cx, groundY - scale * 0.7, 0, cx, groundY - scale * 0.7, scale * 1.6);
     halo.addColorStop(0, 'rgba(255,244,220,0.4)');
@@ -366,9 +387,11 @@ window.YoukokuTextToArt = (() => {
 
     const timeCat = pickTop(counts, ['timeNight', 'timeSunset', 'timeMorning', 'timeDay']);
     const envCat = pickTop(counts, ['ocean', 'mountain', 'forest', 'city']);
-    const weatherCat = pickTop(counts, ['snow', 'rain', 'fire']);
+    const weatherCats = pickAll(counts, ['snow', 'rain', 'fire']);
     const celestialCat = pickTop(counts, ['sun', 'moon']);
-    const subjectCat = pickTop(counts, ['flower', 'bird', 'cat', 'dog', 'person']);
+    const flowerOn = counts.flower > 0;
+    const birdOn = counts.bird > 0;
+    const animalKind = pickTop(counts, ['cat', 'dog', 'person']);
     const starsOn = counts.stars > 0 || timeCat === 'timeNight';
 
     /* 1. sky */
@@ -384,15 +407,23 @@ window.YoukokuTextToArt = (() => {
     else if (envCat === 'forest') drawForest(ctx, w, h, rand);
     else if (envCat === 'city') drawCity(ctx, w, h, rand);
 
-    /* 4. weather overlay */
-    if (weatherCat === 'rain') drawRain(ctx, w, h, rand);
-    else if (weatherCat === 'snow') drawSnow(ctx, w, h, rand);
-    else if (weatherCat === 'fire') drawFire(ctx, w, h, rand);
+    /* 4. weather overlay(s) — every mentioned weather condition renders, not just one */
+    weatherCats.forEach((wc) => {
+      if (wc === 'rain') drawRain(ctx, w, h, rand);
+      else if (wc === 'snow') drawSnow(ctx, w, h, rand);
+      else if (wc === 'fire') drawFire(ctx, w, h, rand);
+    });
 
-    /* 5. subject motif */
-    if (subjectCat === 'flower') drawFlower(ctx, w, h, rand);
-    else if (subjectCat === 'bird') drawBird(ctx, w, h, rand, 2 + Math.floor(rand() * 3));
-    else if (subjectCat === 'cat' || subjectCat === 'dog' || subjectCat === 'person') drawSilhouette(ctx, w, h, rand, subjectCat);
+    /* 5. subject motifs — flowers, birds, and an animal/person can all coexist */
+    if (birdOn) {
+      const birdCount = Math.min(9, 2 + counts.bird + Math.floor(rand() * 2));
+      drawBird(ctx, w, h, rand, birdCount);
+    }
+    if (flowerOn) {
+      const flowerCount = Math.min(9, Math.max(1, counts.flower + Math.floor(rand() * 3)));
+      for (let i = 0; i < flowerCount; i++) drawFlower(ctx, w, h, rand, i, flowerCount);
+    }
+    if (animalKind) drawSilhouette(ctx, w, h, rand, animalKind, 0, 1);
 
     /* 6. mood-driven abstract color texture, layered on top at reduced strength */
     ctx.save();
@@ -424,7 +455,7 @@ window.YoukokuTextToArt = (() => {
     }
     ctx.restore();
 
-    return { mood, key, categories: counts, scene: { timeCat, envCat, weatherCat, celestialCat, subjectCat } };
+    return { mood, key, categories: counts, scene: { timeCat, envCat, weatherCats, celestialCat, flowerOn, birdOn, animalKind } };
   }
 
   return { generate, scoreText };
