@@ -65,7 +65,7 @@ window.YoukokuTextToArt = (() => {
     timeSunset: ['夕焼け','夕暮れ','夕方', 'sunset', 'dusk', 'twilight'],
     timeMorning: ['朝','夜明け','早朝', 'morning', 'dawn', 'sunrise'],
     timeDay: ['昼','日中','正午', 'daytime', 'noon'],
-    sun: ['太陽','日差し','陽光', 'sun', 'sunlight', 'sunshine'],
+    sun: ['太陽','日差し','陽光','朝日','夕日', 'sun', 'sunlight', 'sunshine', 'sunrise', 'sunset'],
     moon: ['月','月光', 'moon', 'moonlight'],
     stars: ['星','星空','星々', 'star', 'stars', 'starry'],
     ocean: ['海','波','浜辺','ビーチ', 'sea', 'ocean', 'wave', 'waves', 'beach', 'shore'],
@@ -143,8 +143,10 @@ window.YoukokuTextToArt = (() => {
     }
   }
 
-  function drawSunOrMoon(ctx, w, h, rand, isSun) {
-    const cx = w * (0.62 + rand() * 0.22), cy = h * (0.14 + rand() * 0.14), r = Math.min(w, h) * (0.07 + rand() * 0.03);
+  function drawSunOrMoon(ctx, w, h, rand, isSun, lowInSky) {
+    const cx = w * (0.62 + rand() * 0.22);
+    const cy = lowInSky ? h * (0.4 + rand() * 0.14) : h * (0.14 + rand() * 0.14);
+    const r = Math.min(w, h) * (0.07 + rand() * 0.03);
     if (isSun) {
       const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 4.4);
       glow.addColorStop(0, 'rgba(255,214,120,0.6)');
@@ -174,6 +176,88 @@ window.YoukokuTextToArt = (() => {
       ctx.restore();
     }
     return { cx, cy, r, color: isSun ? '255,201,77' : '199,208,234' };
+  }
+
+  /* soft radiating light shafts from the sun through the sky, for a dramatic sunny/morning feel */
+  function drawGodRays(ctx, w, h, rand, sun) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const rayCount = 5 + Math.floor(rand() * 3);
+    const maxLen = Math.max(w, h) * 1.3;
+    for (let i = 0; i < rayCount; i++) {
+      const baseAngle = Math.PI / 2 + (rand() - 0.5) * 1.5;
+      const spread = 0.05 + rand() * 0.05;
+      const a1 = baseAngle - spread, a2 = baseAngle + spread;
+      ctx.beginPath();
+      ctx.moveTo(sun.cx, sun.cy);
+      ctx.lineTo(sun.cx + Math.cos(a1) * maxLen, sun.cy + Math.sin(a1) * maxLen);
+      ctx.lineTo(sun.cx + Math.cos(a2) * maxLen, sun.cy + Math.sin(a2) * maxLen);
+      ctx.closePath();
+      const g = ctx.createRadialGradient(sun.cx, sun.cy, 0, sun.cx, sun.cy, maxLen);
+      g.addColorStop(0, 'rgba(255,240,190,0.14)');
+      g.addColorStop(1, 'rgba(255,240,190,0)');
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* sparkle highlights scattered across wave crests when the sun is out */
+  function drawWaterGlitter(ctx, w, h, rand, horizonY) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const count = 40;
+    for (let i = 0; i < count; i++) {
+      const x = rand() * w;
+      const y = horizonY + rand() * (h - horizonY);
+      const len = 3 + rand() * 8;
+      ctx.strokeStyle = `rgba(255,255,255,${0.25 + rand() * 0.35})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x - len / 2, y); ctx.lineTo(x + len / 2, y); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /* a low, soft band of mist hugging the ground for atmosphere */
+  function drawGroundMist(ctx, w, h, rand, horizonY, rgb) {
+    const bandTop = horizonY - h * 0.03;
+    const bandH = h * 0.16;
+    const g = ctx.createLinearGradient(0, bandTop, 0, bandTop + bandH);
+    g.addColorStop(0, `rgba(${rgb},0)`);
+    g.addColorStop(0.5, `rgba(${rgb},0.28)`);
+    g.addColorStop(1, `rgba(${rgb},0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, bandTop, w, bandH);
+  }
+
+  /* white dusting on top of forest canopy / mountain ridge when it's snowing */
+  function drawSnowCaps(ctx, w, h, rand, envCat, horizon) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    if (envCat === 'forest') {
+      const count = 14;
+      for (let i = 0; i < count; i++) {
+        const x = rand() * w;
+        const y = horizon - rand() * h * 0.09;
+        const r = h * (0.012 + rand() * 0.018);
+        ctx.fillStyle = `rgba(255,255,255,${0.35 + rand() * 0.3})`;
+        ctx.beginPath(); ctx.ellipse(x, y, r * 1.4, r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+      }
+    } else if (envCat === 'mountain') {
+      ctx.fillStyle = 'rgba(255,255,255,0.16)';
+      ctx.beginPath();
+      ctx.moveTo(0, horizon);
+      const peaks = 5;
+      for (let i = 0; i <= peaks; i++) {
+        const x = (w / peaks) * i;
+        const peakH = horizon - (h * 0.14 + rand() * h * 0.1);
+        ctx.lineTo(x, i % 2 === 0 ? peakH : horizon - h * 0.03);
+      }
+      ctx.lineTo(w, horizon);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   function drawStars(ctx, w, h, rand, count) {
@@ -586,6 +670,32 @@ window.YoukokuTextToArt = (() => {
     }
   }
 
+  /* very light paper-like grain so flat fills read as painted rather than vector-flat */
+  let grainTile = null;
+  function getGrainTile() {
+    if (grainTile) return grainTile;
+    const size = 96;
+    grainTile = document.createElement('canvas');
+    grainTile.width = size; grainTile.height = size;
+    const gctx = grainTile.getContext('2d');
+    const imgData = gctx.createImageData(size, size);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const v = Math.floor(Math.random() * 255);
+      d[i] = v; d[i + 1] = v; d[i + 2] = v; d[i + 3] = 255;
+    }
+    gctx.putImageData(imgData, 0, 0);
+    return grainTile;
+  }
+  function drawGrain(ctx, w, h) {
+    ctx.save();
+    ctx.globalAlpha = 0.05;
+    ctx.globalCompositeOperation = 'overlay';
+    ctx.fillStyle = ctx.createPattern(getGrainTile(), 'repeat');
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
   /* ---------- main entry point ---------- */
   function generate(canvas, text) {
     const w = canvas.width, h = canvas.height;
@@ -614,9 +724,15 @@ window.YoukokuTextToArt = (() => {
     /* 2. celestial + clouds (behind landscape) */
     if (starsOn) drawStars(ctx, w, h, rand, 40 + Math.floor(rand() * 40));
     let celestial = null;
-    if (celestialCat) celestial = drawSunOrMoon(ctx, w, h, rand, celestialCat === 'sun');
+    if (celestialCat) {
+      const lowInSky = timeCat === 'timeSunset' || timeCat === 'timeMorning';
+      celestial = drawSunOrMoon(ctx, w, h, rand, celestialCat === 'sun', lowInSky);
+    }
     if (timeCat === 'timeDay' || timeCat === 'timeMorning' || timeCat === 'timeSunset') {
       drawClouds(ctx, w, h, rand, tone);
+    }
+    if (celestialCat === 'sun' && (timeCat === 'timeDay' || timeCat === 'timeMorning' || timeCat === 'timeSunset')) {
+      drawGodRays(ctx, w, h, rand, celestial);
     }
 
     /* 3. landscape silhouette, blended into the sky at the horizon for depth */
@@ -627,11 +743,15 @@ window.YoukokuTextToArt = (() => {
     else if (envCat === 'city') { drawHorizonHaze(ctx, w, h, h * 0.68, tone.shadow); horizon = drawCity(ctx, w, h, rand); }
 
     if (envCat === 'ocean' && celestial) drawWaterReflection(ctx, w, h, horizon, celestial);
+    if (envCat === 'ocean' && celestialCat === 'sun') drawWaterGlitter(ctx, w, h, rand, horizon);
+    if (horizon !== null && (envCat === 'forest' || envCat === 'mountain') && timeCat !== 'timeNight') {
+      drawGroundMist(ctx, w, h, rand, horizon, tone.light);
+    }
 
     /* 4. weather overlay(s) — every mentioned weather condition renders, not just one */
     weatherCats.forEach((wc) => {
       if (wc === 'rain') drawRain(ctx, w, h, rand);
-      else if (wc === 'snow') drawSnow(ctx, w, h, rand);
+      else if (wc === 'snow') { drawSnow(ctx, w, h, rand); if (horizon !== null) drawSnowCaps(ctx, w, h, rand, envCat, horizon); }
       else if (wc === 'fire') drawFire(ctx, w, h, rand);
     });
 
@@ -682,6 +802,9 @@ window.YoukokuTextToArt = (() => {
     vignette.addColorStop(1, 'rgba(0,0,0,0.32)');
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, w, h);
+
+    // a last whisper of paper grain so the piece reads as painted, not flat vector art
+    drawGrain(ctx, w, h);
 
     return { mood, key, categories: counts, scene: { timeCat, envCat, weatherCats, celestialCat, flowerOn, birdOn, animalKind } };
   }
