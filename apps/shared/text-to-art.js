@@ -10,8 +10,8 @@
    the same input always yields the same piece.
    ============================================================ */
 window.YoukokuTextToArt = (() => {
-  const TENSE_WORDS = ['泣','叫','恐怖','死','戦','怒','悲し','絶望','痛み','逃げ','血','銃','剣','争い','恐ろし','苦し','崩れ','壊れ','裏切り','孤独', 'fear', 'death', 'war', 'angry', 'anger', 'sad', 'despair', 'pain', 'blood', 'scream', 'terrible', 'lonely', 'betray'];
-  const CALM_WORDS = ['笑','幸せ','平和','安心','喜び','愛','希望','美しい','穏やか','優しい','温かい','眠り','光','花','祝','感謝', 'happy', 'peace', 'joy', 'love', 'hope', 'beautiful', 'calm', 'gentle', 'warm', 'sleep', 'light', 'flower', 'grateful'];
+  const TENSE_WORDS = ['泣','叫','恐怖','死','戦','怒','悲し','絶望','痛み','逃げ','血','銃','剣','争い','恐ろし','苦し','崩れ','壊れ','裏切り','孤独','憎','恨','嫉妬','不安','焦り','絶望的','悔し','切ない','苦悩','悲鳴','怖','震え','涙', 'fear', 'death', 'war', 'angry', 'anger', 'sad', 'sadness', 'despair', 'pain', 'blood', 'scream', 'terrible', 'lonely', 'betray', 'hate', 'grief', 'suffer', 'suffering', 'anxious', 'anxiety', 'dread', 'nightmare', 'cry', 'crying', 'tears'];
+  const CALM_WORDS = ['笑','幸せ','平和','安心','喜び','愛','希望','美しい','穏やか','優しい','温かい','眠り','光','花','祝','感謝','癒','和やか','のどか','安らぎ','微笑','幸福','愛おしい','嬉し','楽しい','安心感','温もり','平穏', 'happy', 'happiness', 'peace', 'peaceful', 'joy', 'love', 'hope', 'beautiful', 'calm', 'gentle', 'warm', 'sleep', 'light', 'flower', 'grateful', 'gratitude', 'smile', 'joyful', 'serene', 'tender', 'comfort', 'cozy'];
 
   function countOccurrences(text, word) {
     let count = 0, idx = 0;
@@ -63,31 +63,35 @@ window.YoukokuTextToArt = (() => {
      Deliberately broad: many synonyms, conjugated/compound forms, and casual expressions
      per category, since real sentences rarely use the one "canonical" word for a concept. */
   const CATEGORIES = {
-    timeNight: ['夜','夜空','深夜','真夜中','夜中','宵','夜更け', 'night', 'midnight', 'nighttime', 'nightfall'],
-    timeSunset: ['夕焼け','夕暮れ','夕方','黄昏','日没','夕方の光', 'sunset', 'dusk', 'twilight', 'evening'],
-    timeMorning: ['朝','夜明け','早朝','明け方','朝方','朝もぼろけ', 'morning', 'dawn', 'sunrise', 'daybreak'],
-    timeDay: ['昼','日中','正午','真昼','午後','昼下がり', 'daytime', 'noon', 'afternoon', 'midday'],
-    sun: ['太陽','日差し','陽光','朝日','夕日','日光','陽射し','日輪', 'sun', 'sunlight', 'sunshine', 'sunrise', 'sunset', 'sunbeam', 'sunny'],
-    moon: ['月','月光','満月','新月','月明かり','半月','月夜', 'moon', 'moonlight', 'moonlit', 'crescent moon', 'full moon'],
-    stars: ['星','星空','星々','星屑','天の川','流れ星','満天の星', 'star', 'stars', 'starry', 'stardust', 'milky way', 'shooting star'],
-    ocean: ['海','波','浜辺','ビーチ','湖','川','滝','水面','岸','水平線','海岸','水辺','港', 'sea', 'ocean', 'wave', 'waves', 'beach', 'shore', 'lake', 'river', 'waterfall', 'coast', 'coastline', 'horizon', 'harbor'],
-    mountain: ['山','山脈','丘','峰','山頂','山々','稜線','岩山', 'mountain', 'mountains', 'hill', 'hills', 'peak', 'summit', 'ridge', 'cliff'],
-    forest: ['森','木','木々','林','緑','樹木','木漏れ日','竹林','森林','草原','野原', 'forest', 'tree', 'trees', 'woods', 'greenery', 'jungle', 'meadow', 'grove', 'field'],
-    city: ['街','都市','ビル','建物','夜景','街並み','街灯','都会','駅','橋','道路','路地', 'city', 'building', 'buildings', 'urban', 'skyline', 'town', 'streetlight', 'street', 'bridge', 'alley'],
-    snow: ['雪','雪原','雪景色','吹雪','粉雪','雪化粧','積雪', 'snow', 'snowy', 'snowfall', 'blizzard', 'snowflake', 'snowstorm'],
-    rain: ['雨','雨降り','嵐','荒れ狂う','暴風雨','梅雨','小雨','豪雨','雨音','雨粒', 'rain', 'rainy', 'raindrop', 'storm', 'stormy', 'drizzle', 'downpour', 'thunderstorm'],
+    timeNight: ['夜','夜空','深夜','真夜中','夜中','宵','夜更け','闇夜','夜長','今夜','夜間', 'night', 'midnight', 'nighttime', 'nightfall', 'dark night', 'after dark'],
+    timeSunset: ['夕焼け','夕暮れ','夕方','黄昏','日没','夕方の光','夕陽','入り日', 'sunset', 'dusk', 'twilight', 'evening', 'golden hour'],
+    timeMorning: ['朝','夜明け','早朝','明け方','朝方','朝もぼろけ','朝焼け','今朝', 'morning', 'dawn', 'sunrise', 'daybreak', 'early morning'],
+    timeDay: ['昼','日中','正午','真昼','午後','昼下がり','昼間','午前', 'daytime', 'noon', 'afternoon', 'midday', 'morning light'],
+    sun: ['太陽','日差し','陽光','朝日','夕日','日光','陽射し','日輪','お日様', 'sun', 'sunlight', 'sunshine', 'sunrise', 'sunset', 'sunbeam', 'sunny', 'sunlit'],
+    moon: ['月','月光','満月','新月','月明かり','半月','月夜','三日月','月夜空', 'moon', 'moonlight', 'moonlit', 'crescent moon', 'full moon', 'lunar'],
+    stars: ['星','星空','星々','星屑','天の川','流れ星','満天の星','オーロラ','彗星','北極星', 'star', 'stars', 'starry', 'stardust', 'milky way', 'shooting star', 'aurora', 'comet', 'galaxy', 'cosmos', 'nebula'],
+    ocean: ['海','波','浜辺','ビーチ','湖','川','滝','水面','岸','水平線','海岸','水辺','港','小川','入り江','沼','池','海底','水中','船','ボート','灯台','島', 'sea', 'ocean', 'wave', 'waves', 'beach', 'shore', 'lake', 'river', 'waterfall', 'coast', 'coastline', 'horizon', 'harbor', 'stream', 'pond', 'swamp', 'underwater', 'boat', 'ship', 'lighthouse', 'island'],
+    mountain: ['山','山脈','丘','峰','山頂','山々','稜線','岩山','谷','火山','洞窟', 'mountain', 'mountains', 'hill', 'hills', 'peak', 'summit', 'ridge', 'cliff', 'valley', 'volcano', 'cave'],
+    forest: ['森','木','木々','林','緑','樹木','木漏れ日','竹林','森林','草原','野原','庭','農場','牧場','公園', 'forest', 'tree', 'trees', 'woods', 'greenery', 'jungle', 'meadow', 'grove', 'field', 'garden', 'farm', 'park'],
+    city: ['街','都市','ビル','建物','夜景','街並み','街灯','都会','駅','橋','道路','路地','城','神社','寺','市場','学校','家','家屋','商店街', 'city', 'building', 'buildings', 'urban', 'skyline', 'town', 'streetlight', 'street', 'bridge', 'alley', 'castle', 'shrine', 'temple', 'market', 'school', 'house'],
+    desert: ['砂漠','砂丘','オアシス','荒野','砂', 'desert', 'dune', 'dunes', 'oasis', 'sand', 'wasteland', 'arid'],
+    snow: ['雪','雪原','雪景色','吹雪','粉雪','雪化粧','積雪','雪だるま','初雪', 'snow', 'snowy', 'snowfall', 'blizzard', 'snowflake', 'snowstorm', 'first snow'],
+    rain: ['雨','雨降り','嵐','荒れ狂う','暴風雨','梅雨','小雨','豪雨','雨音','雨粒','台風','にわか雨', 'rain', 'rainy', 'raindrop', 'storm', 'stormy', 'drizzle', 'downpour', 'thunderstorm', 'typhoon', 'hurricane'],
     thunder: ['雷','雷鳴','稲光','落雷', 'thunder', 'lightning', 'thunderbolt'],
-    fire: ['火','炎','焚き火','火事','篝火','火花', 'fire', 'flame', 'flames', 'burning', 'bonfire', 'wildfire', 'spark'],
+    fire: ['火','炎','焚き火','火事','篝火','火花','キャンドル','ろうそく','提灯','ランタン', 'fire', 'flame', 'flames', 'burning', 'bonfire', 'wildfire', 'spark', 'candle', 'lantern'],
     fog: ['霧','霞','ミスト','もや','朝霧', 'fog', 'mist', 'haze', 'foggy', 'misty'],
+    wind: ['風','風が吹く','風に舞う','突風','そよ風','疾風','強風', 'wind', 'windy', 'breeze', 'gust', 'gale'],
     rainbow: ['虹','虹色', 'rainbow'],
     autumn: ['紅葉','秋','落ち葉','黄葉','紅葉狩り', 'autumn', 'fall foliage', 'red leaves', 'maple leaves'],
-    flower: ['花','花畑','花園','桜','薔薇','バラ','向日葵','ひまわり','チューリップ','花びら','満開', 'flower', 'flowers', 'blossom', 'garden', 'cherry blossom', 'sakura', 'rose', 'sunflower', 'tulip', 'petal', 'bloom'],
-    bird: ['鳥','小鳥','カラス','鳩','白鳥','ツバメ','渡り鳥', 'bird', 'birds', 'crow', 'dove', 'swan', 'swallow'],
+    flower: ['花','花畑','花園','桜','薔薇','バラ','向日葵','ひまわり','チューリップ','花びら','満開','蓮','菊','紫陽花','梅', 'flower', 'flowers', 'blossom', 'garden', 'cherry blossom', 'sakura', 'rose', 'sunflower', 'tulip', 'petal', 'bloom', 'lotus', 'hydrangea'],
+    bird: ['鳥','小鳥','カラス','鳩','白鳥','ツバメ','渡り鳥','フクロウ','孔雀','鶴', 'bird', 'birds', 'crow', 'dove', 'swan', 'swallow', 'owl', 'peacock', 'crane'],
     cat: ['猫','子猫','ネコ', 'cat', 'kitten'],
-    dog: ['犬','子犬','イヌ', 'dog', 'puppy'],
+    dog: ['犬','子犬','イヌ','馬','鹿','牛','羊','ライオン','虎','狼','熊','キツネ','象','ウサギ以外の動物', 'dog', 'puppy', 'horse', 'deer', 'cow', 'sheep', 'lion', 'tiger', 'wolf', 'bear', 'fox', 'elephant'],
+    rabbit: ['うさぎ','ウサギ','兎','子うさぎ', 'rabbit', 'bunny'],
     fish: ['魚','金魚','熱帯魚','鯉', 'fish', 'goldfish', 'koi'],
     butterfly: ['蝶','蝶々','チョウ', 'butterfly'],
-    person: ['少女','少年','女性','男性','人','子供','老人','彼女','彼','私','僕', 'girl', 'boy', 'woman', 'man', 'person', 'child', 'kid', 'she', 'he'],
+    umbrella: ['傘','雨傘','日傘', 'umbrella', 'parasol'],
+    person: ['少女','少年','女性','男性','人','子供','老人','彼女','彼','私','僕','人々','群衆','花嫁','花婿', 'girl', 'boy', 'woman', 'man', 'person', 'child', 'kid', 'she', 'he', 'people', 'crowd', 'bride', 'groom'],
   };
 
   function detectCategories(text) {
@@ -384,6 +388,48 @@ window.YoukokuTextToArt = (() => {
       }
     }
     return horizon;
+  }
+
+  /* rolling sand dunes with a warm gradient wash, plus a couple of low silhouette bumps
+     to suggest distant dunes without needing a whole extra rendering pass */
+  function drawDesert(ctx, w, h, rand) {
+    const horizon = h * 0.64;
+    const g = ctx.createLinearGradient(0, horizon, 0, h);
+    g.addColorStop(0, '#e8b672');
+    g.addColorStop(0.5, '#d99a52');
+    g.addColorStop(1, '#b5793a');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, horizon, w, h - horizon);
+    const dunes = 3;
+    for (let i = 0; i < dunes; i++) {
+      const y = horizon + h * (0.06 + i * 0.1) + (rand() - 0.5) * h * 0.02;
+      const amp = h * (0.02 + rand() * 0.02);
+      ctx.fillStyle = `rgba(${120 - i * 10},${80 - i * 8},${40 - i * 4},${0.25 + i * 0.12})`;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      for (let x = 0; x <= w; x += 20) ctx.lineTo(x, y + Math.sin(x * 0.006 + i) * amp);
+      ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+      ctx.fill();
+    }
+    return horizon;
+  }
+
+  /* thin diagonal streaks suggesting a gust of wind, plus a few drifting particles */
+  function drawWind(ctx, w, h, rand) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 18; i++) {
+      const y = rand() * h;
+      const x = rand() * w;
+      const len = w * (0.06 + rand() * 0.1);
+      ctx.lineWidth = 1 + rand() * 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(x + len * 0.5, y - len * 0.08, x + len, y + len * 0.03);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   const AUTUMN_CANOPY = ['193,68,14', '224,135,30', '242,177,52', '182,36,79'];
@@ -734,8 +780,8 @@ window.YoukokuTextToArt = (() => {
       ctx.stroke();
       // head + hair
       ctx.beginPath(); ctx.arc(cx, groundY - scale * 1.55, scale * 0.22, 0, Math.PI * 2); ctx.fill();
-    } else if (kind === 'cat' || kind === 'dog') {
-      const bodyW = scale * 0.92, bodyH = scale * 0.55;
+    } else if (kind === 'cat' || kind === 'dog' || kind === 'rabbit') {
+      const bodyW = scale * (kind === 'rabbit' ? 0.7 : 0.92), bodyH = scale * (kind === 'rabbit' ? 0.48 : 0.55);
       // legs
       ctx.fillStyle = 'rgba(10,10,16,0.92)';
       [-0.32, -0.05, 0.18, 0.4].forEach((off) => {
@@ -745,7 +791,7 @@ window.YoukokuTextToArt = (() => {
       });
       // body
       ctx.beginPath(); ctx.ellipse(cx, groundY - bodyH * 0.62, bodyW * 0.5, bodyH * 0.5, 0, 0, Math.PI * 2); ctx.fill();
-      const headR = scale * 0.28;
+      const headR = scale * (kind === 'rabbit' ? 0.24 : 0.28);
       const headX = cx + bodyW * 0.42, headY = groundY - bodyH * 0.95;
       ctx.beginPath(); ctx.arc(headX, headY, headR, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath();
@@ -756,6 +802,10 @@ window.YoukokuTextToArt = (() => {
         ctx.moveTo(headX + headR * 0.2, headY - headR * 0.8);
         ctx.lineTo(headX + headR * 0.55, headY - headR * 1.5);
         ctx.lineTo(headX + headR * 0.85, headY - headR * 0.6);
+      } else if (kind === 'rabbit') {
+        // tall, slightly curved upright ears
+        ctx.ellipse(headX - headR * 0.35, headY - headR * 1.9, headR * 0.22, headR * 1.1, -0.12, 0, Math.PI * 2);
+        ctx.ellipse(headX + headR * 0.35, headY - headR * 1.9, headR * 0.22, headR * 1.1, 0.12, 0, Math.PI * 2);
       } else {
         ctx.ellipse(headX - headR * 0.6, headY - headR * 0.3, headR * 0.28, headR * 0.5, -0.3, 0, Math.PI * 2);
         ctx.ellipse(headX + headR * 0.7, headY - headR * 0.3, headR * 0.28, headR * 0.5, 0.3, 0, Math.PI * 2);
@@ -763,17 +813,45 @@ window.YoukokuTextToArt = (() => {
       ctx.fill();
       // snout
       ctx.beginPath();
-      ctx.ellipse(headX + headR * 0.75, headY + headR * 0.15, headR * 0.32, headR * 0.22, 0, 0, Math.PI * 2);
+      ctx.ellipse(headX + headR * 0.75, headY + headR * 0.15, headR * (kind === 'rabbit' ? 0.22 : 0.32), headR * (kind === 'rabbit' ? 0.16 : 0.22), 0, 0, Math.PI * 2);
       ctx.fill();
-      // tail
+      // tail: a small round puff for rabbits, a curved sweep for cat/dog
       ctx.beginPath();
-      ctx.moveTo(cx - bodyW * 0.5, groundY - bodyH * 0.75);
-      ctx.quadraticCurveTo(cx - bodyW * 0.95, groundY - bodyH * 1.35, cx - bodyW * 0.62, groundY - bodyH * 0.15);
-      ctx.lineWidth = scale * 0.08;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = 'rgba(10,10,16,0.9)';
-      ctx.stroke();
+      if (kind === 'rabbit') {
+        ctx.arc(cx - bodyW * 0.48, groundY - bodyH * 0.7, scale * 0.09, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.moveTo(cx - bodyW * 0.5, groundY - bodyH * 0.75);
+        ctx.quadraticCurveTo(cx - bodyW * 0.95, groundY - bodyH * 1.35, cx - bodyW * 0.62, groundY - bodyH * 0.15);
+        ctx.lineWidth = scale * 0.08;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = 'rgba(10,10,16,0.9)';
+        ctx.stroke();
+      }
     }
+    return { cx, groundY, scale };
+  }
+
+  /* a simple open umbrella held above a person's head, for rain scenes */
+  function drawUmbrella(ctx, cx, groundY, scale, rand) {
+    const topY = groundY - scale * 1.85;
+    const r = scale * 0.42;
+    const color = ['#e63946', '#2a9d8f', '#457b9d', '#f4a261'][Math.floor(rand() * 4)];
+    ctx.save();
+    ctx.strokeStyle = 'rgba(20,20,25,0.85)';
+    ctx.lineWidth = scale * 0.05;
+    ctx.beginPath(); ctx.moveTo(cx, topY); ctx.lineTo(cx, groundY - scale * 0.5); ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(cx - r, topY);
+    ctx.quadraticCurveTo(cx, topY - r * 0.9, cx + r, topY);
+    for (let i = 3; i >= 1; i--) {
+      const x = cx - r + (r * 2 * i) / 4;
+      ctx.quadraticCurveTo(x - r * 0.25, topY + r * 0.18, x, topY);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
   }
 
   function drawForegroundFringe(ctx, w, h, rand, color) {
@@ -830,8 +908,8 @@ window.YoukokuTextToArt = (() => {
     const counts = detectCategories(src);
 
     const timeCat = pickTop(counts, ['timeNight', 'timeSunset', 'timeMorning', 'timeDay']);
-    const envCat = pickTop(counts, ['ocean', 'mountain', 'forest', 'city']);
-    const weatherCats = pickAll(counts, ['snow', 'rain', 'fire', 'fog', 'thunder']);
+    const envCat = pickTop(counts, ['ocean', 'mountain', 'forest', 'city', 'desert']);
+    const weatherCats = pickAll(counts, ['snow', 'rain', 'fire', 'fog', 'thunder', 'wind']);
     const celestialCat = pickTop(counts, ['sun', 'moon']);
     const flowerOn = counts.flower > 0;
     const birdOn = counts.bird > 0;
@@ -839,7 +917,8 @@ window.YoukokuTextToArt = (() => {
     const butterflyOn = counts.butterfly > 0;
     const rainbowOn = counts.rainbow > 0;
     const autumnOn = counts.autumn > 0;
-    const animalKind = pickTop(counts, ['cat', 'dog', 'person']);
+    const umbrellaOn = counts.umbrella > 0;
+    const animalKind = pickTop(counts, ['cat', 'dog', 'rabbit', 'person']);
     const starsOn = counts.stars > 0 || timeCat === 'timeNight';
     const tone = TIME_TONE[timeCat] || TIME_TONE.neutral;
 
@@ -867,6 +946,7 @@ window.YoukokuTextToArt = (() => {
     else if (envCat === 'mountain') { drawHorizonHaze(ctx, w, h, h * 0.66, tone.shadow); horizon = drawMountain(ctx, w, h, rand); }
     else if (envCat === 'forest') { drawHorizonHaze(ctx, w, h, h * 0.7, tone.shadow); horizon = drawForest(ctx, w, h, rand, autumnOn); }
     else if (envCat === 'city') { drawHorizonHaze(ctx, w, h, h * 0.68, tone.shadow); horizon = drawCity(ctx, w, h, rand); }
+    else if (envCat === 'desert') { drawHorizonHaze(ctx, w, h, h * 0.64, tone.shadow); horizon = drawDesert(ctx, w, h, rand); }
 
     if (envCat === 'ocean' && celestial) drawWaterReflection(ctx, w, h, horizon, celestial);
     if (envCat === 'ocean' && celestialCat === 'sun') drawWaterGlitter(ctx, w, h, rand, horizon);
@@ -884,6 +964,7 @@ window.YoukokuTextToArt = (() => {
       else if (wc === 'fire') drawFire(ctx, w, h, rand);
       else if (wc === 'fog') drawFog(ctx, w, h, rand);
       else if (wc === 'thunder') drawThunder(ctx, w, h, rand);
+      else if (wc === 'wind') drawWind(ctx, w, h, rand);
     });
 
     /* 5. subject motifs — flowers, birds, and an animal/person can all coexist */
@@ -899,7 +980,12 @@ window.YoukokuTextToArt = (() => {
       const flowerCount = Math.min(9, Math.max(1, counts.flower + Math.floor(rand() * 3)));
       for (let i = 0; i < flowerCount; i++) drawFlower(ctx, w, h, rand, i, flowerCount);
     }
-    if (animalKind) drawSilhouette(ctx, w, h, rand, animalKind, 0, 1, tone.light);
+    if (animalKind) {
+      const placed = drawSilhouette(ctx, w, h, rand, animalKind, 0, 1, tone.light);
+      if (animalKind === 'person' && umbrellaOn && placed) {
+        drawUmbrella(ctx, placed.cx, placed.groundY, placed.scale, rand);
+      }
+    }
 
     /* 6. foreground fringe for extra depth on ground scenes */
     if (envCat === 'forest' || envCat === 'mountain' || (!envCat && (flowerOn || animalKind))) {
@@ -941,7 +1027,7 @@ window.YoukokuTextToArt = (() => {
     // a last whisper of paper grain so the piece reads as painted, not flat vector art
     drawGrain(ctx, w, h);
 
-    return { mood, key, categories: counts, scene: { timeCat, envCat, weatherCats, celestialCat, flowerOn, birdOn, fishOn, butterflyOn, rainbowOn, autumnOn, animalKind } };
+    return { mood, key, categories: counts, scene: { timeCat, envCat, weatherCats, celestialCat, flowerOn, birdOn, fishOn, butterflyOn, rainbowOn, autumnOn, umbrellaOn, animalKind } };
   }
 
   return { generate, scoreText };
