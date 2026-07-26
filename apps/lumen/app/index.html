@@ -145,6 +145,7 @@ window.YOUKOKU_BG_THEMES = [
 <script src="../../shared/detail-bg.js?v=1"></script>
 <script src="../../shared/project-store.js"></script>
 <script src="../../shared/text-to-art.js"></script>
+<script src="../../shared/ai-image-gen.js"></script>
 
 <header class="topbar">
   <a href="../index.html" class="back" data-i18n="lumen.backToDetail">← Lumen について</a>
@@ -166,6 +167,20 @@ window.YOUKOKU_BG_THEMES = [
       <button type="button" class="btn btn-primary" id="generateArtBtn"><span data-i18n="lumen.tool.generateArtBtn">✦ テキストから生成</span></button>
     </div>
     <p class="hint" id="generateArtStatus"></p>
+
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);">
+      <div class="toggle-row" style="margin-bottom:.4rem;">
+        <span data-i18n="lumen.tool.aiGenEnableLabel">AI画像生成を有効にする</span>
+        <button type="button" class="switch" id="aiGenSwitch" aria-pressed="false"></button>
+      </div>
+      <p class="hint" data-i18n="lumen.tool.aiGenDisclaimer">※無料（ただし初回のみ約2.4GBのダウンロードが必要）</p>
+      <div id="aiGenProgressWrap" style="display:none;margin:.5rem 0;">
+        <div style="height:6px;border-radius:999px;background:var(--panel2);overflow:hidden;">
+          <div id="aiGenProgressBar" style="height:100%;width:0%;background:linear-gradient(95deg,var(--violet),var(--blue));transition:width .2s;"></div>
+        </div>
+      </div>
+      <p class="hint" id="aiGenStatus"></p>
+    </div>
   </div>
 
   <div class="workspace">
@@ -354,6 +369,10 @@ window.YOUKOKU_BG_THEMES = [
   const generateArtStatus = document.getElementById('generateArtStatus');
   const promptInput = document.getElementById('promptInput');
   const loadQuillTextBtn = document.getElementById('loadQuillTextBtn');
+  const aiGenSwitch = document.getElementById('aiGenSwitch');
+  const aiGenStatus = document.getElementById('aiGenStatus');
+  const aiGenProgressWrap = document.getElementById('aiGenProgressWrap');
+  const aiGenProgressBar = document.getElementById('aiGenProgressBar');
   const undoBtn = document.getElementById('undoBtn');
   const redoBtn = document.getElementById('redoBtn');
   const compareBtn = document.getElementById('compareBtn');
@@ -1020,17 +1039,7 @@ window.YOUKOKU_BG_THEMES = [
     generateArtStatus.textContent = t('common.loadedQuillTitle', { title: textSlot.json.title || t('studio.untitledStory') });
   });
 
-  generateArtBtn.addEventListener('click', () => {
-    if (!window.YoukokuTextToArt) { generateArtStatus.textContent = t('common.browserUnsupported'); return; }
-    const text = promptInput.value.trim();
-    if (!text) {
-      generateArtStatus.textContent = t('common.enterTextErr');
-      return;
-    }
-    const artCanvas = document.createElement('canvas');
-    artCanvas.width = 1200; artCanvas.height = 800;
-    window.YoukokuTextToArt.generate(artCanvas, text);
-
+  function placeGeneratedArt(artCanvas) {
     srcW = artCanvas.width; srcH = artCanvas.height;
     canvas.width = srcW; canvas.height = srcH;
     srcImage = artCanvas;
@@ -1045,6 +1054,99 @@ window.YOUKOKU_BG_THEMES = [
     sendToProjectBtn.disabled = false;
     clearHistory();
     pushHistory();
+  }
+
+  let aiGenOn = false;
+  let aiGenModelsReady = false;
+
+  async function ensureAiModelsLoaded() {
+    aiGenProgressWrap.style.display = 'block';
+    await window.YoukokuAIImageGen.loadModels((info) => {
+      if (info.stage === 'runtime') {
+        aiGenStatus.textContent = t('lumen.tool.aiGenLoadingSession');
+      } else if (info.stage === 'downloading') {
+        aiGenProgressBar.style.width = `${info.percent}%`;
+        aiGenStatus.textContent = t('lumen.tool.aiGenDownloading', { received: info.receivedMB, total: info.totalMB, percent: info.percent });
+      } else if (info.stage === 'preparing') {
+        aiGenStatus.textContent = t('lumen.tool.aiGenLoadingSession');
+      } else if (info.stage === 'ready') {
+        aiGenProgressWrap.style.display = 'none';
+        aiGenStatus.textContent = t('lumen.tool.aiGenReady');
+      }
+    });
+    aiGenModelsReady = true;
+  }
+
+  aiGenSwitch.addEventListener('click', async () => {
+    if (aiGenOn) {
+      aiGenOn = false;
+      aiGenSwitch.classList.remove('on');
+      aiGenSwitch.setAttribute('aria-pressed', 'false');
+      aiGenStatus.textContent = '';
+      return;
+    }
+    if (!window.YoukokuAIImageGen) { aiGenStatus.textContent = t('common.browserUnsupported'); return; }
+    const support = await window.YoukokuAIImageGen.isSupported();
+    if (!support.ok) {
+      aiGenStatus.textContent = t('lumen.tool.aiGenUnsupported');
+      return;
+    }
+    if (!aiGenModelsReady) {
+      const cacheStatus = await window.YoukokuAIImageGen.getCacheStatus();
+      if (!cacheStatus.complete && !window.confirm(t('lumen.tool.aiGenConfirm'))) {
+        return;
+      }
+    }
+    aiGenOn = true;
+    aiGenSwitch.classList.add('on');
+    aiGenSwitch.setAttribute('aria-pressed', 'true');
+    if (!aiGenModelsReady) {
+      try {
+        await ensureAiModelsLoaded();
+      } catch (e) {
+        aiGenStatus.textContent = t('lumen.tool.aiGenError', { error: e.message || String(e) });
+        aiGenOn = false;
+        aiGenSwitch.classList.remove('on');
+        aiGenSwitch.setAttribute('aria-pressed', 'false');
+        aiGenProgressWrap.style.display = 'none';
+      }
+    } else {
+      aiGenStatus.textContent = t('lumen.tool.aiGenReady');
+    }
+  });
+
+  generateArtBtn.addEventListener('click', async () => {
+    if (!window.YoukokuTextToArt) { generateArtStatus.textContent = t('common.browserUnsupported'); return; }
+    const text = promptInput.value.trim();
+    if (!text) {
+      generateArtStatus.textContent = t('common.enterTextErr');
+      return;
+    }
+
+    if (aiGenOn && aiGenModelsReady) {
+      generateArtStatus.textContent = t('lumen.tool.aiGenGenerating');
+      generateArtBtn.disabled = true;
+      try {
+        const artCanvas = document.createElement('canvas');
+        await window.YoukokuAIImageGen.generate(artCanvas, text);
+        placeGeneratedArt(artCanvas);
+        generateArtStatus.textContent = t('lumen.tool.aiGenSuccess');
+      } catch (e) {
+        generateArtStatus.textContent = t('lumen.tool.aiGenError', { error: e.message || String(e) });
+        const artCanvas = document.createElement('canvas');
+        artCanvas.width = 1200; artCanvas.height = 800;
+        window.YoukokuTextToArt.generate(artCanvas, text);
+        placeGeneratedArt(artCanvas);
+      } finally {
+        generateArtBtn.disabled = false;
+      }
+      return;
+    }
+
+    const artCanvas = document.createElement('canvas');
+    artCanvas.width = 1200; artCanvas.height = 800;
+    window.YoukokuTextToArt.generate(artCanvas, text);
+    placeGeneratedArt(artCanvas);
     generateArtStatus.textContent = t('lumen.tool.generateArtSuccess');
   });
 
