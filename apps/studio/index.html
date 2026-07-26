@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="../shared/i18n-data.js"></script>
 <style>
 :root{
   --bg:#070c26; --panel:#0d1642; --panel2:#11204f; --ink:#f4f5fa; --ink-soft:#8d8fa3; --line:#2a3868;
@@ -95,7 +96,7 @@ main{ max-width:1180px; margin:0 auto; padding:2.6rem 5vw 5rem; }
 .result video{ width:100%; border-radius:10px; display:block; margin-bottom:.8rem; }
 </style>
 </head>
-<body>
+<body data-i18n-doctitle="studio.title">
 
 <canvas id="bgCanvas" aria-hidden="true"></canvas>
 <script>
@@ -117,8 +118,8 @@ window.YOUKOKU_BG_THEMES = [
 
 <main>
   <div class="intro">
-    <h1>7つの作品を、1本にまとめる。</h1>
-    <p>
+    <h1 data-i18n="studio.title">7つの作品を、1本にまとめる。</h1>
+    <p data-i18n="studio.desc">
       各アプリの「→ Studioに送る」で送った本文・画像・3D・動画・音楽を、このページで1本の動画としてつなぎ合わせ、書き出せます。
       すべてこのブラウザの中だけで処理され、サーバーには何も送信されません。
     </p>
@@ -128,38 +129,38 @@ window.YOUKOKU_BG_THEMES = [
     <div class="slots" id="slotsGrid"></div>
 
     <div class="card">
-      <h3>使用するアプリ</h3>
+      <h3 data-i18n="studio.appsCardTitle">使用するアプリ</h3>
       <div class="toggle-row">
-        <span><span class="dot" style="background:#8b5cf6"></span>画像（Lumen / Fleur）</span>
+        <span><span class="dot" style="background:#8b5cf6"></span><span data-i18n="studio.toggle.image">画像（Lumen / Fleur）</span></span>
         <button type="button" class="switch on" id="toggleImage" data-kind="image" aria-pressed="true"></button>
       </div>
       <div class="toggle-row">
-        <span><span class="dot" style="background:#84cc16"></span>Mesh（3D）</span>
+        <span><span class="dot" style="background:#84cc16"></span><span data-i18n="studio.toggle.model">Mesh（3D）</span></span>
         <button type="button" class="switch on" id="toggleModel" data-kind="model" aria-pressed="true"></button>
       </div>
       <div class="toggle-row">
-        <span><span class="dot" style="background:#ec4899"></span>動画（Flux / Anima）</span>
+        <span><span class="dot" style="background:#ec4899"></span><span data-i18n="studio.toggle.video">動画（Flux / Anima）</span></span>
         <button type="button" class="switch on" id="toggleVideo" data-kind="video" aria-pressed="true"></button>
       </div>
       <div class="toggle-row">
-        <span><span class="dot" style="background:#22d3ee"></span>Echo（音楽）</span>
+        <span><span class="dot" style="background:#22d3ee"></span><span data-i18n="studio.toggle.audio">Echo（音楽）</span></span>
         <button type="button" class="switch on" id="toggleAudio" data-kind="audio" aria-pressed="true"></button>
       </div>
-      <p class="hint">オフにしたアプリは、全自動で作成する際にスキップされ、結合結果にも含まれません（例: Meshだけオフにできます）。Quillの文章は自動生成の起点として常に使用されます。</p>
+      <p class="hint" data-i18n="studio.toggleHint">オフにしたアプリは、全自動で作成する際にスキップされ、結合結果にも含まれません（例: Meshだけオフにできます）。Quillの文章は自動生成の起点として常に使用されます。</p>
     </div>
 
     <div class="card">
       <h3>Combine</h3>
       <canvas id="previewCanvas" width="1280" height="720"></canvas>
-      <button type="button" class="btn btn-primary" id="autoCreateBtn" disabled><span>🪄 全自動で作成</span></button>
-      <p class="hint">Quillの文章さえ送っておけば、足りない画像・3D・音楽をルールベースで自動生成して結合します（AI生成ではありません。詳しくは各アプリのヒントをご覧ください）。</p>
-      <button type="button" class="btn btn-primary" id="combineBtn" disabled style="margin-top:.8rem;"><span>✦ 1本の動画にまとめてダウンロード</span></button>
+      <button type="button" class="btn btn-primary" id="autoCreateBtn" disabled><span data-i18n="studio.autoCreateBtn">🪄 全自動で作成</span></button>
+      <p class="hint" data-i18n="studio.autoCreateHint">Quillの文章さえ送っておけば、足りない画像・3D・音楽をルールベースで自動生成して結合します（AI生成ではありません。詳しくは各アプリのヒントをご覧ください）。</p>
+      <button type="button" class="btn btn-primary" id="combineBtn" disabled style="margin-top:.8rem;"><span data-i18n="studio.combineBtn">✦ 1本の動画にまとめてダウンロード</span></button>
       <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
-      <p class="hint" id="combineHint">対応するアプリで「→ Studioに送る」を押すと、ここに反映されます。1つ以上あれば書き出せます。</p>
+      <p class="hint" id="combineHint" data-i18n="studio.combineHint.empty">対応するアプリで「→ Studioに送る」を押すと、ここに反映されます。1つ以上あれば書き出せます。</p>
 
       <div class="result" id="resultBox">
         <video id="resultVideo" controls></video>
-        <a class="btn btn-primary" id="downloadLink" download="youkoku-studio.webm"><span>ダウンロード</span></a>
+        <a class="btn btn-primary" id="downloadLink" download="youkoku-studio.webm"><span data-i18n="common.download">ダウンロード</span></a>
       </div>
     </div>
   </div>
@@ -167,16 +168,18 @@ window.YOUKOKU_BG_THEMES = [
 
 <video id="hiddenVideo" hidden playsinline muted></video>
 
+<script src="../shared/i18n.js"></script>
 <script>
 (() => {
   'use strict';
+  const t = (key, vars) => window.YoukokuI18n.t(key, vars);
 
   const APP_INFO = {
-    text:  { label: 'Quill',        kind: 'テキスト', color: '#f59e0b', link: '../quill/app/' },
-    image: { label: 'Lumen / Fleur', kind: '画像',     color: '#8b5cf6', link: '../lumen/app/', altLink: '../fleur/app/', altMatch: 'Fleur' },
-    model: { label: 'Mesh',         kind: '3D',       color: '#84cc16', link: '../mesh/app/' },
-    video: { label: 'Flux / Anima', kind: '動画',     color: '#ec4899', link: '../flux/app/', altLink: '../anima/app/', altMatch: 'Anima' },
-    audio: { label: 'Echo',         kind: '音楽',     color: '#22d3ee', link: '../echo/app/' },
+    text:  { label: 'Quill',        color: '#f59e0b', link: '../quill/app/' },
+    image: { label: 'Lumen / Fleur', color: '#8b5cf6', link: '../lumen/app/', altLink: '../fleur/app/', altMatch: 'Fleur' },
+    model: { label: 'Mesh',         color: '#84cc16', link: '../mesh/app/' },
+    video: { label: 'Flux / Anima', color: '#ec4899', link: '../flux/app/', altLink: '../anima/app/', altMatch: 'Anima' },
+    audio: { label: 'Echo',         color: '#22d3ee', link: '../echo/app/' },
   };
 
   function resolveAppLabel(info, data) {
@@ -221,8 +224,8 @@ window.YOUKOKU_BG_THEMES = [
     combineBtn.disabled = !Object.values(slots).some(Boolean);
     autoCreateBtn.disabled = !slots.text;
     combineHint.textContent = combineBtn.disabled
-      ? '対応するアプリで「→ Studioに送る」を押すと、ここに反映されます。1つ以上あれば書き出せます。'
-      : '準備ができました。ボタンを押すと1本の動画としてまとめます。';
+      ? t('studio.combineHint.empty')
+      : t('studio.combineHint.ready');
   }
 
   function renderSlots() {
@@ -235,13 +238,13 @@ window.YOUKOKU_BG_THEMES = [
       const displayLabel = resolveAppLabel(info, data);
       const head = document.createElement('div');
       head.className = 'slot-head';
-      head.innerHTML = `<span class="slot-title"><span class="dot" style="background:${info.color}"></span>${escapeHtml(displayLabel)}</span><span class="slot-kind">${info.kind}</span>`;
+      head.innerHTML = `<span class="slot-title"><span class="dot" style="background:${info.color}"></span>${escapeHtml(displayLabel)}</span><span class="slot-kind">${escapeHtml(t('studio.kind.' + kind))}</span>`;
       card.appendChild(head);
 
       const preview = document.createElement('div');
       preview.className = 'slot-preview' + (data ? '' : ' empty');
       if (!data) {
-        preview.textContent = `${info.label}で送信すると表示されます`;
+        preview.textContent = t('studio.slot.emptyHint', { app: info.label });
       } else if (kind === 'image' || kind === 'model') {
         const img = document.createElement('img');
         img.src = trackUrl(URL.createObjectURL(data.blob));
@@ -260,7 +263,7 @@ window.YOUKOKU_BG_THEMES = [
         preview.appendChild(a);
       } else if (kind === 'text') {
         preview.classList.add('slot-text-preview');
-        const title = (data.json && data.json.title) || '無題の物語';
+        const title = (data.json && data.json.title) || t('studio.untitledStory');
         const firstChapter = (data.json && data.json.chapters && data.json.chapters[0]) || { content: '' };
         const snippet = (firstChapter.content || '').slice(0, 90);
         preview.innerHTML = `<strong>${escapeHtml(title)}</strong>${escapeHtml(snippet)}${snippet.length >= 90 ? '…' : ''}`;
@@ -272,12 +275,12 @@ window.YOUKOKU_BG_THEMES = [
       const openBtn = document.createElement('a');
       openBtn.href = resolveAppLink(info, data);
       openBtn.className = 'mini-btn';
-      openBtn.textContent = data ? `${displayLabel}で編集` : `${info.label}を開く`;
+      openBtn.textContent = data ? t('studio.slot.editIn', { app: displayLabel }) : t('studio.slot.openApp', { app: info.label });
       actions.appendChild(openBtn);
       const clearBtn = document.createElement('button');
       clearBtn.type = 'button';
       clearBtn.className = 'mini-btn';
-      clearBtn.textContent = 'クリア';
+      clearBtn.textContent = t('common.clear');
       clearBtn.disabled = !data;
       clearBtn.addEventListener('click', async () => {
         await window.YoukokuProject.clearSlot(kind);
@@ -442,12 +445,12 @@ window.YOUKOKU_BG_THEMES = [
     resultBox.classList.remove('active');
     progressTrack.classList.add('active');
     progressFill.style.width = '2%';
-    combineHint.textContent = '組み立てています…';
+    combineHint.textContent = t('studio.assembling');
 
     try {
       const segments = await buildSegments();
       if (!segments.length) {
-        combineHint.textContent = '組み合わせる素材がありません。';
+        combineHint.textContent = t('studio.noMaterial');
         return;
       }
       const totalDuration = segments.reduce((sum, s) => sum + s.duration, 0);
@@ -527,9 +530,9 @@ window.YOUKOKU_BG_THEMES = [
       downloadLink.href = url;
       resultBox.classList.add('active');
       progressFill.style.width = '100%';
-      combineHint.textContent = '完成しました。';
+      combineHint.textContent = t('studio.done');
     } catch (err) {
-      combineHint.textContent = '書き出しに失敗しました: ' + err.message;
+      combineHint.textContent = t('studio.exportFailedPrefix') + err.message;
     } finally {
       setTimeout(() => progressTrack.classList.remove('active'), 600);
       combineBtn.disabled = false;
@@ -566,17 +569,17 @@ window.YOUKOKU_BG_THEMES = [
   }
 
   autoCreateBtn.addEventListener('click', async () => {
-    if (!slots.text) { combineHint.textContent = 'まずQuillで小説を書き、「→ Studioに送る」を押してください。'; return; }
+    if (!slots.text) { combineHint.textContent = t('studio.needQuillFirst'); return; }
     autoCreateBtn.disabled = true;
     combineBtn.disabled = true;
-    combineHint.textContent = '自動生成しています…';
+    combineHint.textContent = t('studio.autoGenerating');
 
     try {
       const fullText = (slots.text.json.chapters || []).map(c => c.content || '').join('\n');
       const mood = window.YoukokuTextToArt.scoreText(fullText).mood;
 
       if (!slots.image && appEnabled.image) {
-        combineHint.textContent = '自動生成中: Lumen風アートを作成しています…';
+        combineHint.textContent = t('studio.autoGen.image');
         const artCanvas = document.createElement('canvas');
         artCanvas.width = 1200; artCanvas.height = 800;
         window.YoukokuTextToArt.generate(artCanvas, fullText);
@@ -587,22 +590,22 @@ window.YOUKOKU_BG_THEMES = [
       slots = await window.YoukokuProject.getAllSlots();
 
       if (!slots.model && appEnabled.model) {
-        combineHint.textContent = '自動生成中: Meshで3D化しています…';
+        combineHint.textContent = t('studio.autoGen.model');
         const imageData = await getArtImageData(fullText);
         const blob = await window.YoukokuRelief.renderSnapshot(imageData, { width: 1200, height: 800 });
         await window.YoukokuProject.saveSlot('model', { blob, from: 'Mesh (auto)' });
       }
 
       if (!slots.video && appEnabled.video) {
-        combineHint.textContent = '自動生成中: Fluxで3D回転動画を作成しています…';
+        combineHint.textContent = t('studio.autoGen.video');
         const imageData = await getArtImageData(fullText);
         const blob = await window.YoukokuRelief.renderTurntable(imageData, { width: 960, height: 540, duration: 4, fps: 24 });
         await window.YoukokuProject.saveSlot('video', { blob, from: 'Flux (auto)' });
       }
 
       if (!slots.audio && appEnabled.audio) {
-        combineHint.textContent = '自動生成中: Echoで作曲しています…';
-        const buf = await window.YoukokuMusic.generate({ mood, duration: 20 });
+        combineHint.textContent = t('studio.autoGen.audio');
+        const buf = await window.YoukokuMusic.generate({ mood, duration: 20, text: fullText });
         const blob = window.YoukokuWav.encode(buf);
         await window.YoukokuProject.saveSlot('audio', { blob, from: 'Echo (auto)' });
       }
@@ -610,12 +613,13 @@ window.YOUKOKU_BG_THEMES = [
       await refreshSlots();
       await runCombine();
     } catch (err) {
-      combineHint.textContent = '自動生成に失敗しました: ' + err.message;
+      combineHint.textContent = t('studio.autoGenFailedPrefix') + err.message;
       autoCreateBtn.disabled = !slots.text;
       combineBtn.disabled = !Object.values(slots).some(Boolean);
     }
   });
 
+  document.addEventListener('youkoku-lang-change', refreshSlots);
   refreshSlots();
 })();
 </script>

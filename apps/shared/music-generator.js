@@ -17,6 +17,46 @@ window.YoukokuMusic = (() => {
 
   const TIMBRES = ['pad', 'piano', 'guitar', 'synth'];
 
+  /* ---------- text hints: tempo, major/minor tonality, instrument ---------- */
+  const TEMPO_FAST_WORDS = ['速い','急いで','走る','駆ける','踊る','激しい','高速','疾走', 'fast', 'quick', 'energetic', 'upbeat', 'running', 'racing', 'intense'];
+  const TEMPO_SLOW_WORDS = ['ゆっくり','静か','眠る','穏やか','静寂','眠り', 'slow', 'quiet', 'peaceful', 'calm', 'gentle', 'sleepy'];
+  const MINOR_WORDS = ['悲し','切ない','暗い','絶望','孤独','寂し', 'sad', 'dark', 'melancholy', 'sorrow', 'lonely'];
+  const MAJOR_WORDS = ['明るい','幸せ','楽しい','嬉しい','喜び', 'bright', 'happy', 'joyful', 'cheerful'];
+  const INSTRUMENT_WORDS = {
+    piano: ['ピアノ', 'piano'],
+    guitar: ['ギター', 'guitar'],
+    synth: ['シンセ', 'シンセサイザー', 'synth', 'synthesizer', 'electronic'],
+    pad: ['パッド', 'pad', 'ambient', 'drone'],
+  };
+
+  function countOccurrences(text, word) {
+    let count = 0, idx = 0;
+    while ((idx = text.indexOf(word, idx)) !== -1) { count++; idx += word.length; }
+    return count;
+  }
+
+  function sumHits(lower, words) {
+    return words.reduce((sum, w) => sum + countOccurrences(lower, w.toLowerCase()), 0);
+  }
+
+  function detectMusicHints(text) {
+    const lower = (text || '').toLowerCase();
+    const fast = sumHits(lower, TEMPO_FAST_WORDS);
+    const slow = sumHits(lower, TEMPO_SLOW_WORDS);
+    const minor = sumHits(lower, MINOR_WORDS);
+    const major = sumHits(lower, MAJOR_WORDS);
+    let timbre = null, bestCount = 0;
+    Object.keys(INSTRUMENT_WORDS).forEach((tb) => {
+      const c = sumHits(lower, INSTRUMENT_WORDS[tb]);
+      if (c > bestCount) { bestCount = c; timbre = tb; }
+    });
+    return {
+      tempo: fast > slow ? 'fast' : (slow > fast ? 'slow' : 'normal'),
+      tonality: minor > major ? 'minor' : (major > minor ? 'major' : 'auto'),
+      timbre,
+    };
+  }
+
   function noteFreq(base, semitone) { return base * Math.pow(2, semitone / 12); }
 
   function karplusStrongBuffer(ctx, freq, dur, sampleRate) {
@@ -99,19 +139,23 @@ window.YoukokuMusic = (() => {
   }
 
   async function generate(opts) {
-    const { mood = 0, duration = 20, timbre = 'pad' } = opts || {};
+    const { mood = 0, duration = 20, timbre, text = '' } = opts || {};
+    const hints = detectMusicHints(text);
+    const resolvedTimbre = timbre || hints.timbre || 'pad';
     const sampleRate = 44100;
     const ctx = new OfflineAudioContext(2, Math.ceil(duration * sampleRate), sampleRate);
-    const key = mood > 4 ? 'tense' : mood < -4 ? 'calm' : 'neutral';
+    const key = hints.tonality === 'minor' ? 'tense' : hints.tonality === 'major' ? 'calm' : (mood > 4 ? 'tense' : mood < -4 ? 'calm' : 'neutral');
     const scale = SCALES[key];
     const baseFreq = key === 'tense' ? 220 : 196;
-    const noteLen = key === 'tense' ? 0.26 : 0.42;
+    let noteLen = key === 'tense' ? 0.26 : 0.42;
+    if (hints.tempo === 'fast') noteLen *= 0.68;
+    else if (hints.tempo === 'slow') noteLen *= 1.35;
 
     const master = ctx.createGain();
     master.gain.value = 0.55;
     master.connect(ctx.destination);
 
-    if (timbre === 'pad' || timbre === 'synth') {
+    if (resolvedTimbre === 'pad' || resolvedTimbre === 'synth') {
       const pad = ctx.createOscillator();
       pad.type = 'sine';
       pad.frequency.value = baseFreq / 2;
@@ -137,9 +181,9 @@ window.YoukokuMusic = (() => {
       const octaveShift = i % 8 < 5 ? 12 : 0;
       const freq = noteFreq(baseFreq, degree + octaveShift);
 
-      if (timbre === 'piano') schedulePianoNote(ctx, master, freq, t, noteLen);
-      else if (timbre === 'guitar') scheduleGuitarNote(ctx, master, freq, t, noteLen, sampleRate);
-      else if (timbre === 'synth') scheduleSynthNote(ctx, master, freq, t, noteLen);
+      if (resolvedTimbre === 'piano') schedulePianoNote(ctx, master, freq, t, noteLen);
+      else if (resolvedTimbre === 'guitar') scheduleGuitarNote(ctx, master, freq, t, noteLen, sampleRate);
+      else if (resolvedTimbre === 'synth') scheduleSynthNote(ctx, master, freq, t, noteLen);
       else schedulePadNote(ctx, master, freq, t, noteLen, key);
 
       t += noteLen;
@@ -149,5 +193,5 @@ window.YoukokuMusic = (() => {
     return await ctx.startRendering();
   }
 
-  return { generate, SCALES, TIMBRES };
+  return { generate, SCALES, TIMBRES, detectMusicHints };
 })();

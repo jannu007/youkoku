@@ -495,7 +495,7 @@ window.YOUKOKU_BG_THEMES = [
     autoComposeStatus.textContent = '作曲しています…';
     try {
       const mood = window.YoukokuTextToArt.scoreText(text).mood;
-      const buf = await window.YoukokuMusic.generate({ mood, duration: 20, timbre: selectedTimbre });
+      const buf = await window.YoukokuMusic.generate({ mood, duration: 20, timbre: selectedTimbre, text });
       originalBuffer = buf;
       reversedBuffer = null;
       remixBuffer = null;
