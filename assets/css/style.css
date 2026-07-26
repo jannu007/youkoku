@@ -329,31 +329,14 @@ section{ position:relative; padding:9rem 6vw; max-width:1440px; margin:0 auto; }
   .app-specs{ grid-template-columns:1fr 1fr; }
 }
 
-/* ---------- AI creators ---------- */
-.creators{ padding-top:9rem; }
-.creators-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1.4rem; }
-.creator-card{
-  background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:2rem 1.8rem;
-  display:flex; flex-direction:column; gap:.85rem; transition:border-color .4s var(--ease), transform .4s var(--ease);
+/* ---------- AI creators (compact footer credit line) ---------- */
+.footer-creators{ border-top:1px solid var(--line); padding:1.6rem 0; }
+.footer-creators-title{
+  font-family:var(--mono); font-size:.7rem; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--ink-faint); margin:0 0 .8rem;
 }
-.creator-card:hover{ border-color:var(--ink-faint); transform:translateY(-4px); }
-.creator-avatar{
-  width:3.2rem; height:3.2rem; border-radius:50%; display:flex; align-items:center; justify-content:center;
-  font-family:var(--display); font-weight:700; font-size:1.2rem; color:#fff;
-}
-.creator-name{
-  font-family:var(--display); font-weight:700; font-size:1.02rem; margin:0;
-  display:flex; flex-direction:column; gap:.15rem;
-}
-.creator-name-native{ font-family:var(--sans); font-weight:400; font-size:.78rem; color:var(--ink-soft); }
-.creator-meta{ font-size:.8rem; color:var(--ink-soft); margin:0; }
-.creator-role{ font-size:.85rem; color:var(--ink-soft); margin:0; line-height:1.7; flex-grow:1; }
-.creator-app-tag{
-  display:inline-flex; align-items:center; font-family:var(--mono); font-size:.7rem; letter-spacing:.08em;
-  text-transform:uppercase; padding:.35rem .75rem; border-radius:999px; border:1px solid; align-self:flex-start;
-}
-@media (max-width:900px){ .creators-grid{ grid-template-columns:repeat(2,1fr); } }
-@media (max-width:560px){ .creators-grid{ grid-template-columns:1fr; } }
+.footer-creators-list{ display:flex; flex-wrap:wrap; gap:.4rem 1.2rem; }
+.footer-creators-list span{ font-size:.76rem; color:var(--ink-faint); white-space:nowrap; }
 
 /* ---------- device frame mockups ---------- */
 .app-visual{ perspective:1200px; }
