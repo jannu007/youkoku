@@ -59,27 +59,35 @@ window.YoukokuTextToArt = (() => {
     neutral: { sky: '20,24,50', light: '210,210,230', shadow: '40,42,70', warm: false },
   };
 
-  /* ---------- keyword lexicon (Japanese + English) ---------- */
+  /* ---------- keyword lexicon (Japanese + English) ----------
+     Deliberately broad: many synonyms, conjugated/compound forms, and casual expressions
+     per category, since real sentences rarely use the one "canonical" word for a concept. */
   const CATEGORIES = {
-    timeNight: ['夜','夜空','深夜','真夜中', 'night', 'midnight'],
-    timeSunset: ['夕焼け','夕暮れ','夕方', 'sunset', 'dusk', 'twilight'],
-    timeMorning: ['朝','夜明け','早朝', 'morning', 'dawn', 'sunrise'],
-    timeDay: ['昼','日中','正午', 'daytime', 'noon'],
-    sun: ['太陽','日差し','陽光','朝日','夕日', 'sun', 'sunlight', 'sunshine', 'sunrise', 'sunset'],
-    moon: ['月','月光', 'moon', 'moonlight'],
-    stars: ['星','星空','星々', 'star', 'stars', 'starry'],
-    ocean: ['海','波','浜辺','ビーチ', 'sea', 'ocean', 'wave', 'waves', 'beach', 'shore'],
-    mountain: ['山','山脈','丘', 'mountain', 'mountains', 'hill', 'hills'],
-    forest: ['森','木','木々','林', 'forest', 'tree', 'trees', 'woods'],
-    city: ['街','都市','ビル','建物', 'city', 'building', 'buildings', 'urban', 'skyline'],
-    snow: ['雪','雪原', 'snow', 'snowy', 'snowfall'],
-    rain: ['雨','雨降り','嵐','荒れ狂う','暴風雨', 'rain', 'rainy', 'raindrop', 'storm', 'stormy'],
-    fire: ['火','炎','焚き火', 'fire', 'flame', 'flames', 'burning'],
-    flower: ['花','花畑','花園', 'flower', 'flowers', 'blossom', 'garden'],
-    bird: ['鳥','小鳥', 'bird', 'birds'],
-    cat: ['猫','子猫', 'cat', 'kitten'],
-    dog: ['犬','子犬', 'dog', 'puppy'],
-    person: ['少女','少年','女性','男性', 'girl', 'boy', 'woman', 'man', 'person'],
+    timeNight: ['夜','夜空','深夜','真夜中','夜中','宵','夜更け', 'night', 'midnight', 'nighttime', 'nightfall'],
+    timeSunset: ['夕焼け','夕暮れ','夕方','黄昏','日没','夕方の光', 'sunset', 'dusk', 'twilight', 'evening'],
+    timeMorning: ['朝','夜明け','早朝','明け方','朝方','朝もぼろけ', 'morning', 'dawn', 'sunrise', 'daybreak'],
+    timeDay: ['昼','日中','正午','真昼','午後','昼下がり', 'daytime', 'noon', 'afternoon', 'midday'],
+    sun: ['太陽','日差し','陽光','朝日','夕日','日光','陽射し','日輪', 'sun', 'sunlight', 'sunshine', 'sunrise', 'sunset', 'sunbeam', 'sunny'],
+    moon: ['月','月光','満月','新月','月明かり','半月','月夜', 'moon', 'moonlight', 'moonlit', 'crescent moon', 'full moon'],
+    stars: ['星','星空','星々','星屑','天の川','流れ星','満天の星', 'star', 'stars', 'starry', 'stardust', 'milky way', 'shooting star'],
+    ocean: ['海','波','浜辺','ビーチ','湖','川','滝','水面','岸','水平線','海岸','水辺','港', 'sea', 'ocean', 'wave', 'waves', 'beach', 'shore', 'lake', 'river', 'waterfall', 'coast', 'coastline', 'horizon', 'harbor'],
+    mountain: ['山','山脈','丘','峰','山頂','山々','稜線','岩山', 'mountain', 'mountains', 'hill', 'hills', 'peak', 'summit', 'ridge', 'cliff'],
+    forest: ['森','木','木々','林','緑','樹木','木漏れ日','竹林','森林','草原','野原', 'forest', 'tree', 'trees', 'woods', 'greenery', 'jungle', 'meadow', 'grove', 'field'],
+    city: ['街','都市','ビル','建物','夜景','街並み','街灯','都会','駅','橋','道路','路地', 'city', 'building', 'buildings', 'urban', 'skyline', 'town', 'streetlight', 'street', 'bridge', 'alley'],
+    snow: ['雪','雪原','雪景色','吹雪','粉雪','雪化粧','積雪', 'snow', 'snowy', 'snowfall', 'blizzard', 'snowflake', 'snowstorm'],
+    rain: ['雨','雨降り','嵐','荒れ狂う','暴風雨','梅雨','小雨','豪雨','雨音','雨粒', 'rain', 'rainy', 'raindrop', 'storm', 'stormy', 'drizzle', 'downpour', 'thunderstorm'],
+    thunder: ['雷','雷鳴','稲光','落雷', 'thunder', 'lightning', 'thunderbolt'],
+    fire: ['火','炎','焚き火','火事','篝火','火花', 'fire', 'flame', 'flames', 'burning', 'bonfire', 'wildfire', 'spark'],
+    fog: ['霧','霞','ミスト','もや','朝霧', 'fog', 'mist', 'haze', 'foggy', 'misty'],
+    rainbow: ['虹','虹色', 'rainbow'],
+    autumn: ['紅葉','秋','落ち葉','黄葉','紅葉狩り', 'autumn', 'fall foliage', 'red leaves', 'maple leaves'],
+    flower: ['花','花畑','花園','桜','薔薇','バラ','向日葵','ひまわり','チューリップ','花びら','満開', 'flower', 'flowers', 'blossom', 'garden', 'cherry blossom', 'sakura', 'rose', 'sunflower', 'tulip', 'petal', 'bloom'],
+    bird: ['鳥','小鳥','カラス','鳩','白鳥','ツバメ','渡り鳥', 'bird', 'birds', 'crow', 'dove', 'swan', 'swallow'],
+    cat: ['猫','子猫','ネコ', 'cat', 'kitten'],
+    dog: ['犬','子犬','イヌ', 'dog', 'puppy'],
+    fish: ['魚','金魚','熱帯魚','鯉', 'fish', 'goldfish', 'koi'],
+    butterfly: ['蝶','蝶々','チョウ', 'butterfly'],
+    person: ['少女','少年','女性','男性','人','子供','老人','彼女','彼','私','僕', 'girl', 'boy', 'woman', 'man', 'person', 'child', 'kid', 'she', 'he'],
   };
 
   function detectCategories(text) {
@@ -378,11 +386,13 @@ window.YoukokuTextToArt = (() => {
     return horizon;
   }
 
-  function drawForest(ctx, w, h, rand) {
+  const AUTUMN_CANOPY = ['193,68,14', '224,135,30', '242,177,52', '182,36,79'];
+
+  function drawForest(ctx, w, h, rand, autumn) {
     const horizon = h * 0.7;
-    ctx.fillStyle = 'rgba(24,40,30,0.55)';
+    ctx.fillStyle = autumn ? 'rgba(48,26,18,0.55)' : 'rgba(24,40,30,0.55)';
     ctx.fillRect(0, horizon - h * 0.05, w, h * 0.05);
-    ctx.fillStyle = 'rgba(10,20,14,0.92)';
+    ctx.fillStyle = autumn ? 'rgba(30,14,10,0.92)' : 'rgba(10,20,14,0.92)';
     ctx.fillRect(0, horizon, w, h - horizon);
     const count = 10 + Math.floor(rand() * 6);
     for (let i = 0; i < count; i++) {
@@ -392,10 +402,15 @@ window.YoukokuTextToArt = (() => {
       const y = horizon - depth * h * 0.06;
       const r = h * (0.04 + depth * 0.055);
       const shade = 6 + Math.floor(depth * 10);
-      ctx.strokeStyle = `rgba(${shade},${shade + 8},${shade + 4},0.9)`;
+      ctx.strokeStyle = autumn ? `rgba(${40 + shade},${20 + shade},${shade},0.9)` : `rgba(${shade},${shade + 8},${shade + 4},0.9)`;
       ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - trunkH); ctx.stroke();
-      ctx.fillStyle = `rgba(${shade},${shade + 10},${shade + 4},0.94)`;
+      if (autumn) {
+        const c = AUTUMN_CANOPY[Math.floor(rand() * AUTUMN_CANOPY.length)];
+        ctx.fillStyle = `rgba(${c},${0.65 + depth * 0.3})`;
+      } else {
+        ctx.fillStyle = `rgba(${shade},${shade + 10},${shade + 4},0.94)`;
+      }
       ctx.beginPath();
       ctx.arc(x, y - trunkH, r, 0, Math.PI * 2);
       ctx.arc(x - r * 0.65, y - trunkH + r * 0.28, r * 0.68, 0, Math.PI * 2);
@@ -502,6 +517,63 @@ window.YoukokuTextToArt = (() => {
     ctx.fillRect(0, 0, w, h);
   }
 
+  /* thick, layered fog banks that soften everything behind them — much stronger than the
+     thin horizon haze used for ordinary depth cueing */
+  function drawFog(ctx, w, h, rand) {
+    const bands = 4;
+    for (let i = 0; i < bands; i++) {
+      const y = h * (0.35 + i * 0.15) + (rand() - 0.5) * h * 0.06;
+      const bandH = h * (0.14 + rand() * 0.08);
+      const g = ctx.createLinearGradient(0, y - bandH / 2, 0, y + bandH / 2);
+      g.addColorStop(0, 'rgba(225,230,236,0)');
+      g.addColorStop(0.5, `rgba(225,230,236,${0.32 + rand() * 0.18})`);
+      g.addColorStop(1, 'rgba(225,230,236,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, y - bandH / 2, w, bandH);
+    }
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = 'rgba(220,225,232,1)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
+  /* a single bright flash line + brief screen-wide glow, standing in for a lightning strike */
+  function drawThunder(ctx, w, h, rand) {
+    ctx.save();
+    ctx.globalAlpha = 0.14;
+    ctx.fillStyle = 'rgba(230,240,255,1)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+    let x = w * (0.2 + rand() * 0.6), y = 0;
+    ctx.strokeStyle = 'rgba(240,245,255,0.85)';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    while (y < h * 0.55) {
+      x += (rand() - 0.5) * w * 0.09;
+      y += h * (0.06 + rand() * 0.05);
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  /* a soft, wide color-banded arc, only drawn for daylight scenes */
+  function drawRainbow(ctx, w, h, rand) {
+    const cx = w * 0.5, cy = h * 0.78, r = Math.min(w, h) * (0.55 + rand() * 0.1);
+    const bands = ['239,68,68', '245,158,11', '250,204,21', '34,197,94', '59,130,246', '139,92,246'];
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    bands.forEach((c, i) => {
+      ctx.strokeStyle = `rgba(${c},0.32)`;
+      ctx.lineWidth = r * 0.028;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - i * r * 0.03, Math.PI, Math.PI * 2);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
   /* ---------- subject motifs (drawn more prominently, center-ish) ---------- */
   function drawFlower(ctx, w, h, rand, index, total) {
     const spread = total > 1 ? (index + 0.5) / total : 0.5;
@@ -565,6 +637,55 @@ window.YoukokuTextToArt = (() => {
       ctx.quadraticCurveTo(x - s * 0.3, y - s * 0.85, x, y);
       ctx.quadraticCurveTo(x + s * 0.3, y - s * 0.85, x + s, y);
       ctx.stroke();
+    }
+  }
+
+  /* small fish shapes near the water surface — only meaningful over an ocean/lake scene */
+  function drawFish(ctx, w, h, rand, count, horizonY) {
+    const bandTop = horizonY + (h - horizonY) * 0.15;
+    const bandBottom = horizonY + (h - horizonY) * 0.7;
+    for (let i = 0; i < count; i++) {
+      const x = rand() * w, y = bandTop + rand() * (bandBottom - bandTop), s = 5 + rand() * 6;
+      const dir = rand() > 0.5 ? 1 : -1;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(dir, 1);
+      ctx.fillStyle = `rgba(255,${180 + Math.floor(rand() * 50)},${90 + Math.floor(rand() * 40)},0.75)`;
+      ctx.beginPath();
+      ctx.moveTo(-s, 0);
+      ctx.quadraticCurveTo(0, -s * 0.55, s, 0);
+      ctx.quadraticCurveTo(0, s * 0.55, -s, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-s, 0); ctx.lineTo(-s * 1.5, -s * 0.4); ctx.lineTo(-s * 1.5, s * 0.4); ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  /* a few small butterflies, fluttering near flowers or just scattered in the frame */
+  function drawButterfly(ctx, w, h, rand, count) {
+    const palette = ['251,146,60', '236,72,153', '250,204,21', '167,139,250'];
+    for (let i = 0; i < count; i++) {
+      const x = w * (0.15 + rand() * 0.7), y = h * (0.35 + rand() * 0.4), s = 5 + rand() * 5;
+      const color = palette[Math.floor(rand() * palette.length)];
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((rand() - 0.5) * 0.6);
+      ctx.fillStyle = `rgba(${color},0.85)`;
+      [-1, 1].forEach((side) => {
+        ctx.beginPath();
+        ctx.ellipse(side * s * 0.55, -s * 0.35, s * 0.55, s * 0.4, side * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(side * s * 0.45, s * 0.35, s * 0.4, s * 0.32, side * -0.4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.strokeStyle = 'rgba(20,20,25,0.7)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, -s * 0.6); ctx.lineTo(0, s * 0.6); ctx.stroke();
+      ctx.restore();
     }
   }
 
@@ -710,10 +831,14 @@ window.YoukokuTextToArt = (() => {
 
     const timeCat = pickTop(counts, ['timeNight', 'timeSunset', 'timeMorning', 'timeDay']);
     const envCat = pickTop(counts, ['ocean', 'mountain', 'forest', 'city']);
-    const weatherCats = pickAll(counts, ['snow', 'rain', 'fire']);
+    const weatherCats = pickAll(counts, ['snow', 'rain', 'fire', 'fog', 'thunder']);
     const celestialCat = pickTop(counts, ['sun', 'moon']);
     const flowerOn = counts.flower > 0;
     const birdOn = counts.bird > 0;
+    const fishOn = counts.fish > 0;
+    const butterflyOn = counts.butterfly > 0;
+    const rainbowOn = counts.rainbow > 0;
+    const autumnOn = counts.autumn > 0;
     const animalKind = pickTop(counts, ['cat', 'dog', 'person']);
     const starsOn = counts.stars > 0 || timeCat === 'timeNight';
     const tone = TIME_TONE[timeCat] || TIME_TONE.neutral;
@@ -734,16 +859,20 @@ window.YoukokuTextToArt = (() => {
     if (celestialCat === 'sun' && (timeCat === 'timeDay' || timeCat === 'timeMorning' || timeCat === 'timeSunset')) {
       drawGodRays(ctx, w, h, rand, celestial);
     }
+    if (rainbowOn && timeCat !== 'timeNight') drawRainbow(ctx, w, h, rand);
 
     /* 3. landscape silhouette, blended into the sky at the horizon for depth */
     let horizon = null;
     if (envCat === 'ocean') { drawHorizonHaze(ctx, w, h, h * 0.62, tone.shadow); horizon = drawOcean(ctx, w, h, rand); }
     else if (envCat === 'mountain') { drawHorizonHaze(ctx, w, h, h * 0.66, tone.shadow); horizon = drawMountain(ctx, w, h, rand); }
-    else if (envCat === 'forest') { drawHorizonHaze(ctx, w, h, h * 0.7, tone.shadow); horizon = drawForest(ctx, w, h, rand); }
+    else if (envCat === 'forest') { drawHorizonHaze(ctx, w, h, h * 0.7, tone.shadow); horizon = drawForest(ctx, w, h, rand, autumnOn); }
     else if (envCat === 'city') { drawHorizonHaze(ctx, w, h, h * 0.68, tone.shadow); horizon = drawCity(ctx, w, h, rand); }
 
     if (envCat === 'ocean' && celestial) drawWaterReflection(ctx, w, h, horizon, celestial);
     if (envCat === 'ocean' && celestialCat === 'sun') drawWaterGlitter(ctx, w, h, rand, horizon);
+    if (envCat === 'ocean' && fishOn && horizon !== null) {
+      drawFish(ctx, w, h, rand, Math.min(8, 2 + counts.fish + Math.floor(rand() * 2)), horizon);
+    }
     if (horizon !== null && (envCat === 'forest' || envCat === 'mountain') && timeCat !== 'timeNight') {
       drawGroundMist(ctx, w, h, rand, horizon, tone.light);
     }
@@ -753,12 +882,18 @@ window.YoukokuTextToArt = (() => {
       if (wc === 'rain') drawRain(ctx, w, h, rand);
       else if (wc === 'snow') { drawSnow(ctx, w, h, rand); if (horizon !== null) drawSnowCaps(ctx, w, h, rand, envCat, horizon); }
       else if (wc === 'fire') drawFire(ctx, w, h, rand);
+      else if (wc === 'fog') drawFog(ctx, w, h, rand);
+      else if (wc === 'thunder') drawThunder(ctx, w, h, rand);
     });
 
     /* 5. subject motifs — flowers, birds, and an animal/person can all coexist */
     if (birdOn) {
       const birdCount = Math.min(9, 2 + counts.bird + Math.floor(rand() * 2));
       drawBird(ctx, w, h, rand, birdCount);
+    }
+    if (butterflyOn) {
+      const butterflyCount = Math.min(7, 2 + counts.butterfly + Math.floor(rand() * 2));
+      drawButterfly(ctx, w, h, rand, butterflyCount);
     }
     if (flowerOn) {
       const flowerCount = Math.min(9, Math.max(1, counts.flower + Math.floor(rand() * 3)));
@@ -806,7 +941,7 @@ window.YoukokuTextToArt = (() => {
     // a last whisper of paper grain so the piece reads as painted, not flat vector art
     drawGrain(ctx, w, h);
 
-    return { mood, key, categories: counts, scene: { timeCat, envCat, weatherCats, celestialCat, flowerOn, birdOn, animalKind } };
+    return { mood, key, categories: counts, scene: { timeCat, envCat, weatherCats, celestialCat, flowerOn, birdOn, fishOn, butterflyOn, rainbowOn, autumnOn, animalKind } };
   }
 
   return { generate, scoreText };
