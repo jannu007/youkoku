@@ -195,7 +195,19 @@ window.YoukokuAIStyle = (() => {
     if (!model) throw new Error('model-not-loaded');
     const styleImg = getStyleImage(styleKey);
     const content = downscaleForStylize(canvas);
-    const imageData = await model.stylize(content, styleImg);
+    let imageData;
+    try {
+      imageData = await model.stylize(content, styleImg);
+    } catch (e) {
+      // diagnostic: the real-device failures reported a fixed [6000x5120] texture
+      // request regardless of actual content size, which none of canvas/content/style
+      // dimensions here should ever produce — surfacing all of them to find the mismatch.
+      const dims = `canvas=${canvas.width}x${canvas.height} content=${content.width}x${content.height} `
+        + `style=${styleImg.width}x${styleImg.height} dpr=${window.devicePixelRatio} `
+        + `window=${window.innerWidth}x${window.innerHeight}`;
+      const msg = (e && e.message) || String(e);
+      throw new Error(`${msg} [debug: ${dims}]`);
+    }
     const mix = Math.max(0, Math.min(1, strength == null ? 1 : strength));
 
     const stylized = document.createElement('canvas');
