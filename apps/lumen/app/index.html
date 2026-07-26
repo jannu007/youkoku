@@ -97,6 +97,7 @@ input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50
   transition:border-color .25s var(--ease), color .25s var(--ease); text-align:center; padding:.3rem;
 }
 .preset-btn:hover, .preset-btn.active{ border-color:var(--violet); color:var(--ink); }
+.ai-style-btn.active{ border-color:transparent; background:linear-gradient(95deg,var(--violet),var(--blue)); color:#fff; }
 
 .hint{ font-size:.76rem; color:var(--ink-soft); margin-top:.4rem; }
 
@@ -146,6 +147,7 @@ window.YOUKOKU_BG_THEMES = [
 <script src="../../shared/project-store.js"></script>
 <script src="../../shared/text-to-art.js"></script>
 <script src="../../shared/ai-image-gen.js"></script>
+<script src="../../shared/ai-style.js"></script>
 
 <header class="topbar">
   <a href="../index.html" class="back" data-i18n="lumen.backToDetail">← Lumen について</a>
@@ -294,6 +296,24 @@ window.YOUKOKU_BG_THEMES = [
       </div>
 
       <div class="card">
+        <h3 data-i18n="lumen.tool.aiStyleTitle">AIスタイル仕上げ（実験的機能）</h3>
+        <p class="hint" data-i18n="lumen.tool.aiStyleHint">小型（約12MB）のAIスタイル変換モデルをこのブラウザ内で動かし、手作りのテクスチャを今の画像に混ぜ込みます。本格的なAI生成よりずっと軽量で、大きなダウンロードも不要、スマホでも動作します。</p>
+        <div class="btn-row" id="aiStylePicker" style="margin-bottom:.7rem;">
+          <button type="button" class="btn ai-style-btn active" data-style="watercolor" data-i18n="lumen.tool.aiStyleWatercolor">水彩</button>
+          <button type="button" class="btn ai-style-btn" data-style="oil" data-i18n="lumen.tool.aiStyleOil">油彩</button>
+          <button type="button" class="btn ai-style-btn" data-style="ink" data-i18n="lumen.tool.aiStyleInk">墨絵</button>
+        </div>
+        <div class="slider-row">
+          <label><span data-i18n="lumen.tool.aiStyleStrength">強さ</span> <span id="valAiStyleStrength">70%</span></label>
+          <input type="range" id="rAiStyleStrength" min="10" max="100" value="70">
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-primary" id="applyAiStyleBtn" disabled><span data-i18n="lumen.tool.aiStyleApplyBtn">✦ AIスタイルを適用</span></button>
+        </div>
+        <p class="hint" id="aiStyleStatus"></p>
+      </div>
+
+      <div class="card">
         <h3>Crop &amp; Straighten</h3>
         <div class="slider-row">
           <label><span data-i18n="lumen.tool.straighten">水平補正</span> <span id="valStraighten">0°</span></label>
@@ -373,6 +393,11 @@ window.YOUKOKU_BG_THEMES = [
   const aiGenStatus = document.getElementById('aiGenStatus');
   const aiGenProgressWrap = document.getElementById('aiGenProgressWrap');
   const aiGenProgressBar = document.getElementById('aiGenProgressBar');
+  const aiStylePicker = document.getElementById('aiStylePicker');
+  const rAiStyleStrength = document.getElementById('rAiStyleStrength');
+  const valAiStyleStrength = document.getElementById('valAiStyleStrength');
+  const applyAiStyleBtn = document.getElementById('applyAiStyleBtn');
+  const aiStyleStatus = document.getElementById('aiStyleStatus');
   const undoBtn = document.getElementById('undoBtn');
   const redoBtn = document.getElementById('redoBtn');
   const compareBtn = document.getElementById('compareBtn');
@@ -915,6 +940,7 @@ window.YOUKOKU_BG_THEMES = [
       resetBtn.disabled = false;
       downloadBtn.disabled = false;
       sendToProjectBtn.disabled = false;
+      applyAiStyleBtn.disabled = false;
       clearHistory();
       pushHistory();
       URL.revokeObjectURL(url);
@@ -1052,6 +1078,7 @@ window.YOUKOKU_BG_THEMES = [
     resetBtn.disabled = false;
     downloadBtn.disabled = false;
     sendToProjectBtn.disabled = false;
+    applyAiStyleBtn.disabled = false;
     clearHistory();
     pushHistory();
   }
@@ -1154,6 +1181,48 @@ window.YOUKOKU_BG_THEMES = [
     window.YoukokuTextToArt.generate(artCanvas, text);
     placeGeneratedArt(artCanvas);
     generateArtStatus.textContent = t('lumen.tool.generateArtSuccess');
+  });
+
+  let selectedAiStyle = 'watercolor';
+  aiStylePicker.addEventListener('click', (e) => {
+    const btn = e.target.closest('.ai-style-btn');
+    if (!btn) return;
+    selectedAiStyle = btn.dataset.style;
+    aiStylePicker.querySelectorAll('.ai-style-btn').forEach((b) => b.classList.toggle('active', b === btn));
+  });
+
+  rAiStyleStrength.addEventListener('input', () => {
+    valAiStyleStrength.textContent = rAiStyleStrength.value + '%';
+  });
+
+  applyAiStyleBtn.addEventListener('click', async () => {
+    if (!window.YoukokuAIStyle || !window.YoukokuAIStyle.isSupported()) {
+      aiStyleStatus.textContent = t('lumen.tool.aiStyleUnsupported');
+      return;
+    }
+    applyAiStyleBtn.disabled = true;
+    try {
+      if (!window.YoukokuAIStyle.isReady()) {
+        aiStyleStatus.textContent = t('lumen.tool.aiStyleLoading');
+        await window.YoukokuAIStyle.loadModel();
+      }
+      aiStyleStatus.textContent = t('lumen.tool.aiStyleApplying');
+      // reads the fully-rendered canvas (current slider/filter effects included), so those
+      // effects are now baked into the new baseline image — reset the sliders the same way
+      // crop and "generate from text" do, or render() would double-apply them on top
+      const styled = await window.YoukokuAIStyle.applyStyle(canvas, selectedAiStyle, Number(rAiStyleStrength.value) / 100);
+      srcW = styled.width; srcH = styled.height;
+      srcImage = styled;
+      resetControls();
+      render();
+      clearHistory();
+      pushHistory();
+      aiStyleStatus.textContent = t('lumen.tool.aiStyleSuccess');
+    } catch (e) {
+      aiStyleStatus.textContent = t('lumen.tool.aiStyleError', { error: (e && e.message) || String(e) });
+    } finally {
+      applyAiStyleBtn.disabled = false;
+    }
   });
 
   sendToProjectBtn.addEventListener('click', () => {
