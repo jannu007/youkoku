@@ -1059,6 +1059,12 @@ window.YOUKOKU_BG_THEMES = [
   let aiGenOn = false;
   let aiGenModelsReady = false;
 
+  function formatAiGenError(e) {
+    const msg = (e && e.message) || String(e);
+    if (msg === 'download-stalled') return t('lumen.tool.aiGenStalled');
+    return t('lumen.tool.aiGenError', { error: msg });
+  }
+
   async function ensureAiModelsLoaded() {
     aiGenProgressWrap.style.display = 'block';
     await window.YoukokuAIImageGen.loadModels((info) => {
@@ -1104,7 +1110,7 @@ window.YOUKOKU_BG_THEMES = [
       try {
         await ensureAiModelsLoaded();
       } catch (e) {
-        aiGenStatus.textContent = t('lumen.tool.aiGenError', { error: e.message || String(e) });
+        aiGenStatus.textContent = formatAiGenError(e);
         aiGenOn = false;
         aiGenSwitch.classList.remove('on');
         aiGenSwitch.setAttribute('aria-pressed', 'false');
@@ -1132,7 +1138,7 @@ window.YOUKOKU_BG_THEMES = [
         placeGeneratedArt(artCanvas);
         generateArtStatus.textContent = t('lumen.tool.aiGenSuccess');
       } catch (e) {
-        generateArtStatus.textContent = t('lumen.tool.aiGenError', { error: e.message || String(e) });
+        generateArtStatus.textContent = formatAiGenError(e);
         const artCanvas = document.createElement('canvas');
         artCanvas.width = 1200; artCanvas.height = 800;
         window.YoukokuTextToArt.generate(artCanvas, text);

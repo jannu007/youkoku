@@ -89,7 +89,14 @@ window.YoukokuAIImageGen = (() => {
     }
   }
 
-  /* ---------- fetch a model file with byte-level progress, caching the raw response ---------- */
+  /* ---------- fetch a model file with byte-level progress, caching the raw response ----------
+     Files here run up to ~1.7GB. Reading the whole thing into a chunks[] array and then a
+     Blob (as an earlier version of this function did) means holding 2-3x the file size in JS
+     heap at once, which stalled real mobile devices under memory pressure. Response.clone()
+     tees the underlying stream instead: cache.put() consumes one branch and streams it straight
+     to disk-backed Cache Storage, while the other branch is only used to count bytes for the
+     progress bar (each chunk is discarded immediately, never accumulated). A stall timer aborts
+     and reports clearly if no new bytes arrive for a while, instead of hanging forever silently. */
   async function fetchWithProgress(url, onBytes) {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(url);
@@ -98,24 +105,43 @@ window.YoukokuAIImageGen = (() => {
       onBytes(buf.byteLength, buf.byteLength);
       return buf;
     }
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching ${url}`);
-    const total = Number(resp.headers.get('content-length')) || 0;
-    const reader = resp.body.getReader();
-    const chunks = [];
-    let received = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-      received += value.length;
-      onBytes(received, total || received);
-    }
-    const blob = new Blob(chunks);
+
+    const STALL_TIMEOUT_MS = 20000;
+    const controller = new AbortController();
+    let lastProgressAt = Date.now();
+    const stallTimer = setInterval(() => {
+      if (Date.now() - lastProgressAt > STALL_TIMEOUT_MS) controller.abort();
+    }, 2000);
+
     try {
-      await cache.put(url, new Response(blob, { headers: { 'Content-Type': 'application/octet-stream' } }));
-    } catch (e) { /* storage quota or private-browsing — generation still works this session */ }
-    return await blob.arrayBuffer();
+      const resp = await fetch(url, { signal: controller.signal });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching ${url}`);
+      const total = Number(resp.headers.get('content-length')) || 0;
+      const progressClone = resp.clone();
+      const cachePut = cache.put(url, resp).catch(() => { /* storage quota or private-browsing */ });
+
+      const reader = progressClone.body.getReader();
+      let received = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.length;
+        lastProgressAt = Date.now();
+        onBytes(received, total || received);
+      }
+      await cachePut;
+
+      const finalCached = await cache.match(url);
+      if (finalCached) return await finalCached.arrayBuffer();
+      // cache.put failed (quota/private mode) — refetch this once to still return usable bytes
+      const fallback = await fetch(url);
+      return await fallback.arrayBuffer();
+    } catch (e) {
+      if (controller.signal.aborted) throw new Error('download-stalled');
+      throw e;
+    } finally {
+      clearInterval(stallTimer);
+    }
   }
 
   /* ---------- load ORT + tokenizer + all three model sessions ---------- */

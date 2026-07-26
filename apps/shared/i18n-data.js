@@ -166,6 +166,7 @@ Object.assign(window.YOUKOKU_I18N_DICT.en, {
   'lumen.tool.aiGenGenerating': 'Generating with AI…',
   'lumen.tool.aiGenSuccess': '✓ Generated with AI.',
   'lumen.tool.aiGenError': 'AI generation failed ({{error}}). Falling back to the built-in generator.',
+  'lumen.tool.aiGenStalled': "The download stalled (no data for 20+ seconds) and was cancelled. Keep this tab open and in the foreground, and try again — files that already finished won't be re-downloaded, but the one that stalled restarts from the beginning.",
   'lumen.tool.aiGenCancelled': 'Cancelled.',
 
   /* ---------- fleur ---------- */
@@ -744,6 +745,7 @@ Object.assign(window.YOUKOKU_I18N_DICT.ja, {
   'lumen.tool.aiGenGenerating': 'AIで生成中…',
   'lumen.tool.aiGenSuccess': '✓ AIで生成しました。',
   'lumen.tool.aiGenError': 'AI生成に失敗しました（{{error}}）。通常の生成方式にフォールバックします。',
+  'lumen.tool.aiGenStalled': '通信が20秒以上停止したため、ダウンロードを中止しました。タブを閉じず前面に表示したまま、もう一度お試しください（完了済みのファイルは再ダウンロードされませんが、停止したファイルは最初からになります）。',
   'lumen.tool.aiGenCancelled': 'キャンセルしました。',
 
   /* ---------- fleur ---------- */
