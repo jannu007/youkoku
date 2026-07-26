@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Studio — 5つのアプリをつなぐ | AI Records</title>
-<meta name="description" content="Lumen・Flux・Echo・Quill・Meshの作品を1本の動画に組み合わせて書き出すStudio。会員登録不要・完全無料・インストール不要。">
+<title>Studio — 7つのアプリをつなぐ | AI Records</title>
+<meta name="description" content="Lumen・Flux・Echo・Quill・Mesh・Fleur・Animaの作品を1本の動画に組み合わせて書き出すStudio。会員登録不要・完全無料・インストール不要。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2290%22>✦</text></svg>">
 <meta name="theme-color" content="#070c26">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -117,7 +117,7 @@ window.YOUKOKU_BG_THEMES = [
 
 <main>
   <div class="intro">
-    <h1>5つの作品を、1本にまとめる。</h1>
+    <h1>7つの作品を、1本にまとめる。</h1>
     <p>
       各アプリの「→ Studioに送る」で送った本文・画像・3D・動画・音楽を、このページで1本の動画としてつなぎ合わせ、書き出せます。
       すべてこのブラウザの中だけで処理され、サーバーには何も送信されません。
@@ -130,7 +130,7 @@ window.YOUKOKU_BG_THEMES = [
     <div class="card">
       <h3>使用するアプリ</h3>
       <div class="toggle-row">
-        <span><span class="dot" style="background:#8b5cf6"></span>Lumen（画像）</span>
+        <span><span class="dot" style="background:#8b5cf6"></span>画像（Lumen / Fleur）</span>
         <button type="button" class="switch on" id="toggleImage" data-kind="image" aria-pressed="true"></button>
       </div>
       <div class="toggle-row">
@@ -138,7 +138,7 @@ window.YOUKOKU_BG_THEMES = [
         <button type="button" class="switch on" id="toggleModel" data-kind="model" aria-pressed="true"></button>
       </div>
       <div class="toggle-row">
-        <span><span class="dot" style="background:#ec4899"></span>Flux（動画）</span>
+        <span><span class="dot" style="background:#ec4899"></span>動画（Flux / Anima）</span>
         <button type="button" class="switch on" id="toggleVideo" data-kind="video" aria-pressed="true"></button>
       </div>
       <div class="toggle-row">
@@ -172,12 +172,21 @@ window.YOUKOKU_BG_THEMES = [
   'use strict';
 
   const APP_INFO = {
-    text:  { label: 'Quill',  kind: 'テキスト', color: '#f59e0b', link: '../quill/app/' },
-    image: { label: 'Lumen',  kind: '画像',     color: '#8b5cf6', link: '../lumen/app/' },
-    model: { label: 'Mesh',   kind: '3D',       color: '#84cc16', link: '../mesh/app/' },
-    video: { label: 'Flux',   kind: '動画',     color: '#ec4899', link: '../flux/app/' },
-    audio: { label: 'Echo',   kind: '音楽',     color: '#22d3ee', link: '../echo/app/' },
+    text:  { label: 'Quill',        kind: 'テキスト', color: '#f59e0b', link: '../quill/app/' },
+    image: { label: 'Lumen / Fleur', kind: '画像',     color: '#8b5cf6', link: '../lumen/app/', altLink: '../fleur/app/', altMatch: 'Fleur' },
+    model: { label: 'Mesh',         kind: '3D',       color: '#84cc16', link: '../mesh/app/' },
+    video: { label: 'Flux / Anima', kind: '動画',     color: '#ec4899', link: '../flux/app/', altLink: '../anima/app/', altMatch: 'Anima' },
+    audio: { label: 'Echo',         kind: '音楽',     color: '#22d3ee', link: '../echo/app/' },
   };
+
+  function resolveAppLabel(info, data) {
+    return (data && data.from) ? data.from : info.label;
+  }
+
+  function resolveAppLink(info, data) {
+    if (info.altLink && data && data.from && data.from.startsWith(info.altMatch)) return info.altLink;
+    return info.link;
+  }
 
   const slotsGrid = document.getElementById('slotsGrid');
   const combineBtn = document.getElementById('combineBtn');
@@ -223,9 +232,10 @@ window.YOUKOKU_BG_THEMES = [
       const data = slots[kind];
       const card = document.createElement('div');
       card.className = 'slot-card';
+      const displayLabel = resolveAppLabel(info, data);
       const head = document.createElement('div');
       head.className = 'slot-head';
-      head.innerHTML = `<span class="slot-title"><span class="dot" style="background:${info.color}"></span>${info.label}</span><span class="slot-kind">${info.kind}</span>`;
+      head.innerHTML = `<span class="slot-title"><span class="dot" style="background:${info.color}"></span>${escapeHtml(displayLabel)}</span><span class="slot-kind">${info.kind}</span>`;
       card.appendChild(head);
 
       const preview = document.createElement('div');
@@ -260,9 +270,9 @@ window.YOUKOKU_BG_THEMES = [
       const actions = document.createElement('div');
       actions.className = 'slot-actions';
       const openBtn = document.createElement('a');
-      openBtn.href = info.link;
+      openBtn.href = resolveAppLink(info, data);
       openBtn.className = 'mini-btn';
-      openBtn.textContent = data ? `${info.label}で編集` : `${info.label}を開く`;
+      openBtn.textContent = data ? `${displayLabel}で編集` : `${info.label}を開く`;
       actions.appendChild(openBtn);
       const clearBtn = document.createElement('button');
       clearBtn.type = 'button';

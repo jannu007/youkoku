@@ -191,8 +191,49 @@
     });
   }
 
-  const initters = { bokeh: initBokeh, streaks: initStreaks, ripple: initRipple, embers: initEmbers, wire: initWire };
-  const drawers = { bokeh: drawBokeh, streaks: drawStreaks, ripple: drawRipple, embers: drawEmbers, wire: drawWire };
+  /* ---- petals: drifting flower petals falling and swaying ---- */
+  function spawnPetal() {
+    return {
+      x: Math.random() * w, y: -20 - Math.random() * h * 0.3,
+      size: 7 + Math.random() * 12,
+      rot: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.03,
+      vy: 0.35 + Math.random() * 0.55,
+      swayPhase: Math.random() * Math.PI * 2, swaySpeed: 0.012 + Math.random() * 0.018, swayAmp: 18 + Math.random() * 28,
+      c: pick(), a: 0.3 + Math.random() * 0.35,
+    };
+  }
+  function initPetals() {
+    const count = Math.round((w * h) / 24000);
+    state.petals = Array.from({ length: Math.min(count, 46) }, spawnPetal);
+  }
+  function drawPetalShape(x, y, size, rot, c, a) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.beginPath();
+    ctx.moveTo(0, -size);
+    ctx.bezierCurveTo(size * 0.7, -size * 0.5, size * 0.7, size * 0.5, 0, size);
+    ctx.bezierCurveTo(-size * 0.7, size * 0.5, -size * 0.7, -size * 0.5, 0, -size);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(${c},${a})`;
+    ctx.fill();
+    ctx.restore();
+  }
+  function drawPetals() {
+    ctx.fillStyle = BASE;
+    ctx.fillRect(0, 0, w, h);
+    state.petals.forEach((p) => {
+      p.y += p.vy;
+      p.rot += p.rotSpeed;
+      p.swayPhase += p.swaySpeed;
+      const x = p.x + Math.sin(p.swayPhase) * p.swayAmp;
+      drawPetalShape(x, p.y, p.size, p.rot, p.c, p.a);
+      if (p.y > h + 20) Object.assign(p, spawnPetal(), { y: -20 });
+    });
+  }
+
+  const initters = { bokeh: initBokeh, streaks: initStreaks, ripple: initRipple, embers: initEmbers, wire: initWire, petals: initPetals };
+  const drawers = { bokeh: drawBokeh, streaks: drawStreaks, ripple: drawRipple, embers: drawEmbers, wire: drawWire, petals: drawPetals };
   const init = initters[chosen.type] || initBokeh;
   const draw = drawers[chosen.type] || drawBokeh;
 

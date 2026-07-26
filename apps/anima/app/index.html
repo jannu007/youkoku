@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anima — AIアニメーション作成 | AI Records</title>
+<meta name="description" content="オニオンスキンとAI下絵の一括生成で描くアニメーション作成アプリ">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2290%22>▶</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070c26; --panel:#0d1642; --panel2:#11204f; --ink:#f4f5fa; --ink-soft:#8d8fa3; --line:#2a3868;
+  --orange:#f97316; --red:#ef4444;
+  --display:'Space Grotesk',sans-serif;
+  --sans:'Inter','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.7; -webkit-font-smoothing:antialiased; }
+#bgCanvas{ position:fixed; inset:0; z-index:-2; width:100%; height:100%; pointer-events:none; }
+a{ color:inherit; text-decoration:none; }
+button{ font-family:inherit; cursor:pointer; color:inherit; }
+
+.topbar{ display:flex; align-items:center; justify-content:space-between; padding:1.4rem 5vw; border-bottom:1px solid var(--line); }
+.back{ font-size:.78rem; color:var(--ink-soft); }
+.back:hover{ color:var(--ink); }
+.applogo{ font-family:var(--display); font-weight:700; font-size:1rem; display:flex; align-items:center; gap:.6rem; text-transform:uppercase; }
+.applogo .dot{ width:.5rem; height:.5rem; border-radius:50%; background:var(--orange); }
+
+main{ max-width:1180px; margin:0 auto; padding:2.6rem 5vw 5rem; }
+
+.intro{ margin-bottom:2.2rem; }
+.intro h1{ font-family:var(--display); font-weight:700; font-size:clamp(1.5rem,3vw,2rem); margin:0 0 .5rem; }
+.intro p{ color:var(--ink-soft); font-size:.88rem; margin:0; max-width:40em; }
+
+.workspace{ display:grid; grid-template-columns:1fr 320px; gap:2rem; align-items:flex-start; }
+@media (max-width:900px){ .workspace{ grid-template-columns:1fr; } }
+
+.canvas-panel{
+  background:var(--panel); border:1px solid var(--line); border-radius:16px;
+  padding:1.2rem; display:flex; flex-direction:column; align-items:center; gap:1rem;
+}
+.canvas-stack{ position:relative; max-width:100%; line-height:0; }
+.canvas-stack canvas{ display:block; max-width:100%; height:auto; border-radius:8px; }
+#onionCanvas{ background:#fdfbf7; }
+#drawCanvas{ position:absolute; inset:0; touch-action:none; cursor:crosshair; }
+#playbackCanvas{ display:none; max-width:100%; border-radius:8px; background:#fdfbf7; }
+
+.transport{ display:flex; align-items:center; gap:1rem; width:100%; max-width:640px; }
+.play-btn{
+  border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:999px;
+  padding:.6rem 1.2rem; font-size:.78rem; letter-spacing:.04em; text-transform:uppercase; flex-shrink:0;
+}
+.play-btn:hover{ border-color:var(--ink); }
+.fps-row{ display:flex; align-items:center; gap:.6rem; flex:1; font-size:.76rem; color:var(--ink-soft); }
+.fps-row input[type="range"]{ flex:1; }
+
+.frame-strip{
+  display:flex; gap:.6rem; width:100%; max-width:640px; overflow-x:auto; padding:.3rem 0;
+}
+.frame-thumb{
+  flex-shrink:0; width:64px; height:48px; border-radius:6px; border:2px solid var(--line);
+  background:#fdfbf7; cursor:pointer; position:relative; overflow:hidden;
+}
+.frame-thumb canvas{ width:100%; height:100%; display:block; }
+.frame-thumb.active{ border-color:var(--orange); }
+.frame-thumb .idx{
+  position:absolute; bottom:2px; right:4px; font-size:.62rem; color:#000; background:rgba(255,255,255,.7);
+  padding:0 .25em; border-radius:3px; font-family:var(--display);
+}
+.frame-actions{ display:flex; gap:.5rem; width:100%; max-width:640px; }
+
+input[type="range"]{
+  width:100%; -webkit-appearance:none; appearance:none; height:4px; border-radius:4px; background:var(--line); outline:none;
+}
+input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:1rem; height:1rem; border-radius:50%; background:var(--ink); cursor:pointer; border:none;
+}
+input[type="range"]::-moz-range-thumb{ width:1rem; height:1rem; border-radius:50%; background:var(--ink); cursor:pointer; border:none; }
+
+.panel-side{ display:flex; flex-direction:column; gap:1.4rem; }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:1.5rem; }
+.card h3{ font-family:var(--display); font-size:.82rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:0 0 1.2rem; }
+
+.slider-row{ margin-bottom:1.1rem; }
+.slider-row:last-child{ margin-bottom:0; }
+.slider-row label{ display:flex; justify-content:space-between; font-size:.82rem; margin-bottom:.5rem; }
+.slider-row label span{ color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+
+.color-row{ display:flex; align-items:center; gap:.8rem; margin-bottom:1.1rem; }
+.color-row input[type="color"]{
+  width:2.6rem; height:2.6rem; border-radius:10px; border:1px solid var(--line); background:var(--panel2); padding:0; cursor:pointer;
+}
+.color-row span{ font-size:.82rem; color:var(--ink-soft); }
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5em; width:100%;
+  padding:.85rem 1.4rem; font-size:.8rem; letter-spacing:.04em; font-weight:600; border-radius:999px;
+  border:1px solid var(--line); background:transparent; color:var(--ink); text-transform:uppercase;
+  transition:background .3s var(--ease), border-color .3s var(--ease), transform .2s var(--ease);
+}
+.btn:hover{ border-color:var(--ink); transform:translateY(-1px); }
+.btn:disabled{ opacity:.4; cursor:default; transform:none !important; }
+.btn-primary{ background:linear-gradient(95deg,var(--orange),var(--red)); border-color:transparent; color:#fff; }
+.btn-primary:hover{ box-shadow:0 8px 24px rgba(249,115,22,.3); }
+.btn-row{ display:flex; gap:.7rem; }
+.btn-row .btn{ width:auto; flex:1; }
+
+.hint{ font-size:.76rem; color:var(--ink-soft); margin-top:.4rem; }
+
+.toggle-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+.toggle-row:last-child{ margin-bottom:0; }
+.toggle-row span{ font-size:.86rem; }
+.switch{ position:relative; width:2.6rem; height:1.5rem; border-radius:999px; background:var(--line); border:none; flex-shrink:0; transition:background .25s var(--ease); }
+.switch::after{ content:''; position:absolute; top:2px; left:2px; width:1.1rem; height:1.1rem; border-radius:50%; background:var(--ink); transition:transform .25s var(--ease); }
+.switch.on{ background:linear-gradient(95deg,var(--orange),var(--red)); }
+.switch.on::after{ transform:translateX(1.1rem); }
+
+.progress-track{ height:6px; border-radius:6px; background:var(--panel2); overflow:hidden; margin-top:.8rem; display:none; }
+.progress-track.active{ display:block; }
+.progress-fill{ height:100%; background:linear-gradient(90deg,var(--orange),var(--red)); width:0%; transition:width .2s linear; }
+
+.result{ margin-top:1.2rem; display:none; }
+.result.active{ display:block; }
+.result video{ width:100%; border-radius:8px; background:#000; margin-bottom:.8rem; }
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<script>
+window.YOUKOKU_BG_THEMES = [
+  { type: 'embers', colors: ['249,115,22','239,68,68'] },
+];
+</script>
+<script src="../../shared/detail-bg.js?v=1"></script>
+<script src="../../shared/project-store.js"></script>
+<script src="../../shared/text-to-art.js"></script>
+
+<header class="topbar">
+  <a href="../index.html" class="back">← Anima について</a>
+  <div class="applogo"><span class="dot"></span>Anima</div>
+</header>
+
+<main>
+  <div class="intro">
+    <h1>一枚一枚が、動きになる。</h1>
+    <p>コマを1枚ずつ描いてつなぐと、パラパラ漫画のように動きが生まれます。オニオンスキンで前のコマをなぞりながら描けます。データはこのブラウザだけで処理され、外部には送信されません。</p>
+  </div>
+
+  <div class="card" style="margin-bottom:2.2rem;">
+    <h3>AI Prompt</h3>
+    <p class="hint">好きな文章を入力すると、その内容に応じたジェネラティブアートを土台に、ゆっくりとしたパン・ズームを加えた複数フレームを一括生成します（AI動画生成ではなく、1枚の生成アートに動きを加えた手続き的なアニメーションです）。生成すると現在のフレームはすべて置き換わります。</p>
+    <textarea id="promptInput" rows="3" placeholder="例: 風にそよぐ一本の木。" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.7rem;font-size:.85rem;font-family:inherit;resize:vertical;"></textarea>
+    <div class="slider-row" style="margin-top:.9rem;">
+      <label>生成するフレーム数 <span id="valFrameCount">12</span></label>
+      <input type="range" id="rFrameCount" min="4" max="24" value="12">
+    </div>
+    <div class="btn-row" style="margin-top:.7rem;">
+      <button type="button" class="btn" id="loadQuillTextBtn"><span>Quillの文章を読み込む</span></button>
+      <button type="button" class="btn btn-primary" id="generateFramesBtn"><span>✦ テキストからフレームを生成</span></button>
+    </div>
+    <p class="hint" id="generateFramesStatus"></p>
+  </div>
+
+  <div class="workspace">
+    <div class="canvas-panel">
+      <div class="canvas-stack" id="canvasStack">
+        <canvas id="onionCanvas" width="640" height="480"></canvas>
+        <canvas id="drawCanvas" width="640" height="480"></canvas>
+      </div>
+      <canvas id="playbackCanvas" width="640" height="480"></canvas>
+
+      <div class="transport">
+        <button type="button" class="play-btn" id="playBtn"><span>▶ 再生</span></button>
+        <div class="fps-row">
+          <span>FPS <span id="valFps">8</span></span>
+          <input type="range" id="rFps" min="2" max="24" value="8">
+        </div>
+      </div>
+
+      <div class="frame-strip" id="frameStrip"></div>
+      <div class="frame-actions">
+        <button type="button" class="btn" id="newFrameBtn"><span>+ 新しいフレーム</span></button>
+        <button type="button" class="btn" id="duplicateFrameBtn"><span>複製</span></button>
+        <button type="button" class="btn" id="deleteFrameBtn"><span>削除</span></button>
+      </div>
+    </div>
+
+    <div class="panel-side">
+      <div class="card">
+        <h3>Brush</h3>
+        <div class="color-row">
+          <input type="color" id="colorPicker" value="#f97316">
+          <span>ブラシの色</span>
+        </div>
+        <div class="slider-row">
+          <label>太さ <span id="valSize">8px</span></label>
+          <input type="range" id="rSize" min="1" max="40" value="8">
+        </div>
+        <div class="toggle-row">
+          <span>消しゴム</span>
+          <button type="button" class="switch" id="eraserSwitch" aria-pressed="false"></button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>オニオンスキン</h3>
+        <div class="toggle-row">
+          <span>前のコマを半透明表示</span>
+          <button type="button" class="switch on" id="onionSwitch" aria-pressed="true"></button>
+        </div>
+        <p class="hint">オンにすると、1つ前のコマが薄く表示され、なぞりながら次のコマを描けます。書き出したアニメーションには含まれません。</p>
+      </div>
+
+      <div class="card">
+        <h3>Export</h3>
+        <button type="button" class="btn btn-primary" id="exportBtn"><span>↓ WebMで書き出す</span></button>
+        <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
+        <p class="hint" id="exportStatus"></p>
+        <div class="result" id="resultBox">
+          <video id="resultVideo" controls loop></video>
+          <div class="btn-row">
+            <a class="btn btn-primary" id="downloadLink" download="anima-animation.webm"><span>ダウンロード</span></a>
+            <button type="button" class="btn" id="sendToProjectBtn"><span>→ Studioに送る</span></button>
+          </div>
+          <p class="hint" id="sendToProjectStatus"></p>
+          <a href="../../studio/" style="font-size:.74rem;color:var(--ink-soft);text-decoration:underline;text-underline-offset:.2em;">Studioを開く →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<canvas id="exportCanvas" hidden></canvas>
+
+<script>
+(() => {
+  'use strict';
+
+  const FRAME_W = 640, FRAME_H = 480;
+  const BASE_FILL = '#fdfbf7';
+
+  const onionCanvas = document.getElementById('onionCanvas');
+  const onionCtx = onionCanvas.getContext('2d');
+  const drawCanvas = document.getElementById('drawCanvas');
+  const drawCtx = drawCanvas.getContext('2d');
+  const canvasStack = document.getElementById('canvasStack');
+  const playbackCanvas = document.getElementById('playbackCanvas');
+  const playbackCtx = playbackCanvas.getContext('2d');
+  const playBtn = document.getElementById('playBtn');
+  const rFps = document.getElementById('rFps');
+  const valFps = document.getElementById('valFps');
+  const frameStrip = document.getElementById('frameStrip');
+  const newFrameBtn = document.getElementById('newFrameBtn');
+  const duplicateFrameBtn = document.getElementById('duplicateFrameBtn');
+  const deleteFrameBtn = document.getElementById('deleteFrameBtn');
+  const colorPicker = document.getElementById('colorPicker');
+  const rSize = document.getElementById('rSize');
+  const valSize = document.getElementById('valSize');
+  const eraserSwitch = document.getElementById('eraserSwitch');
+  const onionSwitch = document.getElementById('onionSwitch');
+  const exportBtn = document.getElementById('exportBtn');
+  const exportStatus = document.getElementById('exportStatus');
+  const progressTrack = document.getElementById('progressTrack');
+  const progressFill = document.getElementById('progressFill');
+  const resultBox = document.getElementById('resultBox');
+  const resultVideo = document.getElementById('resultVideo');
+  const downloadLink = document.getElementById('downloadLink');
+  const sendToProjectBtn = document.getElementById('sendToProjectBtn');
+  const sendToProjectStatus = document.getElementById('sendToProjectStatus');
+  const promptInput = document.getElementById('promptInput');
+  const rFrameCount = document.getElementById('rFrameCount');
+  const valFrameCount = document.getElementById('valFrameCount');
+  const generateFramesBtn = document.getElementById('generateFramesBtn');
+  const generateFramesStatus = document.getElementById('generateFramesStatus');
+  const loadQuillTextBtn = document.getElementById('loadQuillTextBtn');
+  const exportCanvas = document.getElementById('exportCanvas');
+
+  function makeBlankFrame() {
+    const c = document.createElement('canvas');
+    c.width = FRAME_W; c.height = FRAME_H;
+    return c;
+  }
+
+  let frames = [makeBlankFrame()];
+  let currentIndex = 0;
+  let eraserOn = false;
+  let onionOn = true;
+  let drawing = false;
+  let lastX = 0, lastY = 0;
+
+  function commitCurrentFrame() {
+    const target = frames[currentIndex];
+    const tctx = target.getContext('2d');
+    tctx.clearRect(0, 0, FRAME_W, FRAME_H);
+    tctx.drawImage(drawCanvas, 0, 0);
+  }
+
+  function loadFrameIntoDrawCanvas(index) {
+    drawCtx.clearRect(0, 0, FRAME_W, FRAME_H);
+    drawCtx.drawImage(frames[index], 0, 0);
+  }
+
+  function renderOnion() {
+    onionCtx.clearRect(0, 0, FRAME_W, FRAME_H);
+    onionCtx.fillStyle = BASE_FILL;
+    onionCtx.fillRect(0, 0, FRAME_W, FRAME_H);
+    if (onionOn && currentIndex > 0) {
+      onionCtx.globalAlpha = 0.35;
+      onionCtx.drawImage(frames[currentIndex - 1], 0, 0);
+      onionCtx.globalAlpha = 1;
+    }
+  }
+
+  function renderFrameStrip() {
+    frameStrip.innerHTML = '';
+    frames.forEach((frame, i) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'frame-thumb' + (i === currentIndex ? ' active' : '');
+      const tCanvas = document.createElement('canvas');
+      tCanvas.width = 64; tCanvas.height = 48;
+      const tctx = tCanvas.getContext('2d');
+      tctx.fillStyle = BASE_FILL;
+      tctx.fillRect(0, 0, 64, 48);
+      tctx.drawImage(frame, 0, 0, 64, 48);
+      thumb.appendChild(tCanvas);
+      const idx = document.createElement('span');
+      idx.className = 'idx';
+      idx.textContent = String(i + 1);
+      thumb.appendChild(idx);
+      thumb.addEventListener('click', () => switchToFrame(i));
+      frameStrip.appendChild(thumb);
+    });
+  }
+
+  function switchToFrame(index) {
+    if (index === currentIndex) return;
+    commitCurrentFrame();
+    currentIndex = index;
+    loadFrameIntoDrawCanvas(currentIndex);
+    renderOnion();
+    renderFrameStrip();
+  }
+
+  function refreshAfterEdit() {
+    renderFrameStrip();
+  }
+
+  /* ---------- drawing ---------- */
+  function toCanvasPoint(e) {
+    const rect = drawCanvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (FRAME_W / rect.width);
+    const y = (e.clientY - rect.top) * (FRAME_H / rect.height);
+    return [x, y];
+  }
+
+  function strokeTo(x0, y0, x1, y1) {
+    drawCtx.save();
+    drawCtx.lineCap = 'round';
+    drawCtx.lineJoin = 'round';
+    drawCtx.lineWidth = Number(rSize.value);
+    if (eraserOn) {
+      drawCtx.globalCompositeOperation = 'destination-out';
+      drawCtx.strokeStyle = '#000000';
+    } else {
+      drawCtx.globalCompositeOperation = 'source-over';
+      drawCtx.strokeStyle = colorPicker.value;
+    }
+    drawCtx.beginPath();
+    drawCtx.moveTo(x0, y0);
+    drawCtx.lineTo(x1, y1);
+    drawCtx.stroke();
+    drawCtx.restore();
+  }
+
+  drawCanvas.addEventListener('pointerdown', (e) => {
+    drawing = true;
+    [lastX, lastY] = toCanvasPoint(e);
+    strokeTo(lastX, lastY, lastX + 0.01, lastY + 0.01);
+    drawCanvas.setPointerCapture(e.pointerId);
+  });
+  drawCanvas.addEventListener('pointermove', (e) => {
+    if (!drawing) return;
+    const [x, y] = toCanvasPoint(e);
+    strokeTo(lastX, lastY, x, y);
+    lastX = x; lastY = y;
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((evt) => {
+    drawCanvas.addEventListener(evt, () => {
+      if (!drawing) return;
+      drawing = false;
+      commitCurrentFrame();
+      refreshAfterEdit();
+    });
+  });
+
+  eraserSwitch.addEventListener('click', () => {
+    eraserOn = !eraserOn;
+    eraserSwitch.classList.toggle('on', eraserOn);
+    eraserSwitch.setAttribute('aria-pressed', String(eraserOn));
+  });
+  onionSwitch.addEventListener('click', () => {
+    onionOn = !onionOn;
+    onionSwitch.classList.toggle('on', onionOn);
+    onionSwitch.setAttribute('aria-pressed', String(onionOn));
+    renderOnion();
+  });
+  rSize.addEventListener('input', () => { valSize.textContent = rSize.value + 'px'; });
+  rFps.addEventListener('input', () => { valFps.textContent = rFps.value; });
+  rFrameCount.addEventListener('input', () => { valFrameCount.textContent = rFrameCount.value; });
+
+  /* ---------- frame management ---------- */
+  newFrameBtn.addEventListener('click', () => {
+    commitCurrentFrame();
+    frames.splice(currentIndex + 1, 0, makeBlankFrame());
+    currentIndex += 1;
+    loadFrameIntoDrawCanvas(currentIndex);
+    renderOnion();
+    refreshAfterEdit();
+  });
+  duplicateFrameBtn.addEventListener('click', () => {
+    commitCurrentFrame();
+    const dup = makeBlankFrame();
+    dup.getContext('2d').drawImage(frames[currentIndex], 0, 0);
+    frames.splice(currentIndex + 1, 0, dup);
+    currentIndex += 1;
+    loadFrameIntoDrawCanvas(currentIndex);
+    renderOnion();
+    refreshAfterEdit();
+  });
+  deleteFrameBtn.addEventListener('click', () => {
+    if (frames.length <= 1) return;
+    frames.splice(currentIndex, 1);
+    currentIndex = Math.min(currentIndex, frames.length - 1);
+    loadFrameIntoDrawCanvas(currentIndex);
+    renderOnion();
+    refreshAfterEdit();
+  });
+
+  /* ---------- playback preview ---------- */
+  let playing = false;
+  let playTimerId = null;
+
+  function stopPlayback() {
+    playing = false;
+    playBtn.querySelector('span').textContent = '▶ 再生';
+    if (playTimerId) clearTimeout(playTimerId);
+    playTimerId = null;
+    canvasStack.style.display = '';
+    playbackCanvas.style.display = 'none';
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (playing) { stopPlayback(); return; }
+    commitCurrentFrame();
+    playing = true;
+    playBtn.querySelector('span').textContent = '■ 停止';
+    canvasStack.style.display = 'none';
+    playbackCanvas.style.display = 'block';
+    let i = 0;
+    const tick = () => {
+      if (!playing) return;
+      const fps = Number(rFps.value);
+      playbackCtx.fillStyle = BASE_FILL;
+      playbackCtx.fillRect(0, 0, FRAME_W, FRAME_H);
+      playbackCtx.drawImage(frames[i], 0, 0);
+      i = (i + 1) % frames.length;
+      playTimerId = setTimeout(tick, 1000 / fps);
+    };
+    tick();
+  });
+
+  /* ---------- AI Prompt: generate multiple frames from text (pan/zoom over one generative art image) ---------- */
+  loadQuillTextBtn.addEventListener('click', async () => {
+    if (!window.YoukokuProject) { generateFramesStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    const textSlot = await window.YoukokuProject.getSlot('text');
+    if (!textSlot || !textSlot.json) {
+      generateFramesStatus.textContent = 'Quillにまだ何も送信されていません。';
+      return;
+    }
+    const fullText = (textSlot.json.chapters || []).map(c => c.content || '').join('\n');
+    promptInput.value = fullText;
+    generateFramesStatus.textContent = `✓「${textSlot.json.title || '無題の物語'}」を読み込みました。`;
+  });
+
+  generateFramesBtn.addEventListener('click', () => {
+    if (!window.YoukokuTextToArt) { generateFramesStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    const text = promptInput.value.trim();
+    if (!text) {
+      generateFramesStatus.textContent = 'テキストを入力してください。';
+      return;
+    }
+    if (playing) stopPlayback();
+    const count = Number(rFrameCount.value);
+
+    const artCanvas = document.createElement('canvas');
+    artCanvas.width = 900; artCanvas.height = 900;
+    window.YoukokuTextToArt.generate(artCanvas, text);
+
+    const baseScale = (Math.max(FRAME_W, FRAME_H) / 900) * 1.35;
+    const newFrames = [];
+    for (let i = 0; i < count; i++) {
+      const t = count > 1 ? i / (count - 1) : 0;
+      const zoom = 1 + 0.12 * Math.sin(t * Math.PI);
+      const angle = (t - 0.5) * 0.1;
+      const panX = Math.sin(t * Math.PI * 2) * 40;
+      const panY = Math.cos(t * Math.PI * 2) * 25;
+      const f = makeBlankFrame();
+      const fctx = f.getContext('2d');
+      fctx.save();
+      fctx.translate(FRAME_W / 2 + panX, FRAME_H / 2 + panY);
+      fctx.rotate(angle);
+      fctx.scale(baseScale * zoom, baseScale * zoom);
+      fctx.drawImage(artCanvas, -450, -450);
+      fctx.restore();
+      newFrames.push(f);
+    }
+
+    frames = newFrames;
+    currentIndex = 0;
+    loadFrameIntoDrawCanvas(0);
+    renderOnion();
+    refreshAfterEdit();
+    generateFramesStatus.textContent = `✓ ${count}枚のフレームを生成しました。既存のフレームは置き換えられました。`;
+  });
+
+  /* ---------- export to WebM ---------- */
+  let lastExportBlob = null;
+
+  exportBtn.addEventListener('click', async () => {
+    if (typeof MediaRecorder === 'undefined') {
+      exportStatus.textContent = 'このブラウザは書き出し機能に対応していません。';
+      return;
+    }
+    if (playing) stopPlayback();
+    commitCurrentFrame();
+    exportBtn.disabled = true;
+    resultBox.classList.remove('active');
+    progressTrack.classList.add('active');
+    progressFill.style.width = '3%';
+    exportStatus.textContent = '書き出しています…';
+
+    try {
+      const fps = Number(rFps.value);
+      exportCanvas.width = FRAME_W; exportCanvas.height = FRAME_H;
+      const ectx = exportCanvas.getContext('2d');
+      const stream = exportCanvas.captureStream(fps);
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+        ? 'video/webm;codecs=vp9'
+        : (MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : '');
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const chunks = [];
+      recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+      const stopped = new Promise((resolve) => { recorder.onstop = resolve; });
+
+      recorder.start();
+      const frameMs = 1000 / fps;
+      for (let i = 0; i < frames.length; i++) {
+        ectx.fillStyle = BASE_FILL;
+        ectx.fillRect(0, 0, FRAME_W, FRAME_H);
+        ectx.drawImage(frames[i], 0, 0);
+        progressFill.style.width = Math.round(5 + ((i + 1) / frames.length) * 90) + '%';
+        await new Promise((resolve) => setTimeout(resolve, frameMs));
+      }
+      recorder.stop();
+      await stopped;
+
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      lastExportBlob = blob;
+      const url = URL.createObjectURL(blob);
+      resultVideo.src = url;
+      downloadLink.href = url;
+      resultBox.classList.add('active');
+      progressFill.style.width = '100%';
+      exportStatus.textContent = '✓ 書き出しが完了しました。';
+    } catch (err) {
+      exportStatus.textContent = '書き出しに失敗しました: ' + err.message;
+    } finally {
+      setTimeout(() => progressTrack.classList.remove('active'), 600);
+      exportBtn.disabled = false;
+    }
+  });
+
+  sendToProjectBtn.addEventListener('click', async () => {
+    if (!window.YoukokuProject) { sendToProjectStatus.textContent = 'この機能はこのブラウザでは使えません。'; return; }
+    if (!lastExportBlob) return;
+    try {
+      await window.YoukokuProject.saveSlot('video', { blob: lastExportBlob, from: 'Anima' });
+      sendToProjectStatus.textContent = '✓ Studioに送信しました。';
+    } catch (err) {
+      sendToProjectStatus.textContent = '送信に失敗しました: ' + err.message;
+    }
+  });
+
+  renderOnion();
+  renderFrameStrip();
+})();
+</script>
+</body>
+</html>

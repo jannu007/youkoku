@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleur — AI絵画作成 | AI Records</title>
+<meta name="description" content="筆と万華鏡モードで描く、花のように広がる絵画作成アプリ。会員登録不要・完全無料・インストール不要。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2290%22>❁</text></svg>">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#070c26">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/prism-detail.css?v=2">
+</head>
+<body>
+
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<script>
+window.YOUKOKU_BG_THEMES = [
+  { type: 'petals', colors: ['251,113,133','244,114,182','236,72,153'] },
+  { type: 'bokeh', colors: ['251,113,133','244,114,182','236,72,153'] },
+];
+</script>
+<script src="../shared/detail-bg.js?v=1"></script>
+
+<header class="topbar">
+  <a href="../../index.html" class="back">← AI Records</a>
+  <div class="applogo"><span class="dot" style="background:#fb7185"></span>Fleur</div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-text">
+      <span class="work-tag"><span style="background:#fb7185"></span>AI Painting</span>
+      <h1>Fleur</h1>
+      <p class="tagline">一筆が花びらのように、幾重にも咲いていく絵画。</p>
+      <p class="desc">
+        筆で自由に描くだけでなく、万華鏡のように2〜8分割で線対称に広がる「シンメトリーモード」で、
+        花や紋様のような構図を誰でも簡単に描けます。テキストからAI下絵を生成して、その上に描き込むこともできます。
+        処理はすべてブラウザ内で完結し、データは外部に送信されません。
+      </p>
+      <div class="cta-row">
+        <button type="button" class="btn btn-primary install-btn"><span class="btn-label">インストール</span></button>
+        <span class="price-note">¥0 ・ 会員登録不要 ・ ホーム画面に追加できます</span>
+        <a href="app/" class="open-link">ブラウザで直接開く →</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="device-frame">
+        <div class="device-bar"><span></span><span></span><span></span><span class="device-title">fleur — canvas.ai</span></div>
+        <div class="device-body">
+          <div class="mock-canvas" style="background:radial-gradient(circle at 50% 45%, #fb7185, transparent 45%), radial-gradient(circle at 30% 65%, #ec4899, transparent 50%), radial-gradient(circle at 70% 30%, #f472b6, transparent 45%), #0d0d18;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="feature">
+      <span class="feature-num">01</span>
+      <h3>万華鏡シンメトリー</h3>
+      <p>2〜8分割の線対称モードで描くと、一筆がそのまま花びらや紋様のように広がります。他の絵画アプリにはない体験です。</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">02</span>
+      <h3>AI下絵ジェネレーター</h3>
+      <p>文章を入力すると、その内容の雰囲気に応じたジェネラティブアートを下絵として自動生成。その上から描き込めます。</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">03</span>
+      <h3>Undo / Redoで自由に</h3>
+      <p>何度でも描き直せる履歴管理と、完成した絵をPNGとしてそのまま書き出せる機能を搭載。データはブラウザ内だけで生成されます。</p>
+    </div>
+  </section>
+
+  <section class="bottom-cta">
+    <h2>その一筆を、咲かせてみよう。</h2>
+    <button type="button" class="btn btn-primary btn-lg install-btn"><span class="btn-label">インストール</span></button>
+    <a href="../../index.html#apps" class="back-link">← 他のアプリを見る</a>
+  </section>
+</main>
+
+<script src="../shared/install.js?v=1"></script>
+</body>
+</html>

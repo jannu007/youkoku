@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anima — AIアニメーション作成 | AI Records</title>
+<meta name="description" content="オニオンスキンでコマ撮りアニメーションを描く作成アプリ。会員登録不要・完全無料・インストール不要。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.85em%22 font-size=%2290%22>▶</text></svg>">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#070c26">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/prism-detail.css?v=2">
+</head>
+<body>
+
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<script>
+window.YOUKOKU_BG_THEMES = [
+  { type: 'embers', colors: ['249,115,22','239,68,68'] },
+  { type: 'streaks', colors: ['249,115,22','239,68,68'] },
+];
+</script>
+<script src="../shared/detail-bg.js?v=1"></script>
+
+<header class="topbar">
+  <a href="../../index.html" class="back">← AI Records</a>
+  <div class="applogo"><span class="dot" style="background:#f97316"></span>Anima</div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-text">
+      <span class="work-tag"><span style="background:#f97316"></span>AI Animation</span>
+      <h1>Anima</h1>
+      <p class="tagline">一枚一枚が積み重なり、動きになる。</p>
+      <p class="desc">
+        コマ（フレーム）を1枚ずつ描いてつなぐアニメーション作成アプリ。前のコマを半透明に重ねて表示する
+        「オニオンスキン」で、なぞりながら自然な動きを描けます。テキストから複数フレームを一括生成する
+        AI Promptも搭載。書き上がったアニメーションはWebM動画として書き出せます。処理はすべてブラウザ内で完結します。
+      </p>
+      <div class="cta-row">
+        <button type="button" class="btn btn-primary install-btn"><span class="btn-label">インストール</span></button>
+        <span class="price-note">¥0 ・ 会員登録不要 ・ ホーム画面に追加できます</span>
+        <a href="app/" class="open-link">ブラウザで直接開く →</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="device-frame">
+        <div class="device-bar"><span></span><span></span><span></span><span class="device-title">anima — reel.ai</span></div>
+        <div class="device-body">
+          <div class="mock-canvas" style="background:radial-gradient(circle at 35% 40%, #f97316, transparent 55%), radial-gradient(circle at 68% 65%, #ef4444, transparent 50%), #0d0d18;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="feature">
+      <span class="feature-num">01</span>
+      <h3>オニオンスキン</h3>
+      <p>前のコマを半透明に重ねて表示しながら描けるので、動きの連続性を保ったまま次のコマを描き進められます。</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">02</span>
+      <h3>AI下絵の一括生成</h3>
+      <p>文章を入力すると、その内容のジェネラティブアートを土台に、ゆっくりとしたパン・ズームを加えた複数フレームを一括で生成します。</p>
+    </div>
+    <div class="feature">
+      <span class="feature-num">03</span>
+      <h3>再生プレビューとWebM書き出し</h3>
+      <p>フレームレートを指定して再生プレビューができ、完成したアニメーションはそのままWebM動画として書き出せます。</p>
+    </div>
+  </section>
+
+  <section class="bottom-cta">
+    <h2>そのコマを、動かしてみよう。</h2>
+    <button type="button" class="btn btn-primary btn-lg install-btn"><span class="btn-label">インストール</span></button>
+    <a href="../../index.html#apps" class="back-link">← 他のアプリを見る</a>
+  </section>
+</main>
+
+<script src="../shared/install.js?v=1"></script>
+</body>
+</html>
